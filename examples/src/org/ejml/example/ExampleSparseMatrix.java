@@ -54,7 +54,7 @@ public class ExampleSparseMatrix {
         work.addItem(2,3,6);
 
         // convert into a format that's easier to perform math with
-        DMatrixSparseCSC Z = ConvertDMatrixStruct.convert(work,(DMatrixSparseCSC)null);
+        DMatrixSparseCSC Z = ConvertDMatrixStruct.convert(work, (DMatrixSparseCSC) null);
 
         // print the matrix to standard out in two different formats
         Z.print();
