@@ -36,6 +36,21 @@ BenchmarkReduceScalarWiseLikeMethods.elementMinAbs                100000        
 BenchmarkReduceScalarWiseLikeMethods.reduceScalarSum              100000        10000000  avgt    5  10.962 ± 0.095  ms/op
 BenchmarkReduceScalarWiseLikeMethods.elementSum                   100000        10000000  avgt    5  11.000 ± 0.060  ms/op
 
+(with -UseSuperWord)
+Benchmark                                                    (dimension)  (elementCount)   (semiRing)  Mode  Cnt   Score   Error  Units
+BenchmarkReduceColumnWiseLikeMethods.reduceColumnWiseMaxAbs       100000        10000000          N/A  avgt    5   9.440 ± 0.219  ms/op
+BenchmarkReduceColumnWiseLikeMethods.columnMaxAbs                 100000        10000000          N/A  avgt    5   9.745 ± 0.749  ms/op
+BenchmarkReduceRowWiseLikeMethods.reduceRowWiseMax                100000        10000000          N/A  avgt    5  45.329 ± 1.406  ms/op
+BenchmarkReduceRowWiseLikeMethods.maxRows                         100000        10000000          N/A  avgt    5  63.346 ± 1.054  ms/op
+BenchmarkReduceRowWiseLikeMethods.reduceRowWiseSum                100000        10000000          N/A  avgt    5  44.501 ± 1.673  ms/op
+BenchmarkReduceRowWiseLikeMethods.sumRows                         100000        10000000          N/A  avgt    5  43.355 ± 1.878  ms/op
+BenchmarkReduceScalarWiseLikeMethods.reduceScalarMin              100000        10000000          N/A  avgt    5   6.071 ± 0.327  ms/op
+BenchmarkReduceScalarWiseLikeMethods.elementMin                   100000        10000000          N/A  avgt    5   6.269 ± 0.742  ms/op
+BenchmarkReduceScalarWiseLikeMethods.reduceScalarMinAbs           100000        10000000          N/A  avgt    5   8.114 ± 0.317  ms/op
+BenchmarkReduceScalarWiseLikeMethods.elementMinAbs                100000        10000000          N/A  avgt    5   9.197 ± 0.610  ms/op
+BenchmarkReduceScalarWiseLikeMethods.reduceScalarSum              100000        10000000          N/A  avgt    5  10.890 ± 0.100  ms/op
+BenchmarkReduceScalarWiseLikeMethods.elementSum                   100000        10000000          N/A  avgt    5  10.983 ± 0.556  ms/op
+
 
 ## matrixVectorMult
 
@@ -49,6 +64,17 @@ BenchmarkMatrixVectorMult.vectorMatrix                    100000        10000000
 BenchmarkMatrixVectorMultWithSemiRings.vectorMatrix       100000        10000000  Plus, Times  avgt    5  35.056 ±  1.062  ms/op
 BenchmarkMatrixVectorMultWithSemiRings.vectorMatrix       100000        10000000      Or, And  avgt    5  26.796 ±  0.653  ms/op
 BenchmarkMatrixVectorMultWithSemiRings.vectorMatrix       100000        10000000     Min, Max  avgt    5  87.027 ±  0.976  ms/op
+
+(with -UseSuperWord)
+Benchmark                                            (dimension)  (elementCount)   (semiRing)  Mode  Cnt   Score    Error  Units
+BenchmarkMatrixVectorMult.matrixVector                       100000        10000000          N/A  avgt    5  43.501 ± 1.261  ms/op
+BenchmarkMatrixVectorMult.vectorMatrix                       100000        10000000          N/A  avgt    5  35.961 ± 1.365  ms/op
+BenchmarkMatrixVectorMultWithSemiRings.matrixVector          100000        10000000  Plus, Times  avgt    5  43.986 ± 1.590  ms/op
+BenchmarkMatrixVectorMultWithSemiRings.matrixVector          100000        10000000      Or, And  avgt    5  45.743 ± 0.353  ms/op
+BenchmarkMatrixVectorMultWithSemiRings.matrixVector          100000        10000000     Min, Max  avgt    5  75.611 ± 2.063  ms/op
+BenchmarkMatrixVectorMultWithSemiRings.vectorMatrix          100000        10000000  Plus, Times  avgt    5  35.823 ± 1.103  ms/op
+BenchmarkMatrixVectorMultWithSemiRings.vectorMatrix          100000        10000000      Or, And  avgt    5  26.922 ± 0.547  ms/op
+BenchmarkMatrixVectorMultWithSemiRings.vectorMatrix          100000        10000000     Min, Max  avgt    5  87.600 ± 7.006  ms/op
 
 
 ## matrixMatrixMult
@@ -67,3 +93,10 @@ BenchmarkMatrixMatrixMult.matrixMatrix                   100000          200000 
 BenchmarkMatrixMatrixMultWithSemiRing.matrixMatrix       100000          200000  Plus, Times  avgt    5  26.554 ± 14.542  ms/op
 BenchmarkMatrixMatrixMultWithSemiRing.matrixMatrix       100000          200000      Or, And  avgt    5  25.356 ±  7.291  ms/op
 BenchmarkMatrixMatrixMultWithSemiRing.matrixMatrix       100000          200000     Min, Max  avgt    5  25.865 ±  6.862  ms/op
+
+(with -UseSuperWord)
+Benchmark                                                    (dimension)  (elementCount)   (semiRing)  Mode  Cnt   Score   Error  Units
+BenchmarkMatrixMatrixMult.matrixMatrix                       100000          200000          N/A  avgt    5  22.396 ± 5.129  ms/op
+BenchmarkMatrixMatrixMultWithSemiRing.matrixMatrix           100000          200000  Plus, Times  avgt    5  24.785 ± 8.155  ms/op
+BenchmarkMatrixMatrixMultWithSemiRing.matrixMatrix           100000          200000      Or, And  avgt    5  24.433 ± 3.047  ms/op
+BenchmarkMatrixMatrixMultWithSemiRing.matrixMatrix           100000          200000     Min, Max  avgt    5  24.204 ± 2.200  ms/op
