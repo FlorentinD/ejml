@@ -19,15 +19,15 @@
 package org.ejml.sparse.csc;
 
 import org.ejml.MatrixDimensionException;
-import org.ejml.data.*;
-import org.ejml.ops.DMonoid;
+import org.ejml.data.DGrowArray;
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.data.DMatrixSparseCSC;
+import org.ejml.data.IGrowArray;
 import org.ejml.ops.DSemiRing;
-import org.ejml.ops.DUnaryOperator;
 import org.ejml.sparse.csc.misc.ImplCommonOpsWithSemiRing_DSCC;
 import org.ejml.sparse.csc.mult.ImplSparseSparseMultWithSemiRing_DSCC;
 
 import javax.annotation.Nullable;
-import java.util.Arrays;
 
 import static org.ejml.UtilEjml.reshapeOrDeclare;
 import static org.ejml.UtilEjml.stringShapes;
@@ -248,191 +248,6 @@ public class CommonOpsWithSemiRing_DSCC {
         C.reshape(A.numRows, A.numCols);
 
         ImplCommonOpsWithSemiRing_DSCC.elementMult(A, B, C, semiRing, gw, gx);
-    }
-
-    /**
-     * Applies the row permutation specified by the vector to the input matrix and save the results
-     * in the output matrix.  output[perm[j],:] = input[j,:]
-     *
-     * @param permInv (Input) Inverse permutation vector.  Specifies new order of the rows.
-     * @param input   (Input) Matrix which is to be permuted
-     * @param output  (Output) Matrix which has the permutation stored in it.  Is reshaped.
-     */
-    public static void permuteRowInv(int permInv[], DMatrixSparseCSC input, DMatrixSparseCSC output) {
-        CommonOps_DSCC.permuteRowInv(permInv, input, output);
-    }
-
-    /**
-     * Applies the forward column and inverse row permutation specified by the two vector to the input matrix
-     * and save the results in the output matrix. output[permRow[j],permCol[i]] = input[j,i]
-     *
-     * @param permRowInv (Input) Inverse row permutation vector. Null is the same as passing in identity.
-     * @param input      (Input) Matrix which is to be permuted
-     * @param permCol    (Input) Column permutation vector. Null is the same as passing in identity.
-     * @param output     (Output) Matrix which has the permutation stored in it.  Is reshaped.
-     */
-    public static void permute(@Nullable int permRowInv[], DMatrixSparseCSC input, @Nullable int permCol[], DMatrixSparseCSC output) {
-        CommonOps_DSCC.permute(permRowInv, input, permCol, output);
-    }
-
-    /**
-     * Extracts a column from A and stores it into out.
-     *
-     * @param A      (Input) Source matrix. not modified.
-     * @param column The column in A
-     * @param out    (Output, Optional) Storage for column vector
-     * @return The column of A.
-     */
-    public static DMatrixSparseCSC extractColumn(DMatrixSparseCSC A, int column, @Nullable DMatrixSparseCSC out) {
-        return extractColumn(A, column, out);
-    }
-
-    /**
-     * Creates a submatrix by extracting the specified rows from A. rows = {row0 %le; i %le; row1}.
-     *
-     * @param A    (Input) matrix
-     * @param row0 First row. Inclusive
-     * @param row1 Last row+1.
-     * @param out  (Output, Option) Storage for output matrix
-     * @return The submatrix
-     */
-    public static DMatrixSparseCSC extractRows(DMatrixSparseCSC A, int row0, int row1, DMatrixSparseCSC out) {
-        return CommonOps_DSCC.extractRows(A, row0, row1, out);
-    }
-
-    /**
-     * <p>
-     * Extracts a submatrix from 'src' and inserts it in a submatrix in 'dst'.
-     * </p>
-     * <p>
-     * s<sub>i-y0 , j-x0</sub> = o<sub>ij</sub> for all y0 &le; i &lt; y1 and x0 &le; j &lt; x1 <br>
-     * <br>
-     * where 's<sub>ij</sub>' is an element in the submatrix and 'o<sub>ij</sub>' is an element in the
-     * original matrix.
-     * </p>
-     *
-     * <p>WARNING: This is a very slow operation for sparse matrices. The current implementation is simple but
-     * involves excessive memory copying.</p>
-     *
-     * @param src   The original matrix which is to be copied.  Not modified.
-     * @param srcX0 Start column.
-     * @param srcX1 Stop column+1.
-     * @param srcY0 Start row.
-     * @param srcY1 Stop row+1.
-     * @param dst   Where the submatrix are stored.  Modified.
-     * @param dstY0 Start row in dst.
-     * @param dstX0 start column in dst.
-     */
-    public static void extract(DMatrixSparseCSC src, int srcY0, int srcY1, int srcX0, int srcX1,
-                               DMatrixSparseCSC dst, int dstY0, int dstX0) {
-        CommonOps_DSCC.extract(src, srcY0, srcY1, srcX0, srcX1, dst, dstY0, dstX0);
-    }
-
-    /**
-     * This applies a given unary function on every value stored in the matrix
-     *
-     * @param input  (Input) input matrix. Not modified
-     * @param func   Unary function accepting a double
-     * @param output (Input/Output) Matrix. Modified.
-     */
-    public static void apply(DMatrixSparseCSC input, DUnaryOperator func, @Nullable DMatrixSparseCSC output) {
-        if (output == null) {
-            output = input.createLike();
-        } else if (input != output) {
-            output.copyStructure(input);
-        }
-
-        for (int i = 0; i < input.nz_values.length; i++) {
-            output.nz_values[i] = func.apply(input.nz_values[i]);
-        }
-    }
-
-    public static void apply(DMatrixSparseCSC input, DUnaryOperator func) {
-        apply(input, func, input);
-    }
-
-    /**
-     * This accumulates the matrix values to a scalar value
-     *
-     * @param input     (Input) input matrix. Not modified
-     * @param initValue initial value for accumulator
-     * @param monoid    Monoid defining "+" for accumulator +=  cellValue
-     * @return accumulated value
-     */
-    public static double reduceScalar(DMatrixSparseCSC input, double initValue, DMonoid monoid) {
-        double result = initValue;
-
-        for (int i = 0; i < input.nz_values.length; i++) {
-            result = monoid.func.apply(result, input.nz_values[i]);
-        }
-
-        return result;
-    }
-
-    public static double reduceScalar(DMatrixSparseCSC input, DMonoid monoid) {
-        return reduceScalar(input, 0, monoid);
-    }
-
-    /**
-     * This accumulates the values per column to a scalar value
-     *
-     * @param input     (Input) input matrix. Not modified
-     * @param initValue initial value for accumulator
-     * @param monoid    Monoid defining "+" for accumulator +=  cellValue
-     * @param output    output (Output) Vector, where result can be stored in
-     * @return a column-vector, where v[i] == values of column i reduced to scalar based on `func`
-     */
-    public static DMatrixRMaj reduceColumnWise(DMatrixSparseCSC input, double initValue, DMonoid monoid, @Nullable DMatrixRMaj output) {
-        if (output == null) {
-            output = new DMatrixRMaj(1, input.numCols);
-        } else {
-            output.reshape(1, input.numCols);
-        }
-
-        for (int col = 0; col < input.numCols; col++) {
-            int start = input.col_idx[col];
-            int end = input.col_idx[col + 1];
-
-            double acc = initValue;
-            for (int i = start; i < end; i++) {
-                acc = monoid.func.apply(acc, input.nz_values[i]);
-            }
-
-            // TODO: allow optional resultAccumulator function (use tmp_result array to save reduce result and than combine arrays f.i. 2nd func)
-            output.data[col] = acc;
-        }
-
-        return output;
-    }
-
-    /**
-     * This accumulates the values per row to a scalar value
-     *
-     * @param input     (Input) input matrix. Not modified
-     * @param initValue initial value for accumulator
-     * @param monoid    Monoid defining "+" for accumulator +=  cellValue
-     * @param output    output (Output) Vector, where result can be stored in
-     * @return a row-vector, where v[i] == values of row i reduced to scalar based on `func`
-     */
-    public static DMatrixRMaj reduceRowWise(DMatrixSparseCSC input, double initValue, DMonoid monoid, @Nullable DMatrixRMaj output) {
-        if (output == null) {
-            output = new DMatrixRMaj(1, input.numRows);
-        } else {
-            output.reshape(1, input.numCols);
-        }
-        // TODO: allow optional resultAccumulator function (use tmp_result array to save reduce result and than combine arrays f.i. 2nd func)
-        Arrays.fill(output.data, initValue);
-
-        for (int col = 0; col < input.numCols; col++) {
-            int start = input.col_idx[col];
-            int end = input.col_idx[col + 1];
-
-            for (int i = start; i < end; i++) {
-                output.data[input.nz_rows[i]] = monoid.func.apply(output.data[input.nz_rows[i]], input.nz_values[i]);
-            }
-        }
-
-        return output;
     }
 }
 
