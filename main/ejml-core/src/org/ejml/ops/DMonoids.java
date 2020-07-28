@@ -22,16 +22,16 @@ package org.ejml.ops;
  * as defined in the graphblas c-api (https://people.eecs.berkeley.edu/~aydin/GraphBLAS_API_C_v13.pdf)
  * p. 26
  */
-public final class PreDefinedDoubleMonoids {
-    public static final DoubleMonoid AND = new DoubleMonoid(1, (a, b) -> (a == 0 || b == 0) ? 0 : 1);
-    public static final DoubleMonoid OR = new DoubleMonoid(0, (a, b) -> (a != 0 || b != 0) ? 1 : 0);
-    public static final DoubleMonoid XOR = new DoubleMonoid(0, (a, b) -> ((a == 0 && b == 0) || (a != 0 && b != 0)) ? 0 : 1);
-    public static final DoubleMonoid XNOR = new DoubleMonoid(0, (a, b) -> ((a == 0 && b == 0) || (a != 0 && b != 0)) ? 1 : 0);
+public final class DMonoids {
+    public static final DMonoid AND = new DMonoid(1, (a, b) -> (a == 0 || b == 0) ? 0 : 1);
+    public static final DMonoid OR = new DMonoid(0, (a, b) -> (a != 0 || b != 0) ? 1 : 0);
+    public static final DMonoid XOR = new DMonoid(0, (a, b) -> ((a == 0 && b == 0) || (a != 0 && b != 0)) ? 0 : 1);
+    public static final DMonoid XNOR = new DMonoid(0, (a, b) -> ((a == 0 && b == 0) || (a != 0 && b != 0)) ? 1 : 0);
 
-    public static final DoubleMonoid PLUS = new DoubleMonoid(0, Double::sum);
-    public static final DoubleMonoid TIMES = new DoubleMonoid(1, (a, b) -> a * b);
+    public static final DMonoid PLUS = new DMonoid(0, Double::sum);
+    public static final DMonoid TIMES = new DMonoid(1, (a, b) -> a * b);
 
     // TODO: performance incr. worth not using safe Math.min/max?
-    public final static DoubleMonoid MIN = new DoubleMonoid(Double.MAX_VALUE, (a, b) -> (a <= b) ? a : b);
-    public final static DoubleMonoid MAX = new DoubleMonoid(Double.MIN_VALUE, (a, b) -> (a >= b) ? a : b);
+    public final static DMonoid MIN = new DMonoid(Double.MAX_VALUE, (a, b) -> (a <= b) ? a : b);
+    public final static DMonoid MAX = new DMonoid(Double.MIN_VALUE, (a, b) -> (a >= b) ? a : b);
 }
