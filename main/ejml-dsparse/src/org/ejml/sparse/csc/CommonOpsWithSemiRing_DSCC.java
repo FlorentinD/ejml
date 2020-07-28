@@ -19,10 +19,7 @@
 package org.ejml.sparse.csc;
 
 import org.ejml.MatrixDimensionException;
-import org.ejml.data.DGrowArray;
-import org.ejml.data.DMatrixRMaj;
-import org.ejml.data.DMatrixSparseCSC;
-import org.ejml.data.IGrowArray;
+import org.ejml.data.*;
 import org.ejml.ops.DMonoid;
 import org.ejml.ops.DSemiRing;
 import org.ejml.ops.DUnaryOperator;
@@ -32,155 +29,172 @@ import org.ejml.sparse.csc.mult.ImplSparseSparseMultWithSemiRing_DSCC;
 import javax.annotation.Nullable;
 import java.util.Arrays;
 
+import static org.ejml.UtilEjml.reshapeOrDeclare;
 import static org.ejml.UtilEjml.stringShapes;
 
 
 public class CommonOpsWithSemiRing_DSCC {
 
-    public static void mult(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC C, DSemiRing semiRing) {
-        mult(A, B, C, semiRing, null, null);
+    public static DMatrixSparseCSC mult(DMatrixSparseCSC A, DMatrixSparseCSC B, @Nullable DMatrixSparseCSC output, DSemiRing semiRing) {
+        return mult(A, B, output, semiRing, null, null);
     }
 
     /**
-     * Performs matrix multiplication.  C = A*B
+     * Performs matrix multiplication.  output = A*B
      *
      * @param A  (Input) Matrix. Not modified.
      * @param B  (Input) Matrix. Not modified.
-     * @param C  (Output) Storage for results.  Data length is increased if increased if insufficient.
+     * @param output  (Output) Storage for results.  Data length is increased if increased if insufficient.
      * @param gw (Optional) Storage for internal workspace.  Can be null.
      * @param gx (Optional) Storage for internal workspace.  Can be null.
      */
-    public static void mult(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC C, DSemiRing semiRing,
+    public static DMatrixSparseCSC mult(DMatrixSparseCSC A, DMatrixSparseCSC B, @Nullable DMatrixSparseCSC output, DSemiRing semiRing,
                             @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numCols != B.numRows)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
-        C.reshape(A.numRows, B.numCols);
+        output = reshapeOrDeclare(output,A,A.numRows,B.numCols);
 
-        ImplSparseSparseMultWithSemiRing_DSCC.mult(A, B, C, semiRing, gw, gx);
+        ImplSparseSparseMultWithSemiRing_DSCC.mult(A, B, output, semiRing, gw, gx);
+
+        return output;
     }
 
-    public static void multTransA(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC C, DSemiRing semiRing,
-                                  @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
+    public static DMatrixSparseCSC multTransA(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC output, DSemiRing semiRing,
+                                     @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numRows != B.numRows)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
-        C.reshape(A.numCols, B.numCols);
+        output = reshapeOrDeclare(output,A,A.numCols,B.numCols);
 
-        ImplSparseSparseMultWithSemiRing_DSCC.multTransA(A, B, C, semiRing, gw, gx);
+        ImplSparseSparseMultWithSemiRing_DSCC.multTransA(A, B, output, semiRing, gw, gx);
+
+        return output;
     }
 
     /**
-     * Performs matrix multiplication.  C = A*B<sup>T</sup>. B needs to be sorted and will be sorted if it
+     * Performs matrix multiplication.  output = A*B<sup>T</sup>. B needs to be sorted and will be sorted if it
      * has not already been sorted.
      *
      * @param A  (Input) Matrix. Not modified.
      * @param B  (Input) Matrix. Value not modified but indicies will be sorted if not sorted already.
-     * @param C  (Output) Storage for results.  Data length is increased if increased if insufficient.
+     * @param output  (Output) Storage for results.  Data length is increased if increased if insufficient.
      * @param gw (Optional) Storage for internal workspace.  Can be null.
      * @param gx (Optional) Storage for internal workspace.  Can be null.
      */
-    public static void multTransB(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC C, DSemiRing semiRing,
+    public static DMatrixSparseCSC multTransB(DMatrixSparseCSC A, DMatrixSparseCSC B, @Nullable DMatrixSparseCSC output, DSemiRing semiRing,
                                   @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numCols != B.numCols)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
-        C.reshape(A.numRows, B.numRows);
+        output = reshapeOrDeclare(output, A, A.numRows, B.numRows);
 
         if (!B.isIndicesSorted())
             B.sortIndices(null);
 
-        ImplSparseSparseMultWithSemiRing_DSCC.multTransB(A, B, C, semiRing, gw, gx);
+        ImplSparseSparseMultWithSemiRing_DSCC.multTransB(A, B, output, semiRing, gw, gx);
+
+        return output;
     }
 
 
     /**
-     * Performs matrix multiplication.  C = A*B
+     * Performs matrix multiplication.  output = A*B
      *
      * @param A Matrix
      * @param B Dense Matrix
-     * @param C Dense Matrix
+     * @param output Dense Matrix
      */
-    public static void mult(DMatrixSparseCSC A, DMatrixRMaj B, DMatrixRMaj C, DSemiRing semiRing) {
+    public static DMatrixRMaj mult(DMatrixSparseCSC A, DMatrixRMaj B, @Nullable DMatrixRMaj output, DSemiRing semiRing) {
         if (A.numCols != B.numRows)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
-        C.reshape(A.numRows, B.numCols);
 
-        ImplSparseSparseMultWithSemiRing_DSCC.mult(A, B, C, semiRing);
+        output = reshapeOrDeclare(output,A.numRows,B.numCols);
+
+        ImplSparseSparseMultWithSemiRing_DSCC.mult(A, B, output, semiRing);
+
+        return output;
     }
 
     /**
-     * <p>C = C + A*B</p>
+     * <p>output = output + A*B</p>
      */
-    public static void multAdd(DMatrixSparseCSC A, DMatrixRMaj B, DMatrixRMaj C, DSemiRing semiRing) {
-        if (A.numRows != C.numRows || B.numCols != C.numCols)
-            throw new IllegalArgumentException("Inconsistent matrix shapes. " + stringShapes(A, B, C));
+    public static void multAdd(DMatrixSparseCSC A, DMatrixRMaj B, @Nullable DMatrixRMaj output, DSemiRing semiRing) {
+        if (A.numRows != output.numRows || B.numCols != output.numCols)
+            throw new IllegalArgumentException("Inconsistent matrix shapes. " + stringShapes(A, B, output));
 
-        ImplSparseSparseMultWithSemiRing_DSCC.multAdd(A, B, C, semiRing);
+        ImplSparseSparseMultWithSemiRing_DSCC.multAdd(A, B, output, semiRing);
     }
 
     /**
-     * Performs matrix multiplication.  C = A<sup>T</sup>*B
+     * Performs matrix multiplication.  output = A<sup>T</sup>*B
      *
      * @param A Matrix
      * @param B Dense Matrix
-     * @param C Dense Matrix
+     * @param output Dense Matrix
      */
-    public static void multTransA(DMatrixSparseCSC A, DMatrixRMaj B, DMatrixRMaj C, DSemiRing semiRing) {
+    public static DMatrixRMaj multTransA(DMatrixSparseCSC A, DMatrixRMaj B, @Nullable DMatrixRMaj output, DSemiRing semiRing) {
         if (A.numRows != B.numRows)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
-        C.reshape(A.numCols, B.numCols);
 
-        ImplSparseSparseMultWithSemiRing_DSCC.multTransA(A, B, C, semiRing);
+        output = reshapeOrDeclare(output, A.numCols, B.numCols);
+
+        ImplSparseSparseMultWithSemiRing_DSCC.multTransA(A, B, output, semiRing);
+
+        return output;
     }
 
     /**
-     * <p>C = C + A<sup>T</sup>*B</p>
+     * <p>output = output + A<sup>T</sup>*B</p>
      */
-    public static void multAddTransA(DMatrixSparseCSC A, DMatrixRMaj B, DMatrixRMaj C, DSemiRing semiRing) {
-        if (A.numCols != C.numRows || B.numCols != C.numCols)
-            throw new IllegalArgumentException("Inconsistent matrix shapes. " + stringShapes(A, B, C));
+    public static void multAddTransA(DMatrixSparseCSC A, DMatrixRMaj B, DMatrixRMaj output, DSemiRing semiRing) {
+        if (A.numCols != output.numRows || B.numCols != output.numCols)
+            throw new IllegalArgumentException("Inconsistent matrix shapes. " + stringShapes(A, B, output));
 
-        ImplSparseSparseMultWithSemiRing_DSCC.multAddTransA(A, B, C, semiRing);
+        ImplSparseSparseMultWithSemiRing_DSCC.multAddTransA(A, B, output, semiRing);
     }
 
     /**
-     * Performs matrix multiplication.  C = A*B<sup>T</sup>
+     * Performs matrix multiplication.  output = A*B<sup>T</sup>
      *
      * @param A Matrix
      * @param B Dense Matrix
-     * @param C Dense Matrix
+     * @param output Dense Matrix
      */
-    public static void multTransB(DMatrixSparseCSC A, DMatrixRMaj B, DMatrixRMaj C, DSemiRing semiRing) {
-        // todo: combine with multAdd as only difference is that C is filled with zero before
+    public static DMatrixRMaj multTransB(DMatrixSparseCSC A, DMatrixRMaj B, @Nullable DMatrixRMaj output, DSemiRing semiRing) {
+        // todo: combine with multAdd as only difference is that output is filled with zero before
         if (A.numCols != B.numCols)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
-        C.reshape(A.numRows, B.numRows);
+        output = reshapeOrDeclare(output, A.numRows, B.numRows);
 
-        ImplSparseSparseMultWithSemiRing_DSCC.multTransB(A, B, C, semiRing);
+        ImplSparseSparseMultWithSemiRing_DSCC.multTransB(A, B, output, semiRing);
+
+        return output;
     }
 
     /**
-     * <p>C = C + A*B<sup>T</sup></p>
+     * <p>output = output + A*B<sup>T</sup></p>
      */
-    public static void multAddTransB(DMatrixSparseCSC A, DMatrixRMaj B, DMatrixRMaj C, DSemiRing semiRing) {
-        if (A.numRows != C.numRows || B.numRows != C.numCols)
-            throw new IllegalArgumentException("Inconsistent matrix shapes. " + stringShapes(A, B, C));
+    public static void multAddTransB(DMatrixSparseCSC A, DMatrixRMaj B, DMatrixRMaj output, DSemiRing semiRing) {
+        if (A.numRows != output.numRows || B.numRows != output.numCols)
+            throw new IllegalArgumentException("Inconsistent matrix shapes. " + stringShapes(A, B, output));
 
         // TODO: ? this is basically the equivalent of graphblas mult with specified accumulator op
-        ImplSparseSparseMultWithSemiRing_DSCC.multAddTransB(A, B, C, semiRing);
+        ImplSparseSparseMultWithSemiRing_DSCC.multAddTransB(A, B, output, semiRing);
     }
 
     /**
-     * Performs matrix multiplication.  C = A<sup>T</sup>*B<sup>T</sup>
+     * Performs matrix multiplication.  output = A<sup>T</sup>*B<sup>T</sup>
      *
      * @param A Matrix
      * @param B Dense Matrix
-     * @param C Dense Matrix
+     * @param output Dense Matrix
      */
-    public static void multTransAB(DMatrixSparseCSC A, DMatrixRMaj B, DMatrixRMaj C, DSemiRing semiRing) {
+    public static DMatrixRMaj multTransAB(DMatrixSparseCSC A, DMatrixRMaj B, DMatrixRMaj output, DSemiRing semiRing) {
         if (A.numRows != B.numCols)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
-        C.reshape(A.numCols, B.numRows);
+        output = reshapeOrDeclare(output, A.numCols, B.numRows);
 
-        ImplSparseSparseMultWithSemiRing_DSCC.multTransAB(A, B, C, semiRing);
+        ImplSparseSparseMultWithSemiRing_DSCC.multTransAB(A, B, output, semiRing);
+
+        return output;
     }
 
 
