@@ -62,6 +62,10 @@ public class GenerateJavaCode32 extends GenerateCode32 {
         prefix32.add("FMonoids");
         prefix64.add("DSemiRings");
         prefix32.add("FSemiRings");
+        prefix64.add("PrimitiveDMask");
+        prefix32.add("PrimitiveFMask");
+        prefix64.add("SparseDMask");
+        prefix32.add("SparseFMask");
         prefix64.add("DScalar");
         prefix32.add("FScalar");
         prefix64.add("DMatrix");
@@ -103,6 +107,8 @@ public class GenerateJavaCode32 extends GenerateCode32 {
         converter.replacePattern("DBinary", "FBinary");
         converter.replacePattern("DMonoid", "FMonoid");
         converter.replacePattern("DSemiRing", "FSemiRing");
+        converter.replacePattern("SparseDMask", "SparseFMask");
+        converter.replacePattern("PrimitiveDMask", "PrimitiveFMask");
         converter.replacePattern("ConvertD", "ConvertF");
         converter.replacePattern("DGrowArray", "FGrowArray");
         converter.replacePattern("DMatrix", "FMatrix");
@@ -143,6 +149,8 @@ public class GenerateJavaCode32 extends GenerateCode32 {
                 "main/ejml-core/test/org/ejml/data",
                 "main/ejml-core/src/org/ejml/ops",
                 "main/ejml-core/test/org/ejml/ops",
+                "main/ejml-core/src/org/ejml/masks",
+                "main/ejml-core/test/org/ejml/masks",
                 "main/ejml-experimental/src/org/ejml/dense/row/decomposition/bidiagonal/"
         };
 
