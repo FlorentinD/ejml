@@ -68,6 +68,8 @@ public class GenerateJavaCode32 extends GenerateCode32 {
         prefix32.add("PrimitiveFMask");
         prefix64.add("SparseDMask");
         prefix32.add("SparseFMask");
+        prefix64.add("DMasks");
+        prefix32.add("FMasks");
         prefix64.add("DScalar");
         prefix32.add("FScalar");
         prefix64.add("DMatrix");
@@ -112,6 +114,7 @@ public class GenerateJavaCode32 extends GenerateCode32 {
         converter.replacePattern("DSemiRing", "FSemiRing");
         converter.replacePattern("SparseDMask", "SparseFMask");
         converter.replacePattern("PrimitiveDMask", "PrimitiveFMask");
+        converter.replacePattern("DMasks", "FMasks");
         converter.replacePattern("ConvertD", "ConvertF");
         converter.replacePattern("DGrowArray", "FGrowArray");
         converter.replacePattern("DMatrix", "FMatrix");

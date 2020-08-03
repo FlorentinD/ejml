@@ -23,26 +23,36 @@ public class PrimitiveDMask extends Mask {
     private final double[] values;
     // alternatively declare extra separate masks for primitive and dense DMatrix
     private final int numCols;
+    //
+    private final double zeroElement;
 
     public PrimitiveDMask(double[] values, boolean negated) {
-        // for dense structures they cannot be used for structural masks
-        this(values, 1, negated);
+        this(values, 1, negated, 0);
+    }
+
+    public PrimitiveDMask(double[] values, boolean negated, double zeroElement) {
+        this(values, 1, negated, zeroElement);
     }
 
     public PrimitiveDMask(double[] values, int numCols, boolean negated) {
+        this(values, numCols, negated, 0);
+    }
+
+    public PrimitiveDMask(double[] values, int numCols, boolean negated, double zeroElement) {
         // for dense structures they cannot be used for structural masks
         super(negated);
         this.values = values;
         this.numCols = numCols;
+        this.zeroElement = zeroElement;
     }
 
     @Override
     public boolean isSet(int row, int col) {
         // XOR as negated flips the mask flag
-        return negated ^ (values[row * numCols + col] != 0);
+        return negated ^ (values[row * numCols + col] != zeroElement);
     }
 
     public boolean isSet(int index) {
-        return negated ^ (values[index] != 0);
+        return negated ^ (values[index] != zeroElement);
     }
 }
