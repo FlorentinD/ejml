@@ -23,38 +23,36 @@ import org.ejml.data.*;
 /**
  * Helper class to create the corresponding mask based on a matrix or primitive array
  */
-public class Masks {
+public class DMasks {
+    // TODO: use builder?
+
     public static Mask of(double[] values, boolean negated) {
-        return new PrimitiveDMask(values, negated);
+        return of(values, negated, 0);
     }
 
-    public static Mask of(float[] values, boolean negated) {
-        return new PrimitiveFMask(values, negated);
+    public static Mask of(double[] values, boolean negated, double zeroElement) {
+        return new PrimitiveDMask(values, negated, zeroElement);
     }
 
     public static Mask of(DMatrixD1 matrix, boolean negated) {
-        return new PrimitiveDMask(matrix.data, matrix.numCols, negated);
+        return of(matrix, negated, 0);
     }
 
-    public static Mask of(FMatrixD1 matrix, boolean negated) {
-        return new PrimitiveFMask(matrix.data, matrix.numCols, negated);
+    public static Mask of(DMatrixD1 matrix, boolean negated, double zeroElement) {
+        return new PrimitiveDMask(matrix.data, matrix.numCols, negated, zeroElement);
     }
 
+    public static Mask of(DMatrixSparseCSC matrix, boolean negated, boolean structural, double zeroElement){
+        if (structural) {
+            return new SparseStructuralMask(matrix, negated);
+        }
+        else {
+            return new SparseDMask(matrix, negated, zeroElement);
+        }
+    }
+
+    // structural masks cannot have a zeroElement
     public static Mask of(DMatrixSparseCSC matrix, boolean negated, boolean structural) {
-        if (structural) {
-            return new SparseStructuralMask(matrix, negated);
-        }
-        else {
-            return new SparseDMask(matrix, negated);
-        }
-    }
-
-    public static Mask of(FMatrixSparseCSC matrix, boolean negated, boolean structural) {
-        if (structural) {
-            return new SparseStructuralMask(matrix, negated);
-        }
-        else {
-            return new SparseFMask(matrix, negated);
-        }
+        return of(matrix, negated, structural, 0);
     }
 }

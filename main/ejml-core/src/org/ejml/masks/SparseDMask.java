@@ -22,14 +22,20 @@ import org.ejml.data.DMatrixSparseCSC;
 
 public class SparseDMask extends Mask {
     protected final DMatrixSparseCSC matrix;
+    protected final double zeroElement;
 
     public SparseDMask(DMatrixSparseCSC matrix, boolean negated) {
+        this(matrix, negated, 0);
+    }
+
+    public SparseDMask(DMatrixSparseCSC matrix, boolean negated, double zeroElement) {
         super(negated);
         this.matrix = matrix;
+        this.zeroElement = zeroElement;
     }
 
     @Override
     public boolean isSet(int row, int col) {
-        return negated ^ (matrix.unsafe_get(row, col) != 0);
+        return negated ^ (matrix.unsafe_get(row, col) != zeroElement);
     }
 }
