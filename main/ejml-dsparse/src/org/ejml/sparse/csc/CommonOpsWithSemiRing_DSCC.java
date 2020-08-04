@@ -246,13 +246,15 @@ public class CommonOpsWithSemiRing_DSCC {
      * @param gw (Optional) Storage for internal workspace.  Can be null.
      * @param gx (Optional) Storage for internal workspace.  Can be null.
      */
-    public static DMatrixSparseCSC elementMult(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC C, DSemiRing semiRing,
+    public static DMatrixSparseCSC elementMult(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC output, DSemiRing semiRing,
                                    @Nullable Mask mask, @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numCols != B.numCols || A.numRows != B.numRows)
             throw new MatrixDimensionException("All inputs must have the same number of rows and columns. " + stringShapes(A, B));
         output = reshapeOrDeclare(output, A, A.numRows, A.numCols);
 
-        ImplCommonOpsWithSemiRing_DSCC.elementMult(A, B, C, semiRing, mask, gw, gx);
+        ImplCommonOpsWithSemiRing_DSCC.elementMult(A, B, output, semiRing, mask, gw, gx);
+
+        return output;
     }
 }
 
