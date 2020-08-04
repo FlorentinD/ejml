@@ -31,7 +31,6 @@ public final class DMonoids {
     public static final DMonoid PLUS = new DMonoid(0, Double::sum);
     public static final DMonoid TIMES = new DMonoid(1, (a, b) -> a * b);
 
-    // TODO: performance incr. worth not using safe Math.min/max?
     public final static DMonoid MIN = new DMonoid(Double.MAX_VALUE, (a, b) -> (a <= b) ? a : b);
     public final static DMonoid MAX = new DMonoid(Double.MIN_VALUE, (a, b) -> (a >= b) ? a : b);
 }

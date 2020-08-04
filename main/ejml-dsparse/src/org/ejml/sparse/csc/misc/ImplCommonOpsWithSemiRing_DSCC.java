@@ -35,17 +35,6 @@ import static org.ejml.sparse.csc.mult.ImplSparseSparseMultWithSemiRing_DSCC.mul
 public class ImplCommonOpsWithSemiRing_DSCC {
 
     /**
-     * Performs a matrix transpose.
-     *
-     * @param A  Original matrix.  Not modified.
-     * @param C  Storage for transposed 'a'.  Reshaped.
-     * @param gw (Optional) Storage for internal workspace.  Can be null.
-     */
-    public static void transpose(DMatrixSparseCSC A, DMatrixSparseCSC C, @Nullable IGrowArray gw) {
-        ImplCommonOps_DSCC.transpose(A, C, gw);
-    }
-
-    /**
      * Performs matrix addition:<br>
      * C = A + B
      *
