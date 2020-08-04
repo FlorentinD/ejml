@@ -46,7 +46,7 @@ public class TestImplCommonOpsWithSemiRing_DSCC {
         b.set(1, 1, 3);
         b.set(0, 0, 4);
 
-        ImplCommonOpsWithSemiRing_DSCC.add(1, a, 1, b, c, semiRing, null, null);
+        ImplCommonOpsWithSemiRing_DSCC.add(1, a, 1, b, c, semiRing, null, null, null);
 
         double[] found = new double[]{c.get(0, 0), c.get(1, 1)};
         assertTrue(c.getNumElements() == 2);
@@ -72,7 +72,7 @@ public class TestImplCommonOpsWithSemiRing_DSCC {
 
         DMatrixSparseCSC result = new DMatrixSparseCSC(3, 3, 0);
 
-        ImplCommonOpsWithSemiRing_DSCC.elementMult(matrix, otherMatrix, result, semiRing, null, null);
+        ImplCommonOpsWithSemiRing_DSCC.elementMult(matrix, otherMatrix, result, semiRing, null, null, null);
 
         assertEquals(2, result.getNumElements());
         assertTrue(expected[0] == result.get(1, 1));

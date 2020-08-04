@@ -1880,6 +1880,10 @@ public class CommonOps_DSCC {
         } else if (input != output) {
             output.copyStructure(input);
         }
+        // TODO: how to apply mask (space/time tradeoff)
+        //      only compute value if mask.isSet -> no SIMDI usage possible
+        //      compute in tmp matrix -> memory usage doubled
+        // also here Mask needs to be based on nz_value index
 
         for (int i = 0; i < input.nz_length; i++) {
             output.nz_values[i] = func.apply(input.nz_values[i]);
@@ -1981,6 +1985,7 @@ public class CommonOps_DSCC {
             output.reshape(1, input.numCols);
         }
         // TODO: allow optional resultAccumulator function (use tmp_result array to save reduce result and than combine arrays f.i. 2nd func)
+        // TODO: use tmp array and than set to output (there regard mask)
         Arrays.fill(output.data, initValue);
 
         for (int col = 0; col < input.numCols; col++) {

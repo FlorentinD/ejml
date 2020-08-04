@@ -22,6 +22,7 @@ import org.ejml.data.DGrowArray;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.data.DMatrixSparseCSC;
 import org.ejml.data.IGrowArray;
+import org.ejml.masks.Mask;
 import org.ejml.ops.DSemiRing;
 import org.ejml.sparse.csc.CommonOps_DSCC;
 
@@ -40,10 +41,11 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
      * @param A  Matrix
      * @param B  Matrix
      * @param C  Storage for results.  Data length is increased if increased if insufficient.
+     * @param mask Mask for specifying which entries should be overwritten
      * @param gw (Optional) Storage for internal workspace.  Can be null.
      * @param gx (Optional) Storage for internal workspace.  Can be null.
      */
-    public static void mult(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC C, DSemiRing semiRing,
+    public static void mult(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC C, DSemiRing semiRing, @Nullable Mask mask,
                             @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         double[] x = adjust(gx, A.numRows);
         int[] w = adjust(gw, A.numRows, A.numRows);
@@ -76,7 +78,10 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
             int idxC1 = C.col_idx[colB + 1];
 
             for (int i = idxC0; i < idxC1; i++) {
-                C.nz_values[i] = x[C.nz_rows[i]];
+                //  this will destroy simdi usage here .. (hopefully not if mask == null)
+                if (mask == null || mask.isSet(C.nz_rows[i], bj)) {
+                    C.nz_values[i] = x[C.nz_rows[i]];
+                }
             }
 
             idx0 = idx1;
@@ -90,10 +95,11 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
      * @param A  Matrix
      * @param B  Matrix
      * @param C  Storage for results.  Data length is increased if increased if insufficient.
+     * @param mask Mask for specifying which entries should be overwritten
      * @param gw (Optional) Storage for internal workspace.  Can be null.
      * @param gx (Optional) Storage for internal workspace.  Can be null.
      */
-    public static void multTransA(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC C, DSemiRing semiRing,
+    public static void multTransA(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC C, DSemiRing semiRing, @Nullable Mask mask,
                                   @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         double[] x = adjust(gx, A.numRows);
         int[] w = adjust(gw, A.numRows, A.numRows);
@@ -116,28 +122,31 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
             for (int bi = idxB0; bi < idxB1; bi++) {
                 int rowB = B.nz_rows[bi];
                 x[rowB] = B.nz_values[bi];
+                // TODO: wouldn't a BitSet also work instead of an IGrowArray?
                 w[rowB] = bj;
             }
 
             // C(colA,colB) = A(:,colA)*B(:,colB)
             for (int colA = 0; colA < A.numCols; colA++) {
-                int idxA0 = A.col_idx[colA];
-                int idxA1 = A.col_idx[colA + 1];
+                if (mask == null || mask.isSet(colA, bj)) {
+                    int idxA0 = A.col_idx[colA];
+                    int idxA1 = A.col_idx[colA + 1];
 
-                double sum = semiRing.add.id;
-                for (int ai = idxA0; ai < idxA1; ai++) {
-                    int rowA = A.nz_rows[ai];
-                    if (w[rowA] == bj) {
-                        sum = semiRing.add.func.apply(sum, semiRing.mult.func.apply(x[rowA], A.nz_values[ai]));
+                    double sum = semiRing.add.id;
+                    for (int ai = idxA0; ai < idxA1; ai++) {
+                        int rowA = A.nz_rows[ai];
+                        if (w[rowA] == bj) {
+                            sum = semiRing.add.func.apply(sum, semiRing.mult.func.apply(x[rowA], A.nz_values[ai]));
+                        }
                     }
-                }
 
-                if (sum != semiRing.add.id) {
-                    if (C.nz_length == C.nz_values.length) {
-                        C.growMaxLength(C.nz_length * 2 + 1, true);
+                    if (sum != semiRing.add.id) {
+                        if (C.nz_length == C.nz_values.length) {
+                            C.growMaxLength(C.nz_length * 2 + 1, true);
+                        }
+                        C.nz_values[C.nz_length] = sum;
+                        C.nz_rows[C.nz_length++] = colA;
                     }
-                    C.nz_values[C.nz_length] = sum;
-                    C.nz_rows[C.nz_length++] = colA;
                 }
             }
             C.col_idx[bj] = C.nz_length;
@@ -151,10 +160,11 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
      * @param A  Matrix
      * @param B  Matrix
      * @param C  Storage for results.  Data length is increased if increased if insufficient.
+     * @param mask Mask for specifying which entries should be overwritten
      * @param gw (Optional) Storage for internal workspace.  Can be null.
      * @param gx (Optional) Storage for internal workspace.  Can be null.
      */
-    public static void multTransB(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC C, DSemiRing semiRing,
+    public static void multTransB(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC C, DSemiRing semiRing, @Nullable Mask mask,
                                   @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (!B.isIndicesSorted())
             throw new IllegalArgumentException("B must have its indices sorted.");
@@ -195,7 +205,10 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
             int idxC1 = C.col_idx[colC + 1];
 
             for (int i = idxC0; i < idxC1; i++) {
-                C.nz_values[i] = x[C.nz_rows[i]];
+                //  this will destroy simdi usage here .. (hopefully not if mask == null)
+                if(mask == null || mask.isSet(C.nz_rows[i], colC)) {
+                    C.nz_values[i] = x[C.nz_rows[i]];
+                }
             }
         }
     }
@@ -230,6 +243,8 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
             }
         }
     }
+
+    // sparse-dense variants
 
     public static void mult(DMatrixSparseCSC A, DMatrixRMaj B, DMatrixRMaj C, DSemiRing semiRing) {
         C.fill(semiRing.add.id);
