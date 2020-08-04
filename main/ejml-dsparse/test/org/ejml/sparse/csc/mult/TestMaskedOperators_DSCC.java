@@ -91,7 +91,7 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         // graphblas == following outgoing edges of source nodes
         DMatrixSparseCSC vector = new DMatrixSparseCSC(1, 7);
         vector.set(0, 3, 0.5);
-        vector.set(0, 5, 0.6);
+        vector.set(0, 4, 0.6);
 
         DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.mult(vector, inputMatrix, null, semiRing, null);
 
