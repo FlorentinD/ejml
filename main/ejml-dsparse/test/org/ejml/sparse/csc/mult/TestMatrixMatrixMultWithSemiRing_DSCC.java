@@ -36,27 +36,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings({"UnusedMethod"})
-public class TestMatrixMatrixMultWithSemiRing_DSCC {
-    DMatrixSparseCSC inputMatrix;
-
-    @BeforeEach
-    public void setUp() {
-        // based on example in http://mit.bme.hu/~szarnyas/grb/graphblas-introduction.pdf
-        inputMatrix = new DMatrixSparseCSC(7, 7, 12);
-        inputMatrix.set(0, 1, 1);
-        inputMatrix.set(0, 3, 1);
-        inputMatrix.set(1, 4, 1);
-        inputMatrix.set(1, 6, 1);
-        inputMatrix.set(2, 5, 1);
-        inputMatrix.set(3, 0, 0.2);
-        inputMatrix.set(3, 2, 0.4);
-        inputMatrix.set(4, 5, 1);
-        inputMatrix.set(5, 2, 0.5);
-        inputMatrix.set(6, 2, 1);
-        inputMatrix.set(6, 3, 1);
-        inputMatrix.set(6, 4, 1);
-
-    }
+public class TestMatrixMatrixMultWithSemiRing_DSCC extends BaseTestMatrixMatrixOpsWithSemiRing_DSCC {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("sparseVectorMatrixMultSources")
