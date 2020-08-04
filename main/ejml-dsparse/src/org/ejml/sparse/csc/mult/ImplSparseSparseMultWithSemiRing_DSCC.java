@@ -128,7 +128,7 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
 
             // C(colA,colB) = A(:,colA)*B(:,colB)
             for (int colA = 0; colA < A.numCols; colA++) {
-                if (mask == null || mask.isSet(colA, bj)) {
+                if (mask == null || mask.isSet(colA, bj - 1)) {
                     int idxA0 = A.col_idx[colA];
                     int idxA1 = A.col_idx[colA + 1];
 
