@@ -42,7 +42,7 @@ public class MatrixVectorMultWithSemiRing_DSCC {
             Arrays.fill(c, semiRing.add.id);
         } else {
             for (int i = 0; i < c.length; i++) {
-                if (mask.isSet(i)) {
+                if (mask == null || mask.isSet(i)) {
                     c[i] = semiRing.add.id;
                 }
             }
@@ -88,7 +88,7 @@ public class MatrixVectorMultWithSemiRing_DSCC {
      */
     public static void mult(double a[], DMatrixSparseCSC B, double c[], DSemiRing semiRing, @Nullable PrimitiveDMask mask) {
         for (int k = 0; k < B.numCols; k++) {
-            if(mask.isSet(k)) {
+            if(mask == null || mask.isSet(k)) {
                 int idx0 = B.col_idx[k];
                 int idx1 = B.col_idx[k + 1];
 
