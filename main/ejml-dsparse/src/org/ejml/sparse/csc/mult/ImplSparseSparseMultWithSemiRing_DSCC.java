@@ -79,7 +79,7 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
 
             for (int i = idxC0; i < idxC1; i++) {
                 //  this will destroy simdi usage here .. (hopefully not if mask == null)
-                if (mask == null || mask.isSet(C.nz_rows[i], bj)) {
+                if (mask == null || mask.isSet(C.nz_rows[i], bj - 1)) {
                     C.nz_values[i] = x[C.nz_rows[i]];
                 }
             }
