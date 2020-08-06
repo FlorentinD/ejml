@@ -22,7 +22,6 @@ import org.ejml.data.DGrowArray;
 import org.ejml.data.DMatrixSparseCSC;
 import org.ejml.data.IGrowArray;
 import org.ejml.masks.Mask;
-import org.ejml.ops.DMonoid;
 import org.ejml.ops.DSemiRing;
 
 import javax.annotation.Nullable;
@@ -70,43 +69,6 @@ public class ImplCommonOpsWithSemiRing_DSCC {
                 if(mask == null || mask.isSet(C.nz_rows[i], col)) {
                     C.nz_values[i] = x[C.nz_rows[i]];
                 }
-            }
-        }
-        C.col_idx[A.numCols] = C.nz_length;
-    }
-
-    /**
-     * Performs matrix addition:<br>
-     * C = A + B
-     *
-     * .. f.i. to combine intialOutput and computedOutput (needed for masks and accumulators in GraphHBLAS)
-     * @param A  Matrix
-     * @param B  Matrix
-     * @param C  Output matrix.
-     * @param accum accumulator
-     * @param gw (Optional) Storage for internal workspace.  Can be null.
-     * @param gx (Optional) Storage for internal workspace.  Can be null.
-     */
-    public static void add(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC C, DMonoid accum,
-                           @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
-        double[] x = adjust(gx, A.numRows);
-        int[] w = adjust(gw, A.numRows, A.numRows);
-
-        C.indicesSorted = false;
-        C.nz_length = 0;
-
-        for (int col = 0; col < A.numCols; col++) {
-            C.col_idx[col] = C.nz_length;
-
-            multAddColA(A, col, C, col + 1, accum, x, w);
-            multAddColA(B, col, C, col + 1, accum, x, w);
-
-            // take the values in the dense vector 'x' and put them into 'C'
-            int idxC0 = C.col_idx[col];
-            int idxC1 = C.col_idx[col + 1];
-
-            for (int i = idxC0; i < idxC1; i++) {
-                    C.nz_values[i] = x[C.nz_rows[i]];
             }
         }
         C.col_idx[A.numCols] = C.nz_length;
