@@ -23,8 +23,10 @@ import org.ejml.data.DMatrixRMaj;
 import org.ejml.data.DMatrixSparseCSC;
 import org.ejml.data.IGrowArray;
 import org.ejml.masks.Mask;
+import org.ejml.ops.DMonoid;
 import org.ejml.ops.DSemiRing;
 import org.ejml.sparse.csc.CommonOps_DSCC;
+import org.ejml.sparse.csc.misc.ImplCommonOpsWithSemiRing_DSCC;
 
 import javax.annotation.Nullable;
 
@@ -46,7 +48,7 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
      * @param gx (Optional) Storage for internal workspace.  Can be null.
      */
     public static void mult(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC C, DSemiRing semiRing, @Nullable Mask mask,
-                            @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
+                                        @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         double[] x = adjust(gx, A.numRows);
         int[] w = adjust(gw, A.numRows, A.numRows);
 
@@ -86,7 +88,6 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
 
             idx0 = idx1;
         }
-
     }
 
     /**
@@ -240,6 +241,35 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
                 x[row] = semiRing.mult.func.apply(A.nz_values[j], alpha);
             } else {
                 x[row] = semiRing.add.func.apply(x[row], semiRing.mult.func.apply(A.nz_values[j], alpha));
+            }
+        }
+    }
+
+    /**
+     * Performs the performing operation x = x + A(:,i)
+     * for applying a accumulator
+     */
+    public static void multAddColA(DMatrixSparseCSC A, int colA,
+                                   DMatrixSparseCSC C, int mark,
+                                   DMonoid accum,
+                                   double x[], int w[]) {
+        int idxA0 = A.col_idx[colA];
+        int idxA1 = A.col_idx[colA + 1];
+
+        for (int j = idxA0; j < idxA1; j++) {
+            int row = A.nz_rows[j];
+
+            if (w[row] < mark) {
+                if (C.nz_length >= C.nz_rows.length) {
+                    C.growMaxLength(C.nz_length * 2 + 1, true);
+                }
+
+                w[row] = mark;
+                C.nz_rows[C.nz_length] = row;
+                C.col_idx[mark] = ++C.nz_length;
+                x[row] = A.nz_values[j];
+            } else {
+                x[row] = accum.func.apply(x[row], A.nz_values[j]);
             }
         }
     }

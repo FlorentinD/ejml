@@ -19,11 +19,13 @@
 package org.ejml.sparse.csc;
 
 import org.ejml.MatrixDimensionException;
+import org.ejml.UtilEjml;
 import org.ejml.data.DGrowArray;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.data.DMatrixSparseCSC;
 import org.ejml.data.IGrowArray;
 import org.ejml.masks.Mask;
+import org.ejml.ops.DMonoid;
 import org.ejml.ops.DSemiRing;
 import org.ejml.sparse.csc.misc.ImplCommonOpsWithSemiRing_DSCC;
 import org.ejml.sparse.csc.mult.ImplSparseSparseMultWithSemiRing_DSCC;
@@ -55,10 +57,27 @@ public class CommonOpsWithSemiRing_DSCC {
                                         @Nullable Mask mask, @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numCols != B.numRows)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
-        output = reshapeOrDeclare(output,A,A.numRows,B.numCols);
 
+        // !! important to do before reshape
+        DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, A.numRows, B.numCols) ? output.copy() : null;
+
+
+        output = reshapeOrDeclare(output,A,A.numRows,B.numCols);
         ImplSparseSparseMultWithSemiRing_DSCC.mult(A, B, output, semiRing, mask, gw, gx);
 
+        return combineOutputs(output, semiRing.add, initialOutput);
+    }
+
+    // for applying mask and accumulator
+    private static DMatrixSparseCSC combineOutputs(DMatrixSparseCSC output, DMonoid accum, DMatrixSparseCSC initialOutput) {
+        if (initialOutput != null) {
+            // memory overhead .. maybe also can reuse something?
+            DMatrixSparseCSC combinedOutput = output.createLike();
+            // instead of "semiRing.add" this could be a dedicated accumulator
+            ImplCommonOpsWithSemiRing_DSCC.add(initialOutput, output, combinedOutput, accum, null, null);
+            // is the previous result of C gc-able? (should be)
+            output = combinedOutput;
+        }
         return output;
     }
 
@@ -66,11 +85,13 @@ public class CommonOpsWithSemiRing_DSCC {
                                               @Nullable Mask mask, @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numRows != B.numRows)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
+        // !! important to do before reshape
+        DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, A.numCols, B.numCols) ? output.copy() : null;
         output = reshapeOrDeclare(output,A,A.numCols,B.numCols);
 
         ImplSparseSparseMultWithSemiRing_DSCC.multTransA(A, B, output, semiRing, mask, gw, gx);
 
-        return output;
+        return combineOutputs(output, semiRing.add, initialOutput);
     }
 
     /**
@@ -88,10 +109,11 @@ public class CommonOpsWithSemiRing_DSCC {
                                               @Nullable Mask mask, @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numCols != B.numCols)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
+        DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, A.numRows, B.numRows) ? output.copy() : null;
         output = reshapeOrDeclare(output, A, A.numRows, B.numRows);
         if (!B.isIndicesSorted()) B.sortIndices(null);
         ImplSparseSparseMultWithSemiRing_DSCC.multTransB(A, B, output, semiRing, mask, gw, gx);
-        return output;
+        return combineOutputs(output, semiRing.add, initialOutput);
     }
 
 
@@ -211,6 +233,7 @@ public class CommonOpsWithSemiRing_DSCC {
         ImplSparseSparseMultWithSemiRing_DSCC.multAddTransAB(A, B, C, semiRing);
     }
 
+    // sparse versions again
     /**
      * Performs matrix addition:<br>
      * output = &alpha;A + &beta;B
@@ -228,11 +251,12 @@ public class CommonOpsWithSemiRing_DSCC {
                            @Nullable Mask mask, @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numRows != B.numRows || A.numCols != B.numCols)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
+        DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, A.numRows, A.numCols) ? output.copy() : null;
         output = reshapeOrDeclare(output, A, A.numRows, A.numCols);
 
         ImplCommonOpsWithSemiRing_DSCC.add(alpha, A, beta, B, output, semiRing, mask, gw, gx);
 
-        return output;
+        return combineOutputs(output, semiRing.add, initialOutput);
     }
 
     /**
@@ -250,11 +274,12 @@ public class CommonOpsWithSemiRing_DSCC {
                                    @Nullable Mask mask, @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numCols != B.numCols || A.numRows != B.numRows)
             throw new MatrixDimensionException("All inputs must have the same number of rows and columns. " + stringShapes(A, B));
+        DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, A.numRows, A.numCols) ? output.copy() : null;
         output = reshapeOrDeclare(output, A, A.numRows, A.numCols);
 
         ImplCommonOpsWithSemiRing_DSCC.elementMult(A, B, output, semiRing, mask, gw, gx);
 
-        return output;
+        return combineOutputs(output, semiRing.add, initialOutput);
     }
 }
 

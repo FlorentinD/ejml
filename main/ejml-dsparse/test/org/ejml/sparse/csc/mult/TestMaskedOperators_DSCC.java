@@ -35,7 +35,6 @@ import java.util.Iterator;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-// TODO: proper base test that includes the matrix
 public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRing_DSCC {
 
     DSemiRing semiRing = DSemiRings.PLUS_TIMES;
@@ -49,18 +48,19 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         v[3] = 0.5;
         v[0] = 0.6;
 
-        System.out.println("input vector = " + Arrays.toString(v));
-
-        double[] found = new double[7];
-        double[] foundWithMask = found.clone();
+        double[] prevResult = new double[7];
+        prevResult[3] = 99;
+        prevResult[0] = 42;
+        double[] found = prevResult.clone();
+        double[] foundWithMask = prevResult.clone();
 
         // == dont calculate for existing entries (currently still zero-ing out very likely)
-        PrimitiveDMask mask = new PrimitiveDMask(v, true);
+        PrimitiveDMask mask = new PrimitiveDMask(prevResult, true);
 
         MatrixVectorMultWithSemiRing_DSCC.mult(v, inputMatrix, found, semiRing);
         MatrixVectorMultWithSemiRing_DSCC.mult(v, inputMatrix, foundWithMask, semiRing, mask);
 
-        assertMaskedResult(found, foundWithMask, mask);
+        assertMaskedResult(prevResult, found, foundWithMask, mask);
     }
 
     @Test
@@ -71,16 +71,19 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         v[3] = 0.5;
         v[4] = 0.6;
 
-        double[] found = new double[7];
-        double[] foundWithMask = found.clone();
+        double[] prevResult = new double[7];
+        prevResult[3] = 99;
+        prevResult[0] = 42;
+        double[] found = prevResult.clone();
+        double[] foundWithMask = prevResult.clone();
 
         // == dont calculate for existing entries (currently still zero-ing out very likely)
-        PrimitiveDMask mask = new PrimitiveDMask(v, true);
+        PrimitiveDMask mask = new PrimitiveDMask(prevResult, true);
 
         MatrixVectorMultWithSemiRing_DSCC.mult(inputMatrix, v, found, semiRing);
         MatrixVectorMultWithSemiRing_DSCC.mult(inputMatrix, v, foundWithMask, semiRing, mask);
 
-        assertMaskedResult(found, foundWithMask, mask);
+        assertMaskedResult(prevResult, found, foundWithMask, mask);
     }
 
     // matrix, matrix ops
@@ -93,16 +96,19 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         vector.set(0, 3, 0.5);
         vector.set(0, 4, 0.6);
 
-        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.mult(vector, inputMatrix, null, semiRing, null);
+        DMatrixSparseCSC prevResult = vector.copy();
+        prevResult.set(0, 2, 99);
 
-        // TODO: parameterize test
+        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.mult(vector, inputMatrix, prevResult.copy(), semiRing, null);
+
+        // TODO: parameterize test .. also changes expected result
         boolean negated = true;
         boolean structural = true;
-        Mask mask = DMasks.of(vector, negated, structural);
+        Mask mask = DMasks.of(prevResult, negated, structural);
 
-        DMatrixSparseCSC foundWithMask = CommonOpsWithSemiRing_DSCC.mult(vector, inputMatrix, null, semiRing, mask);
+        DMatrixSparseCSC foundWithMask = CommonOpsWithSemiRing_DSCC.mult(vector, inputMatrix, prevResult.copy(), semiRing, mask);
 
-        assertMaskedResult(found, foundWithMask, mask);
+        assertMaskedResult(prevResult, found, foundWithMask, mask);
     }
 
     @Test
@@ -112,58 +118,69 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         vector.set(0, 3, 0.5);
         vector.set(0, 5, 0.6);
 
+        DMatrixSparseCSC prevResult = vector.copy();
+        prevResult.set(0, 2, 99);
+
+
         DMatrixSparseCSC transposed_vector = CommonOps_DSCC.transpose(vector, null, null);
 
-        DMatrixSparseCSC foundTA = CommonOpsWithSemiRing_DSCC.multTransA(transposed_vector, inputMatrix, null, semiRing, null, null, null);
+        DMatrixSparseCSC foundTA = CommonOpsWithSemiRing_DSCC.multTransA(transposed_vector, inputMatrix, prevResult.copy(), semiRing, null, null, null);
 
         boolean negated = true;
         boolean structural = true;
-        Mask mask = DMasks.of(vector, negated, structural);
+        Mask mask = DMasks.of(prevResult, negated, structural);
 
-        DMatrixSparseCSC foundTAWithMask = CommonOpsWithSemiRing_DSCC.multTransA(transposed_vector, inputMatrix, null, semiRing, mask, null, null);
+        DMatrixSparseCSC foundTAWithMask = CommonOpsWithSemiRing_DSCC.multTransA(transposed_vector, inputMatrix, prevResult.copy(), semiRing, mask, null, null);
 
-        assertMaskedResult(foundTA, foundTAWithMask, mask);
+        assertMaskedResult(prevResult, foundTA, foundTAWithMask, mask);
     }
 
     @Test
     public void mult_A_T_B() {
         // graphblas == following outgoing edges of source nodes
-        DMatrixSparseCSC vector = new DMatrixSparseCSC(1, 7);
-        vector.set(0, 3, 0.5);
-        vector.set(0, 5, 0.6);
+        DMatrixSparseCSC inputVector = new DMatrixSparseCSC(1, 7);
+        inputVector.set(0, 3, 0.5);
+        inputVector.set(0, 5, 0.6);
 
         DMatrixSparseCSC transposed_matrix = CommonOps_DSCC.transpose(inputMatrix, null, null);
 
-        DMatrixSparseCSC foundTB = CommonOpsWithSemiRing_DSCC.multTransB(vector, transposed_matrix, null, semiRing, null, null, null);
+        DMatrixSparseCSC prevResult = inputVector.copy();
+        prevResult.set(0, 2, 99);
+
+        DMatrixSparseCSC foundTB = CommonOpsWithSemiRing_DSCC.multTransB(inputVector, transposed_matrix, prevResult.copy(), semiRing, null, null, null);
 
         boolean negated = true;
         boolean structural = true;
-        Mask mask = DMasks.of(vector, negated, structural);
+        Mask mask = DMasks.of(prevResult, negated, structural);
 
-        DMatrixSparseCSC foundTBWithMask = CommonOpsWithSemiRing_DSCC.multTransB(vector, transposed_matrix, null, semiRing, mask, null, null);
+        DMatrixSparseCSC foundTBWithMask = CommonOpsWithSemiRing_DSCC.multTransB(inputVector, transposed_matrix, prevResult.copy(), semiRing, mask, null, null);
 
-        assertMaskedResult(foundTB, foundTBWithMask, mask);
+        assertMaskedResult(prevResult, foundTB, foundTBWithMask, mask);
     }
 
 
     @Test
     public void add_A_B() {
         // graphblas == following outgoing edges of source nodes
-        DMatrixSparseCSC vector = new DMatrixSparseCSC(7, 7);
-        vector.set(0, 3, 0.5);
-        vector.set(0, 5, 0.6);
+        DMatrixSparseCSC otherMatrix = new DMatrixSparseCSC(7, 7);
+        otherMatrix.set(0, 3, 0.5);
+        otherMatrix.set(0, 5, 0.6);
 
-        DMatrixSparseCSC found = new DMatrixSparseCSC(0, 0);
-        DMatrixSparseCSC foundWithMask = found.createLike();
+        DMatrixSparseCSC resultInput = new DMatrixSparseCSC(7, 7);
+        // these should not be kept in the result (as negated mask)
+        resultInput.set(0,0, 99);
+        resultInput.set(0,3, 42);
 
-        CommonOpsWithSemiRing_DSCC.add(1, vector, 1, inputMatrix, found, semiRing, null, null, null);
+        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.add(1, otherMatrix, 1, inputMatrix, resultInput.copy(), semiRing, null, null, null);
 
-        // TODO: parameterize test
         boolean negated = true;
         boolean structural = true;
-        Mask mask = DMasks.of(vector, negated, structural);
+        Mask mask = DMasks.of(resultInput, negated, structural);
 
-        CommonOpsWithSemiRing_DSCC.add(1, vector, 1, inputMatrix, foundWithMask, semiRing, mask, null, null);
+        DMatrixSparseCSC foundWithMask = CommonOpsWithSemiRing_DSCC.add(1, otherMatrix, 1, inputMatrix, resultInput.copy(), semiRing, mask, null, null);
+
+        System.out.println("resultInput");
+        resultInput.print();
 
         System.out.println("found");
         found.print();
@@ -171,33 +188,39 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         System.out.println("foundWithMask");
         foundWithMask.print();
 
-        assertMaskedResult(found, foundWithMask, mask);
+        assertMaskedResult(resultInput, found, foundWithMask, mask);
     }
 
     // TODO: test elementWise-Mult, apply and reduce
 
 
 
-    private void assertMaskedResult(DMatrixSparseCSC found, DMatrixSparseCSC foundWithMask, Mask mask) {
+    private void assertMaskedResult(DMatrixSparseCSC prevResult, DMatrixSparseCSC found, DMatrixSparseCSC foundWithMask, Mask mask) {
         Iterator<DMatrixSparse.CoordinateRealValue> it = found.createCoordinateIterator();
+        // check that existing result were not overwritten
         it.forEachRemaining(value -> {
             if (mask.isSet(value.row, value.col)) {
-                assertEquals(found.get(value.row, value.col), foundWithMask.get(value.row, value.col));
+                assertEquals(found.get(value.row, value.col), foundWithMask.get(value.row, value.col), "Field should have been computed");
             }
             else {
-                // TODO: check if it is the value of the input result matrix (currently just overwritten)
-                assertEquals(semiRing.add.id,  foundWithMask.get(value.row, value.col));
+                assertEquals(prevResult.get(value.row, value.col),  foundWithMask.get(value.row, value.col), "Field from initial result was overwritten");
+            }
+        });
+
+        // checking that untouched cells are still present
+        prevResult.createCoordinateIterator().forEachRemaining(value -> {
+            if (!mask.isSet(value.row, value.col)) {
+                assertEquals(prevResult.get(value.row, value.col),  foundWithMask.get(value.row, value.col), "Field from initial result was deleted");
             }
         });
     }
 
-    private void assertMaskedResult(double[] found, double[] foundWithMask, PrimitiveDMask mask) {
+    private void assertMaskedResult(double[] prevResult, double[] found, double[] foundWithMask, PrimitiveDMask mask) {
         for (int i = 0; i < found.length; i++) {
             if (mask.isSet(i)) {
-                assertEquals(foundWithMask[i], found[i]);
+                assertEquals(foundWithMask[i], found[i], "Computation differs");
             } else {
-                // at some point this should be v[i] == foundWithMask[i]
-                assertEquals(semiRing.add.id, foundWithMask[i]);
+                assertEquals(prevResult[i], foundWithMask[i], "Initial result was overwritten");
             }
         }
     }
