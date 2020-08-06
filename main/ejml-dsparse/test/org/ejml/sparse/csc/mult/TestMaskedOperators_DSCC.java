@@ -23,6 +23,7 @@ import org.ejml.data.DMatrixSparseCSC;
 import org.ejml.masks.DMasks;
 import org.ejml.masks.Mask;
 import org.ejml.masks.PrimitiveDMask;
+import org.ejml.ops.DBinaryOperator;
 import org.ejml.ops.DSemiRing;
 import org.ejml.ops.DSemiRings;
 import org.ejml.sparse.csc.CommonOpsWithSemiRing_DSCC;
@@ -33,7 +34,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRing_DSCC {
 
@@ -179,19 +179,53 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
 
         DMatrixSparseCSC foundWithMask = CommonOpsWithSemiRing_DSCC.add(1, otherMatrix, 1, inputMatrix, resultInput.copy(), semiRing, mask, null, null);
 
-        System.out.println("resultInput");
-        resultInput.print();
+        assertMaskedResult(resultInput, found, foundWithMask, mask);
+    }
 
-        System.out.println("found");
-        found.print();
+    @Test
+    public void elementWiseMult() {
+        // graphblas == following outgoing edges of source nodes
+        DMatrixSparseCSC otherMatrix = new DMatrixSparseCSC(7, 7);
+        otherMatrix.set(0, 3, 0.5);
+        otherMatrix.set(0, 5, 0.6);
 
-        System.out.println("foundWithMask");
-        foundWithMask.print();
+        DMatrixSparseCSC resultInput = new DMatrixSparseCSC(7, 7);
+        // these should not be kept in the result (as negated mask)
+        resultInput.set(0,0, 99);
+        resultInput.set(0,3, 42);
+
+        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.elementMult(otherMatrix, inputMatrix, resultInput.copy(), semiRing, null, null, null);
+
+        boolean negated = true;
+        boolean structural = true;
+        Mask mask = DMasks.of(resultInput, negated, structural);
+
+        DMatrixSparseCSC foundWithMask = CommonOpsWithSemiRing_DSCC.elementMult(otherMatrix, inputMatrix, resultInput.copy(), semiRing, mask, null, null);
 
         assertMaskedResult(resultInput, found, foundWithMask, mask);
     }
 
-    // TODO: test elementWise-Mult, apply and reduce
+    @Test
+    public void apply() {
+        DMatrixSparseCSC inputVector = new DMatrixSparseCSC(1, 7);
+        inputVector.set(0, 3, 0.5);
+        inputVector.set(0, 5, 0.6);
+
+        DMatrixSparseCSC prevResult = inputVector.copy();
+        prevResult.set(0, 2, 99);
+
+        boolean negated = true;
+        boolean structural = true;
+        Mask mask = DMasks.of(prevResult, negated, structural);
+
+        DBinaryOperator first = (x, y) -> x;
+        DMatrixSparseCSC result = CommonOps_DSCC.apply(inputVector, a -> a * 2, prevResult.copy(), null, null);
+        DMatrixSparseCSC resultWithMask = CommonOps_DSCC.apply(inputVector, a -> a * 2, prevResult.copy(), mask, first);
+
+        assertMaskedResult(prevResult, result, resultWithMask, mask);
+    }
+
+    // TODO: test reduce as well as general test of MaskUtil
 
 
 
