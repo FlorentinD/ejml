@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static org.ejml.UtilEjml.reshapeOrDeclare;
 import static org.ejml.UtilEjml.stringShapes;
+import static org.ejml.sparse.csc.MaskUtil_DSCC.combineOutputs;
 
 
 public class CommonOpsWithSemiRing_DSCC {
@@ -65,7 +66,7 @@ public class CommonOpsWithSemiRing_DSCC {
         output = reshapeOrDeclare(output, A, A.numRows,B.numCols);
         ImplSparseSparseMultWithSemiRing_DSCC.mult(A, B, output, semiRing, mask, gw, gx);
 
-        return combineOutputs(output, semiRing.add, initialOutput);
+        return combineOutputs(output, semiRing.add.func, initialOutput);
     }
 
     // for applying mask and accumulator
@@ -219,7 +220,7 @@ public class CommonOpsWithSemiRing_DSCC {
 
         ImplCommonOpsWithSemiRing_DSCC.add(alpha, A, beta, B, output, semiRing, mask, gw, gx);
 
-        return combineOutputs(output, semiRing.add, initialOutput);
+        return combineOutputs(output, semiRing.add.func, initialOutput);
     }
 
     /**
@@ -244,6 +245,6 @@ public class CommonOpsWithSemiRing_DSCC {
 
         ImplCommonOpsWithSemiRing_DSCC.elementMult(A, B, output, semiRing, mask, gw, gx);
 
-        return combineOutputs(output, semiRing.add, initialOutput);
+        return combineOutputs(output, semiRing.add.func, initialOutput);
     }
 }
