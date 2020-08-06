@@ -18,6 +18,8 @@
 
 package org.ejml.sparse.csc.mult;
 
+import org.ejml.data.DMatrixD1;
+import org.ejml.data.DMatrixRMaj;
 import org.ejml.data.DMatrixSparse;
 import org.ejml.data.DMatrixSparseCSC;
 import org.ejml.masks.DMasks;
@@ -225,8 +227,45 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         assertMaskedResult(prevResult, result, resultWithMask, mask);
     }
 
-    // TODO: test reduce as well as general test of MaskUtil
+    @Test
+    public void reduceRowWise() {
+        DMatrixSparseCSC inputVector = new DMatrixSparseCSC(1, 7);
+        inputVector.set(0, 3, 0.5);
+        inputVector.set(0, 5, 0.6);
 
+        DMatrixRMaj prevResult = new DMatrixRMaj(1,7);
+        prevResult.set(0, 5, 0.6);
+        prevResult.set(0, 2, 99);
+
+        boolean negated = true;
+        Mask mask = DMasks.of(prevResult, negated);
+
+        DBinaryOperator first = (x, y) -> x;
+        DMatrixRMaj result = CommonOps_DSCC.reduceRowWise(inputVector, 0, (a,b) -> a + b, prevResult.copy(), null, null);
+        DMatrixRMaj resultWithMask = CommonOps_DSCC.reduceRowWise(inputVector, 0, (a,b) -> a + b, prevResult.copy(), mask, first);
+
+        assertMaskedResult(prevResult, result, resultWithMask, mask);
+    }
+
+    @Test
+    public void reduceColumnWise() {
+        DMatrixSparseCSC inputVector = new DMatrixSparseCSC(1, 7);
+        inputVector.set(0, 3, 0.5);
+        inputVector.set(0, 5, 0.6);
+
+        DMatrixRMaj prevResult = new DMatrixRMaj(1,7);
+        prevResult.set(0, 5, 0.6);
+        prevResult.set(0, 2, 99);
+
+        boolean negated = true;
+        Mask mask = DMasks.of(prevResult, negated);
+
+        DBinaryOperator first = (x, y) -> x;
+        DMatrixRMaj result = CommonOps_DSCC.reduceColumnWise(inputVector, 0, (a,b) -> a + b, prevResult.copy(), null, null);
+        DMatrixRMaj resultWithMask = CommonOps_DSCC.reduceColumnWise(inputVector, 0, (a,b) -> a + b, prevResult.copy(), mask, first);
+
+        assertMaskedResult(prevResult, result, resultWithMask, mask);
+    }
 
 
     private void assertMaskedResult(DMatrixSparseCSC prevResult, DMatrixSparseCSC found, DMatrixSparseCSC foundWithMask, Mask mask) {
@@ -247,6 +286,18 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
                 assertEquals(prevResult.get(value.row, value.col),  foundWithMask.get(value.row, value.col), "Field from initial result was deleted");
             }
         });
+    }
+
+    private void assertMaskedResult(DMatrixD1 prevResult, DMatrixD1 found, DMatrixD1 foundWithMask, Mask mask) {
+        for (int row = 0; row < found.getNumRows(); row++) {
+            for (int col = 0; col < found.getNumCols(); col++) {
+                if (mask.isSet(row, col)) {
+                    assertEquals(found.get(row, col), foundWithMask.get(row, col), "Field should have been computed");
+                } else {
+                    assertEquals(prevResult.get(row, col), foundWithMask.get(row, col), "Field from initial result was overwritten");
+                }
+            }
+        }
     }
 
     private void assertMaskedResult(double[] prevResult, double[] found, double[] foundWithMask, PrimitiveDMask mask) {
