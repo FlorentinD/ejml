@@ -36,4 +36,14 @@ public class SparseStructuralMask extends Mask {
     public boolean isSet(int row, int col) {
         return negated ^ matrix.isAssigned(row, col);
     }
+
+    @Override
+    public int getNumCols() {
+        return matrix.getNumCols();
+    }
+
+    @Override
+    public int getNumRows() {
+        return matrix.getNumRows();
+    }
 }
