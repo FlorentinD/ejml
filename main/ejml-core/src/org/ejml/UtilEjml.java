@@ -552,10 +552,11 @@ public class UtilEjml {
     }
 
     /**
-     * Check if output matrix needs to be cached for later merge with actual result
+     * Check if initialOutput matrix needs to be cached for later merge with actual result
      * (in order to prevent deleting entries which shouldnt be overwritten, e.g. !mask.isSet())
      */
-    public static boolean useInitialOutput(Mask mask, Matrix output, int numRows, int numCols) {
-        return mask != null && output != null && output.getNumRows() == numRows && output.getNumCols() == numCols;
+    public static boolean useInitialOutput(Mask mask, Matrix initialOutput, int numRows, int numCols) {
+        // check for dimensions as an indicator (TODO check if actually this is not misleading)
+        return mask != null && initialOutput != null && initialOutput.getNumRows() == numRows && initialOutput.getNumCols() == numCols;
     }
 }

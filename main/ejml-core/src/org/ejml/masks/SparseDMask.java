@@ -38,4 +38,14 @@ public class SparseDMask extends Mask {
     public boolean isSet(int row, int col) {
         return negated ^ (matrix.unsafe_get(row, col) != zeroElement);
     }
+
+    @Override
+    public int getNumCols() {
+        return matrix.numCols;
+    }
+
+    @Override
+    public int getNumRows() {
+        return matrix.numRows;
+    }
 }

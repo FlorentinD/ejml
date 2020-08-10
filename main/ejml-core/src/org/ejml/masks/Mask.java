@@ -19,6 +19,9 @@
 package org.ejml.masks;
 
 
+import org.ejml.MatrixDimensionException;
+import org.ejml.data.Matrix;
+
 /**
  * Mask used for specifying which matrix entries should be computed
  */
@@ -31,6 +34,35 @@ public abstract class Mask {
     }
 
     public abstract boolean isSet(int row, int col);
+
+    public abstract int getNumCols();
+
+    public abstract int getNumRows();
+
+    public void print() {
+        String result = "";
+        for (int row = 0; row < getNumRows(); row++) {
+            for (int col = 0; col < getNumCols(); col++) {
+                result += isSet(row, col) ? "+ " : "- ";
+            }
+            result += System.lineSeparator();
+        }
+
+        System.out.println(result);
+    };
+
+    /**
+     * Checks whether the dimensions of the mask and matrix match
+     * @param matrix the mask is applied to
+     */
+    public void compatible(Matrix matrix) {
+        if (matrix.getNumCols() != getNumCols() || matrix.getNumRows() != getNumRows()) {
+            throw new MatrixDimensionException(String.format(
+                    "Mask of (%d, %d) cannot be applied for matrix (%d, %d)",
+                    getNumRows(), getNumCols(), matrix.getNumCols(), matrix.getNumCols()
+            ));
+        }
+    }
 
     // TODO: use an Iterator as it should be faster as stepping can be used -> no need to call for each entry?
     //      Problem .. dense matrices are row-based, whereas existing sparse matrix format is column based

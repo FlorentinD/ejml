@@ -25,7 +25,7 @@ import org.ejml.data.DMatrixRMaj;
 import org.ejml.data.DMatrixSparseCSC;
 import org.ejml.data.IGrowArray;
 import org.ejml.masks.Mask;
-import org.ejml.ops.DMonoid;
+import org.ejml.ops.DBinaryOperator;
 import org.ejml.ops.DSemiRing;
 import org.ejml.sparse.csc.misc.ImplCommonOpsWithSemiRing_DSCC;
 import org.ejml.sparse.csc.mult.ImplSparseSparseMultWithSemiRing_DSCC;
@@ -38,6 +38,8 @@ import static org.ejml.sparse.csc.MaskUtil_DSCC.combineOutputs;
 
 
 public class CommonOpsWithSemiRing_DSCC {
+
+    private static final DBinaryOperator SECOND = (x, y) -> y;
 
     public static DMatrixSparseCSC mult(DMatrixSparseCSC A, DMatrixSparseCSC B, @Nullable DMatrixSparseCSC output, DSemiRing semiRing,
                                         @Nullable Mask mask) {
@@ -62,11 +64,14 @@ public class CommonOpsWithSemiRing_DSCC {
         // !! important to do before reshape
         DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, A.numRows, B.numCols) ? output.copy() : null;
 
-
         output = reshapeOrDeclare(output,A,A.numRows,B.numCols);
+        if (mask != null) {
+            mask.compatible(output);
+        }
+
         ImplSparseSparseMultWithSemiRing_DSCC.mult(A, B, output, semiRing, mask, gw, gx);
 
-        return combineOutputs(output, semiRing.add.func, initialOutput);
+        return combineOutputs(output, SECOND, initialOutput);
     }
 
     public static DMatrixSparseCSC multTransA(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC output, DSemiRing semiRing,
@@ -76,10 +81,13 @@ public class CommonOpsWithSemiRing_DSCC {
         // !! important to do before reshape
         DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, A.numCols, B.numCols) ? output.copy() : null;
         output = reshapeOrDeclare(output,A,A.numCols,B.numCols);
+        if (mask != null) {
+            mask.compatible(output);
+        }
 
         ImplSparseSparseMultWithSemiRing_DSCC.multTransA(A, B, output, semiRing, mask, gw, gx);
 
-        return combineOutputs(output, semiRing.add.func, initialOutput);
+        return combineOutputs(output, SECOND, initialOutput);
     }
 
     /**
@@ -99,9 +107,12 @@ public class CommonOpsWithSemiRing_DSCC {
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
         DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, A.numRows, B.numRows) ? output.copy() : null;
         output = reshapeOrDeclare(output, A, A.numRows, B.numRows);
+        if (mask != null) {
+            mask.compatible(output);
+        }
         if (!B.isIndicesSorted()) B.sortIndices(null);
         ImplSparseSparseMultWithSemiRing_DSCC.multTransB(A, B, output, semiRing, mask, gw, gx);
-        return combineOutputs(output, semiRing.add.func, initialOutput);
+        return combineOutputs(output, SECOND, initialOutput);
     }
 
 
@@ -241,10 +252,13 @@ public class CommonOpsWithSemiRing_DSCC {
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
         DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, A.numRows, A.numCols) ? output.copy() : null;
         output = reshapeOrDeclare(output, A, A.numRows, A.numCols);
+        if (mask != null) {
+            mask.compatible(output);
+        }
 
         ImplCommonOpsWithSemiRing_DSCC.add(alpha, A, beta, B, output, semiRing, mask, gw, gx);
 
-        return combineOutputs(output, semiRing.add.func, initialOutput);
+        return combineOutputs(output, SECOND, initialOutput);
     }
 
     /**
@@ -264,10 +278,13 @@ public class CommonOpsWithSemiRing_DSCC {
             throw new MatrixDimensionException("All inputs must have the same number of rows and columns. " + stringShapes(A, B));
         DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, A.numRows, A.numCols) ? output.copy() : null;
         output = reshapeOrDeclare(output, A, A.numRows, A.numCols);
+        if (mask != null) {
+            mask.compatible(output);
+        }
 
         ImplCommonOpsWithSemiRing_DSCC.elementMult(A, B, output, semiRing, mask, gw, gx);
 
-        return combineOutputs(output, semiRing.add.func, initialOutput);
+        return combineOutputs(output, SECOND, initialOutput);
     }
 }
 

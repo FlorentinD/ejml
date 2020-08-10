@@ -38,7 +38,6 @@ import org.ejml.sparse.csc.mult.ImplSparseSparseMult_DSCC;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
-import java.util.BitSet;
 
 import static org.ejml.UtilEjml.*;
 import static org.ejml.sparse.csc.MaskUtil_DSCC.combineOutputs;
@@ -1901,6 +1900,9 @@ public class CommonOps_DSCC {
                                          @Nullable DMatrixSparseCSC output, @Nullable Mask mask, @Nullable DBinaryOperator accum) {
         DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, input.numRows, input.numCols) ? output.copy() : null;
         output = reshapeOrDeclare(output, input);
+        if (mask != null) {
+            mask.compatible(output);
+        }
 
         // dont check for the mask here as the computation is too simple to get any improvements when skipping
         // would more likely prohibit vectorisation
@@ -1958,6 +1960,9 @@ public class CommonOps_DSCC {
                                                @Nullable DMatrixRMaj output, @Nullable Mask mask, @Nullable DBinaryOperator accum) {
         DMatrixRMaj initialOutput = UtilEjml.useInitialOutput(mask, output, 1, input.numCols) ? output.copy() : null;
         output = reshapeOrDeclare(output, 1, input.numCols);
+        if (mask != null) {
+            mask.compatible(output);
+        }
 
         for (int col = 0; col < input.numCols; col++) {
             int start = input.col_idx[col];
@@ -1999,6 +2004,9 @@ public class CommonOps_DSCC {
                                             @Nullable DMatrixRMaj output, @Nullable Mask mask, @Nullable DBinaryOperator accum) {
         DMatrixRMaj initialOutput = UtilEjml.useInitialOutput(mask, output, input.numRows, 1) ? output.copy() : null;
         output = reshapeOrDeclare(output, input.numRows, 1);
+        if (mask != null) {
+            mask.compatible(output);
+        }
 
         Arrays.fill(output.data, initValue);
 
