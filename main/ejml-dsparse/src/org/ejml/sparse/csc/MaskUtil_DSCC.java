@@ -32,6 +32,7 @@ import static org.ejml.UtilEjml.checkSameShape;
 
 public class MaskUtil_DSCC {
     // for applying mask and accumulator (output gets overwritten)
+    // ! assumes that the mask is already applied to the output .. e.g. unset fields not even computed
     static DMatrixSparseCSC combineOutputs(DMatrixSparseCSC output, DBinaryOperator accum, DMatrixSparseCSC initialOutput) {
         if (initialOutput != null) {
             // memory overhead .. maybe also can reuse something?
