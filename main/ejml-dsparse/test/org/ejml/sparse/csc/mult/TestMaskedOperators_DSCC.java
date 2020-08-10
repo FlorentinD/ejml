@@ -22,7 +22,6 @@ import org.ejml.data.*;
 import org.ejml.masks.DMasks;
 import org.ejml.masks.Mask;
 import org.ejml.masks.PrimitiveDMask;
-import org.ejml.ops.ConvertMatrixType;
 import org.ejml.ops.DBinaryOperator;
 import org.ejml.ops.DSemiRing;
 import org.ejml.ops.DSemiRings;
@@ -31,6 +30,7 @@ import org.ejml.sparse.csc.CommonOps_DSCC;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -180,33 +180,55 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
     @ParameterizedTest
     @MethodSource("sparseVectorSource")
     public void apply(DMatrixSparseCSC vector, DMatrixSparseCSC prevResult, Mask mask) {
-        DBinaryOperator first = (x, y) -> x;
+        DBinaryOperator second = (x, y) -> y;
         DMatrixSparseCSC result = CommonOps_DSCC.apply(vector, a -> a * 2, prevResult.copy(), null, null);
-        DMatrixSparseCSC resultWithMask = CommonOps_DSCC.apply(vector, a -> a * 2, prevResult.copy(), mask, first);
+        DMatrixSparseCSC resultWithMask = CommonOps_DSCC.apply(vector, a -> a * 2, prevResult.copy(), mask, second);
 
         assertMaskedResult(prevResult, result, resultWithMask, mask);
     }
 
     @ParameterizedTest
-    @MethodSource("sparseVectorSource")
-    public void reduceRowWise(DMatrixSparseCSC vector, DMatrixSparseCSC prevSparseResult, Mask mask) {
-        DMatrixRMaj prevResult = (DMatrixRMaj) ConvertMatrixType.convert(prevSparseResult, MatrixType.DDRM);
+    @ValueSource(strings = {"true", "false"})
+    public void reduceRowWise(boolean negatedMask) {
+        DMatrixSparseCSC matrix = new DMatrixSparseCSC(7, 7);
+        matrix.set(0, 3, 0.5);
+        matrix.set(0, 4, 0.6);
+        matrix.set(4, 0, 0.1);
+        matrix.set(3, 0, 0.2);
+
+        double[] prevPrimitiveResult = new double[7];
+        prevPrimitiveResult[2] = 42;
+        prevPrimitiveResult[0] = 99;
+
+        DMatrixRMaj prevResult = DMatrixRMaj.wrap(matrix.numRows, 1, prevPrimitiveResult);
+        Mask mask = DMasks.of(prevResult, negatedMask);
 
         DBinaryOperator first = (x, y) -> x;
-        DMatrixRMaj result = CommonOps_DSCC.reduceRowWise(vector, 0, Double::sum, prevResult.copy(), null, null);
-        DMatrixRMaj resultWithMask = CommonOps_DSCC.reduceRowWise(vector, 0, Double::sum, prevResult.copy(), mask, first);
+        DMatrixRMaj result = CommonOps_DSCC.reduceRowWise(matrix, 0, Double::sum, prevResult.copy(), null, null);
+        DMatrixRMaj resultWithMask = CommonOps_DSCC.reduceRowWise(matrix, 0, Double::sum, prevResult.copy(), mask, first);
 
         assertMaskedResult(prevResult, result, resultWithMask, mask);
     }
 
     @ParameterizedTest
-    @MethodSource("sparseVectorSource")
-    public void reduceColumnWise(DMatrixSparseCSC vector, DMatrixSparseCSC prevSparseResult, Mask mask) {
-        DMatrixRMaj prevResult = (DMatrixRMaj) ConvertMatrixType.convert(prevSparseResult, MatrixType.DDRM);
+    @ValueSource(strings = {"true", "false"})
+    public void reduceColumnWise(boolean negatedMask) {
+        DMatrixSparseCSC matrix = new DMatrixSparseCSC(7, 7);
+        matrix.set(0, 3, 0.5);
+        matrix.set(0, 4, 0.6);
+        matrix.set(4, 0, 0.1);
+        matrix.set(3, 0, 0.2);
+
+        double[] prevPrimitiveResult = new double[7];
+        prevPrimitiveResult[2] = 42;
+        prevPrimitiveResult[0] = 99;
+
+        DMatrixRMaj prevResult = DMatrixRMaj.wrap(1, matrix.numCols, prevPrimitiveResult);
+        Mask mask = DMasks.of(prevResult, negatedMask);
 
         DBinaryOperator first = (x, y) -> x;
-        DMatrixRMaj result = CommonOps_DSCC.reduceColumnWise(vector, 0, Double::sum, prevResult.copy(), null, null);
-        DMatrixRMaj resultWithMask = CommonOps_DSCC.reduceColumnWise(vector, 0, Double::sum, prevResult.copy(), mask, first);
+        DMatrixRMaj result = CommonOps_DSCC.reduceColumnWise(matrix, 0, Double::sum, prevResult.copy(), null, null);
+        DMatrixRMaj resultWithMask = CommonOps_DSCC.reduceColumnWise(matrix, 0, Double::sum, prevResult.copy(), mask, first);
 
         assertMaskedResult(prevResult, result, resultWithMask, mask);
     }
