@@ -127,7 +127,7 @@ public class MaskUtil_DSCC {
 
         for (int j = idxA0; j < idxA1; j++) {
             int row = A.nz_rows[j];
-            if (mask == null || mask.isSet(row, colA)) {
+            if (mask == null || mask.isSet(row, mark - 1)) {
                 if (w[row] < mark) {
                     if (C.nz_length >= C.nz_rows.length) {
                         C.growMaxLength(C.nz_length * 2 + 1, true);
