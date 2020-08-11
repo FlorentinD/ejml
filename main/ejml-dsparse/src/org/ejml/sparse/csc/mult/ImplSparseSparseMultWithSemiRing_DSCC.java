@@ -221,9 +221,9 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
 
         for (int j = idxA0; j < idxA1; j++) {
             int row = A.nz_rows[j];
-
             // TODO: only use iterator over a single column mask values here
-            if (mask == null || mask.isSet(row, mark)) {
+            // mark - 1 is the actual target column
+            if (mask == null || mask.isSet(row, mark - 1)) {
                 if (w[row] < mark) {
                     if (C.nz_length >= C.nz_rows.length) {
                         C.growMaxLength(C.nz_length * 2 + 1, true);

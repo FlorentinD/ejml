@@ -556,7 +556,7 @@ public class UtilEjml {
      * (in order to prevent deleting entries which shouldnt be overwritten, e.g. !mask.isSet())
      */
     public static boolean useInitialOutput(Mask mask, Matrix initialOutput, int numRows, int numCols) {
-        // check for dimensions as an indicator (TODO check if actually this is not misleading)
+        // check for dimensions as an indicator (TODO check if actually this is not misleading .. replace by "replace" flag)
         return mask != null && initialOutput != null && initialOutput.getNumRows() == numRows && initialOutput.getNumCols() == numCols;
     }
 }

@@ -37,9 +37,11 @@ public class ImplCommonOpsWithSemiRing_DSCC {
 
     /**
      * Performs matrix addition:<br>
-     * C = A + B
+     * C = &alpha;A + &beta;B
      *
-     * @param A  Matrix
+     * @param alpha scalar value multiplied against A
+     * @param A Matrix
+     * @param beta scalar value multiplied against B
      * @param B  Matrix
      * @param C  Output matrix.
      * @param mask Mask for specifying which entries should be overwritten
