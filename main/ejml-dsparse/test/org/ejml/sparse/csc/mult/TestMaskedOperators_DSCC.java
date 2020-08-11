@@ -80,8 +80,8 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         otherMatrix.set(0, 5, 0.6);
 
         DMatrixSparseCSC prevResult = new DMatrixSparseCSC(7, 7);
-        prevResult.set(0,0, 99);
-        prevResult.set(0,3, 42);
+        prevResult.set(0, 0, 99);
+        prevResult.set(0, 3, 42);
 
         return Stream.of(
                 Arguments.of(otherMatrix, prevResult, DMasks.of(prevResult, false, true)),
@@ -238,16 +238,15 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         it.forEachRemaining(value -> {
             if (mask.isSet(value.row, value.col)) {
                 assertEquals(found.get(value.row, value.col), foundWithMask.get(value.row, value.col), "Field should have been computed");
-            }
-            else {
-                assertEquals(prevResult.get(value.row, value.col),  foundWithMask.get(value.row, value.col), "Field from initial result was overwritten");
+            } else {
+                assertEquals(prevResult.get(value.row, value.col), foundWithMask.get(value.row, value.col), "Field from initial result was overwritten");
             }
         });
 
         // checking that untouched cells are still present
         prevResult.createCoordinateIterator().forEachRemaining(value -> {
             if (!mask.isSet(value.row, value.col)) {
-                assertEquals(prevResult.get(value.row, value.col),  foundWithMask.get(value.row, value.col), "Field from initial result was deleted");
+                assertEquals(prevResult.get(value.row, value.col), foundWithMask.get(value.row, value.col), "Field from initial result was deleted");
             }
         });
     }

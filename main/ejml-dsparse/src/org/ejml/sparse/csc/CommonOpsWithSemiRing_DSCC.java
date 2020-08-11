@@ -51,6 +51,7 @@ public class CommonOpsWithSemiRing_DSCC {
      * @param output  (Output) Storage for results. Data length is increased if increased if insufficient.
      * @param semiRing Semi-Ring to define + and *
      * @param mask Mask for specifying which entries should be overwritten
+     * @param accumulator Operator to combine result with existing entries in output matrix
      * @param gw       (Optional) Storage for internal workspace.  Can be null.
      * @param gx       (Optional) Storage for internal workspace.  Can be null.
      */
@@ -63,7 +64,7 @@ public class CommonOpsWithSemiRing_DSCC {
         // !! important to do before reshape
         DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, A.numRows, B.numCols) ? output.copy() : null;
 
-        output = reshapeOrDeclare(output,A,A.numRows,B.numCols);
+        output = reshapeOrDeclare(output, A, A.numRows, B.numCols);
         if (mask != null) {
             mask.compatible(output);
         }
@@ -71,19 +72,6 @@ public class CommonOpsWithSemiRing_DSCC {
         ImplSparseSparseMultWithSemiRing_DSCC.mult(A, B, output, semiRing, mask, gw, gx);
 
         return combineOutputs(output, accumulator, initialOutput);
-    }
-
-    // for applying mask and accumulator
-    private static DMatrixSparseCSC combineOutputs(DMatrixSparseCSC output, DMonoid accum, DMatrixSparseCSC initialOutput) {
-        if (initialOutput != null) {
-            // memory overhead .. maybe also can reuse something?
-            DMatrixSparseCSC combinedOutput = output.createLike();
-            // instead of "semiRing.add" this could be a dedicated accumulator
-            ImplCommonOpsWithSemiRing_DSCC.add(initialOutput, output, combinedOutput, accum, null, null);
-            // is the previous result of C gc-able? (should be)
-            output = combinedOutput;
-        }
-        return output;
     }
 
     /**
@@ -205,18 +193,19 @@ public class CommonOpsWithSemiRing_DSCC {
      * Performs matrix addition:<br>
      * output = &alpha;A + &beta;B
      *
-     * @param alpha    scalar value multiplied against A
-     * @param A        Matrix
-     * @param beta     scalar value multiplied against B
-     * @param B        Matrix
-     * @param output   (Optional)    Output matrix.
+     * @param alpha       scalar value multiplied against A
+     * @param A           Matrix
+     * @param beta        scalar value multiplied against B
+     * @param B           Matrix
+     * @param output      (Optional)    Output matrix.
+     * @param mask        Mask for specifying which entries should be overwritten
      * @param semiRing Semi-Ring to define + and *
-     * @param mask Mask for specifying which entries should be overwritten
-     * @param gw       (Optional) Storage for internal workspace.  Can be null.
-     * @param gx       (Optional) Storage for internal workspace.  Can be null.
+     * @param accumulator Operator to combine result with existing entries in output matrix
+     * @param gw          (Optional) Storage for internal workspace.  Can be null.
+     * @param gx          (Optional) Storage for internal workspace.  Can be null.
      */
     public static DMatrixSparseCSC add(double alpha, DMatrixSparseCSC A, double beta, DMatrixSparseCSC B, @Nullable DMatrixSparseCSC output, DSemiRing semiRing,
-                           @Nullable Mask mask, @Nullable DBinaryOperator accumulator, @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
+                                       @Nullable Mask mask, @Nullable DBinaryOperator accumulator, @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numRows != B.numRows || A.numCols != B.numCols)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
         DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, A.numRows, A.numCols) ? output.copy() : null;
@@ -235,16 +224,17 @@ public class CommonOpsWithSemiRing_DSCC {
      * output[i,j] = A[i,j]*B[i,j]<br>
      * All matrices must have the same shape.
      *
-     * @param A        (Input) Matrix.
-     * @param B        (Input) Matrix
-     * @param output   (Output) Matrix. data array is grown to min(A.nz_length,B.nz_length), resulting a in a large speed boost.
+     * @param A           (Input) Matrix.
+     * @param B           (Input) Matrix
+     * @param output      (Output) Matrix. data array is grown to min(A.nz_length,B.nz_length), resulting a in a large speed boost.
      * @param semiRing Semi-Ring to define + and *
-     * @param mask Mask for specifying which entries should be overwritten
-     * @param gw       (Optional) Storage for internal workspace.  Can be null.
-     * @param gx       (Optional) Storage for internal workspace.  Can be null.
+     * @param mask        Mask for specifying which entries should be overwritten
+     * @param accumulator Operator to combine result with existing entries in output matrix
+     * @param gw          (Optional) Storage for internal workspace.  Can be null.
+     * @param gx          (Optional) Storage for internal workspace.  Can be null.
      */
     public static DMatrixSparseCSC elementMult(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC output, DSemiRing semiRing,
-                                   @Nullable Mask mask, @Nullable DBinaryOperator accumulator, @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
+                                               @Nullable Mask mask, @Nullable DBinaryOperator accumulator, @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numCols != B.numCols || A.numRows != B.numRows)
             throw new MatrixDimensionException("All inputs must have the same number of rows and columns. " + stringShapes(A, B));
         DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, A.numRows, A.numCols) ? output.copy() : null;
