@@ -33,16 +33,21 @@ import static org.ejml.UtilEjml.checkSameShape;
 public class MaskUtil_DSCC {
     // for applying mask and accumulator (output gets overwritten)
     // ! assumes that the mask is already applied to the output .. e.g. unset fields not even computed (and not assigned)
-    static DMatrixSparseCSC combineOutputs(DMatrixSparseCSC output, DBinaryOperator accum, DMatrixSparseCSC initialOutput) {
+    // ! the mask is only needed for `apply` there the mask is not applied to the result structure before
+    static DMatrixSparseCSC combineOutputs(DMatrixSparseCSC output, @Nullable Mask mask, DBinaryOperator accum, DMatrixSparseCSC initialOutput) {
         if (initialOutput != null) {
             // memory overhead .. maybe also can reuse something?
             DMatrixSparseCSC combinedOutput = output.createLike();
             // instead of "semiRing.add" this could be a dedicated accumulator
-            add(initialOutput, output, combinedOutput, accum, null, null);
+            add(initialOutput, output, combinedOutput, mask, accum, null, null);
             // is the previous result of C gc-able? (should be)
             output = combinedOutput;
         }
         return output;
+    }
+
+    static DMatrixSparseCSC combineOutputs(DMatrixSparseCSC output, DBinaryOperator accum, DMatrixSparseCSC initialOutput) {
+        return combineOutputs(output, null, accum, initialOutput);
     }
 
     static DMatrixRMaj combineOutputs(DMatrixRMaj output, DMatrixRMaj initialOutput, Mask mask, @Nullable DBinaryOperator accum) {
@@ -80,7 +85,7 @@ public class MaskUtil_DSCC {
      * @param gw (Optional) Storage for internal workspace.  Can be null.
      * @param gx (Optional) Storage for internal workspace.  Can be null.
      */
-    public static void add(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC C, DBinaryOperator accum,
+    public static void add(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC C, @Nullable Mask mask, DBinaryOperator accum,
                            @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         double[] x = adjust(gx, A.numRows);
         int[] w = adjust(gw, A.numRows, A.numRows);
@@ -93,9 +98,9 @@ public class MaskUtil_DSCC {
 
             // always take the values of A
             // second as x[row] would be the first argument
-            multAddColA(A, col, C, col + 1, (a, b) -> b, x, w);
-            // accum values of A and B
-            multAddColA(B, col, C, col + 1, accum, x, w);
+            multAddColA(A, col, C, col + 1, null, (a, b) -> b, x, w);
+            // accum values of A and B (if entry is set in mask)
+            multAddColA(B, col, C, col + 1, mask, accum, x, w);
 
             // take the values in the dense vector 'x' and put them into 'C'
             int idxC0 = C.col_idx[col];
@@ -114,6 +119,7 @@ public class MaskUtil_DSCC {
      */
     public static void multAddColA(DMatrixSparseCSC A, int colA,
                                    DMatrixSparseCSC C, int mark,
+                                   @Nullable Mask mask,
                                    DBinaryOperator accum,
                                    double x[], int w[]) {
         int idxA0 = A.col_idx[colA];
@@ -121,19 +127,20 @@ public class MaskUtil_DSCC {
 
         for (int j = idxA0; j < idxA1; j++) {
             int row = A.nz_rows[j];
+            if (mask == null || mask.isSet(row, colA)) {
+                if (w[row] < mark) {
+                    if (C.nz_length >= C.nz_rows.length) {
+                        C.growMaxLength(C.nz_length * 2 + 1, true);
+                    }
 
-            if (w[row] < mark) {
-                if (C.nz_length >= C.nz_rows.length) {
-                    C.growMaxLength(C.nz_length * 2 + 1, true);
+                    w[row] = mark;
+                    C.nz_rows[C.nz_length] = row;
+                    C.col_idx[mark] = ++C.nz_length;
+                    x[row] = A.nz_values[j];
+                } else if (accum != null) {
+                    // if it is null .. x[row] can just stay the same
+                    x[row] = accum.apply(x[row], A.nz_values[j]);
                 }
-
-                w[row] = mark;
-                C.nz_rows[C.nz_length] = row;
-                C.col_idx[mark] = ++C.nz_length;
-                x[row] = A.nz_values[j];
-            } else if (accum != null) {
-                // if it is null .. x[row] can just stay the same
-                x[row] = accum.apply(x[row], A.nz_values[j]);
             }
         }
     }
