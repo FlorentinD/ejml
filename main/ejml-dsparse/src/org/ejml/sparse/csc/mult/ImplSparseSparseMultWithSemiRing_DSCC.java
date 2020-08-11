@@ -70,7 +70,7 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
                 int rowB = B.nz_rows[bi];
                 double valB = B.nz_values[bi];  // B(k,j)  k=rowB j=colB
 
-                multAddColA(A, rowB, valB, C, colB + 1, semiRing, x, w);
+                multAddColA(A, rowB, valB, C, colB + 1, semiRing, mask, x, w);
             }
 
             // take the values in the dense vector 'x' and put them into 'C'
@@ -78,10 +78,7 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
             int idxC1 = C.col_idx[colB + 1];
 
             for (int i = idxC0; i < idxC1; i++) {
-                //  this will destroy simdi usage here .. (hopefully not if mask == null)
-                if (mask == null || mask.isSet(C.nz_rows[i], bj - 1)) {
-                    C.nz_values[i] = x[C.nz_rows[i]];
-                }
+                C.nz_values[i] = x[C.nz_rows[i]];
             }
 
             idx0 = idx1;
@@ -193,7 +190,7 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
                 if (bi < B.col_idx[colB + 1]) {
                     int row = B.nz_rows[bi];
                     if (row == colC) {
-                        multAddColA(A, colB, B.nz_values[bi], C, mark, semiRing, x, w);
+                        multAddColA(A, colB, B.nz_values[bi], C, mark, semiRing, mask, x, w);
                         w[locationB + colB]++;
                     }
                 }
@@ -204,10 +201,7 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
             int idxC1 = C.col_idx[colC + 1];
 
             for (int i = idxC0; i < idxC1; i++) {
-                //  this will destroy simdi usage here .. (hopefully not if mask == null)
-                if(mask == null || mask.isSet(C.nz_rows[i], colC)) {
-                    C.nz_values[i] = x[C.nz_rows[i]];
-                }
+                C.nz_values[i] = x[C.nz_rows[i]];
             }
         }
     }
@@ -220,7 +214,7 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
     public static void multAddColA(DMatrixSparseCSC A, int colA,
                                    double alpha,
                                    DMatrixSparseCSC C, int mark,
-                                   DSemiRing semiRing,
+                                   DSemiRing semiRing, @Nullable Mask mask,
                                    double x[], int w[]) {
         int idxA0 = A.col_idx[colA];
         int idxA1 = A.col_idx[colA + 1];
@@ -228,17 +222,20 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
         for (int j = idxA0; j < idxA1; j++) {
             int row = A.nz_rows[j];
 
-            if (w[row] < mark) {
-                if (C.nz_length >= C.nz_rows.length) {
-                    C.growMaxLength(C.nz_length * 2 + 1, true);
-                }
+            // TODO: only use iterator over a single column mask values here
+            if (mask == null || mask.isSet(row, mark)) {
+                if (w[row] < mark) {
+                    if (C.nz_length >= C.nz_rows.length) {
+                        C.growMaxLength(C.nz_length * 2 + 1, true);
+                    }
 
-                w[row] = mark;
-                C.nz_rows[C.nz_length] = row;
-                C.col_idx[mark] = ++C.nz_length;
-                x[row] = semiRing.mult.func.apply(A.nz_values[j], alpha);
-            } else {
-                x[row] = semiRing.add.func.apply(x[row], semiRing.mult.func.apply(A.nz_values[j], alpha));
+                    w[row] = mark;
+                    C.nz_rows[C.nz_length] = row;
+                    C.col_idx[mark] = ++C.nz_length;
+                    x[row] = semiRing.mult.func.apply(A.nz_values[j], alpha);
+                } else {
+                    x[row] = semiRing.add.func.apply(x[row], semiRing.mult.func.apply(A.nz_values[j], alpha));
+                }
             }
         }
     }
