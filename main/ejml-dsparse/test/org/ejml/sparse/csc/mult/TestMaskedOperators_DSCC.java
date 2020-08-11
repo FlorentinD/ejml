@@ -120,8 +120,8 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
     @ParameterizedTest
     @MethodSource("sparseVectorSource")
     public void mult_A_B(DMatrixSparseCSC sparseVector, DMatrixSparseCSC prevResult, Mask mask) {
-        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.mult(sparseVector, inputMatrix, prevResult.copy(), semiRing, null);
-        DMatrixSparseCSC foundWithMask = CommonOpsWithSemiRing_DSCC.mult(sparseVector, inputMatrix, prevResult.copy(), semiRing, mask);
+        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.mult(sparseVector, inputMatrix, prevResult.copy(), semiRing, null, null);
+        DMatrixSparseCSC foundWithMask = CommonOpsWithSemiRing_DSCC.mult(sparseVector, inputMatrix, prevResult.copy(), semiRing, mask, null);
 
         assertMaskedResult(prevResult, found, foundWithMask, mask);
     }
@@ -134,9 +134,9 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         DMatrixSparseCSC transposed_vector = CommonOps_DSCC.transpose(sparseVector, null, null);
 
         DMatrixSparseCSC foundTA = CommonOpsWithSemiRing_DSCC.multTransA(
-                transposed_vector, inputMatrix, prevResult.copy(), semiRing, null, null, null);
+                transposed_vector, inputMatrix, prevResult.copy(), semiRing, null, null, null, null);
         DMatrixSparseCSC foundTAWithMask = CommonOpsWithSemiRing_DSCC.multTransA(
-                transposed_vector, inputMatrix, prevResult.copy(), semiRing, mask, null, null);
+                transposed_vector, inputMatrix, prevResult.copy(), semiRing, mask, null, null, null);
 
         assertMaskedResult(prevResult, foundTA, foundTAWithMask, mask);
     }
@@ -147,9 +147,9 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         DMatrixSparseCSC transposed_matrix = CommonOps_DSCC.transpose(inputMatrix, null, null);
 
         DMatrixSparseCSC foundTB = CommonOpsWithSemiRing_DSCC.multTransB(
-                sparseVector, transposed_matrix, prevResult.copy(), semiRing, null, null, null);
+                sparseVector, transposed_matrix, prevResult.copy(), semiRing, null, null, null, null);
         DMatrixSparseCSC foundTBWithMask = CommonOpsWithSemiRing_DSCC.multTransB(
-                sparseVector, transposed_matrix, prevResult.copy(), semiRing, mask, null, null);
+                sparseVector, transposed_matrix, prevResult.copy(), semiRing, mask, null, null, null);
 
         assertMaskedResult(prevResult, foundTB, foundTBWithMask, mask);
     }
@@ -159,9 +159,9 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
     @MethodSource("sparseMatrixSource")
     public void add_A_B(DMatrixSparseCSC otherMatrix, DMatrixSparseCSC prevResult, Mask mask) {
         DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.add(
-                1, otherMatrix, 1, inputMatrix, prevResult.copy(), semiRing, null, null, null);
+                1, otherMatrix, 1, inputMatrix, prevResult.copy(), semiRing, null, null, null, null);
         DMatrixSparseCSC foundWithMask = CommonOpsWithSemiRing_DSCC.add(
-                1, otherMatrix, 1, inputMatrix, prevResult.copy(), semiRing, mask, null, null);
+                1, otherMatrix, 1, inputMatrix, prevResult.copy(), semiRing, mask, null, null, null);
 
         assertMaskedResult(prevResult, found, foundWithMask, mask);
     }
@@ -170,9 +170,9 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
     @MethodSource("sparseMatrixSource")
     public void elementWiseMult(DMatrixSparseCSC otherMatrix, DMatrixSparseCSC prevResult, Mask mask) {
         DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.elementMult(
-                otherMatrix, inputMatrix, prevResult.copy(), semiRing, null, null, null);
+                otherMatrix, inputMatrix, prevResult.copy(), semiRing, null, null, null, null);
         DMatrixSparseCSC foundWithMask = CommonOpsWithSemiRing_DSCC.elementMult(
-                otherMatrix, inputMatrix, prevResult.copy(), semiRing, mask, null, null);
+                otherMatrix, inputMatrix, prevResult.copy(), semiRing, mask, null, null, null);
 
         assertMaskedResult(prevResult, found, foundWithMask, mask);
     }
@@ -203,9 +203,8 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         DMatrixRMaj prevResult = DMatrixRMaj.wrap(matrix.numRows, 1, prevPrimitiveResult);
         Mask mask = DMasks.of(prevResult, negatedMask);
 
-        DBinaryOperator first = (x, y) -> x;
         DMatrixRMaj result = CommonOps_DSCC.reduceRowWise(matrix, 0, Double::sum, prevResult.copy(), null, null);
-        DMatrixRMaj resultWithMask = CommonOps_DSCC.reduceRowWise(matrix, 0, Double::sum, prevResult.copy(), mask, first);
+        DMatrixRMaj resultWithMask = CommonOps_DSCC.reduceRowWise(matrix, 0, Double::sum, prevResult.copy(), mask, null);
 
         assertMaskedResult(prevResult, result, resultWithMask, mask);
     }
@@ -226,9 +225,8 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         DMatrixRMaj prevResult = DMatrixRMaj.wrap(1, matrix.numCols, prevPrimitiveResult);
         Mask mask = DMasks.of(prevResult, negatedMask);
 
-        DBinaryOperator first = (x, y) -> x;
         DMatrixRMaj result = CommonOps_DSCC.reduceColumnWise(matrix, 0, Double::sum, prevResult.copy(), null, null);
-        DMatrixRMaj resultWithMask = CommonOps_DSCC.reduceColumnWise(matrix, 0, Double::sum, prevResult.copy(), mask, first);
+        DMatrixRMaj resultWithMask = CommonOps_DSCC.reduceColumnWise(matrix, 0, Double::sum, prevResult.copy(), mask, null);
 
         assertMaskedResult(prevResult, result, resultWithMask, mask);
     }

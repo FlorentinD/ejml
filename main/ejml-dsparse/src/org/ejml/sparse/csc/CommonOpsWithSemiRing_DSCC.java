@@ -39,11 +39,9 @@ import static org.ejml.sparse.csc.MaskUtil_DSCC.combineOutputs;
 
 public class CommonOpsWithSemiRing_DSCC {
 
-    private static final DBinaryOperator SECOND = (x, y) -> y;
-
     public static DMatrixSparseCSC mult(DMatrixSparseCSC A, DMatrixSparseCSC B, @Nullable DMatrixSparseCSC output, DSemiRing semiRing,
-                                        @Nullable Mask mask) {
-        return mult(A, B, output, semiRing, mask, null, null);
+                                        @Nullable Mask mask, @Nullable DBinaryOperator accumulator) {
+        return mult(A, B, output, semiRing, mask, accumulator, null, null);
     }
 
     /**
@@ -57,7 +55,8 @@ public class CommonOpsWithSemiRing_DSCC {
      * @param gx (Optional) Storage for internal workspace.  Can be null.
      */
     public static DMatrixSparseCSC mult(DMatrixSparseCSC A, DMatrixSparseCSC B, @Nullable DMatrixSparseCSC output, DSemiRing semiRing,
-                                        @Nullable Mask mask, @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
+                                        @Nullable Mask mask, @Nullable DBinaryOperator accumulator, @Nullable IGrowArray gw,
+                                        @Nullable DGrowArray gx) {
         if (A.numCols != B.numRows)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
 
@@ -71,11 +70,12 @@ public class CommonOpsWithSemiRing_DSCC {
 
         ImplSparseSparseMultWithSemiRing_DSCC.mult(A, B, output, semiRing, mask, gw, gx);
 
-        return combineOutputs(output, SECOND, initialOutput);
+        return combineOutputs(output, accumulator, initialOutput);
     }
 
     public static DMatrixSparseCSC multTransA(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC output, DSemiRing semiRing,
-                                              @Nullable Mask mask, @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
+                                              @Nullable Mask mask, @Nullable DBinaryOperator accumulator,
+                                              @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numRows != B.numRows)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
         // !! important to do before reshape
@@ -87,7 +87,7 @@ public class CommonOpsWithSemiRing_DSCC {
 
         ImplSparseSparseMultWithSemiRing_DSCC.multTransA(A, B, output, semiRing, mask, gw, gx);
 
-        return combineOutputs(output, SECOND, initialOutput);
+        return combineOutputs(output, accumulator, initialOutput);
     }
 
     /**
@@ -102,7 +102,8 @@ public class CommonOpsWithSemiRing_DSCC {
      * @param gx (Optional) Storage for internal workspace.  Can be null.
      */
     public static DMatrixSparseCSC multTransB(DMatrixSparseCSC A, DMatrixSparseCSC B, @Nullable DMatrixSparseCSC output, DSemiRing semiRing,
-                                              @Nullable Mask mask, @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
+                                              @Nullable Mask mask, @Nullable DBinaryOperator accumulator,
+                                              @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numCols != B.numCols)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
         DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, A.numRows, B.numRows) ? output.copy() : null;
@@ -112,7 +113,7 @@ public class CommonOpsWithSemiRing_DSCC {
         }
         if (!B.isIndicesSorted()) B.sortIndices(null);
         ImplSparseSparseMultWithSemiRing_DSCC.multTransB(A, B, output, semiRing, mask, gw, gx);
-        return combineOutputs(output, SECOND, initialOutput);
+        return combineOutputs(output, accumulator, initialOutput);
     }
 
 
@@ -247,7 +248,7 @@ public class CommonOpsWithSemiRing_DSCC {
      * @param gx     (Optional) Storage for internal workspace.  Can be null.
      */
     public static DMatrixSparseCSC add(double alpha, DMatrixSparseCSC A, double beta, DMatrixSparseCSC B, @Nullable DMatrixSparseCSC output, DSemiRing semiRing,
-                           @Nullable Mask mask, @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
+                           @Nullable Mask mask, @Nullable DBinaryOperator accumulator, @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numRows != B.numRows || A.numCols != B.numCols)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
         DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, A.numRows, A.numCols) ? output.copy() : null;
@@ -258,7 +259,7 @@ public class CommonOpsWithSemiRing_DSCC {
 
         ImplCommonOpsWithSemiRing_DSCC.add(alpha, A, beta, B, output, semiRing, mask, gw, gx);
 
-        return combineOutputs(output, SECOND, initialOutput);
+        return combineOutputs(output, accumulator, initialOutput);
     }
 
     /**
@@ -273,7 +274,7 @@ public class CommonOpsWithSemiRing_DSCC {
      * @param gx (Optional) Storage for internal workspace.  Can be null.
      */
     public static DMatrixSparseCSC elementMult(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC output, DSemiRing semiRing,
-                                   @Nullable Mask mask, @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
+                                   @Nullable Mask mask, @Nullable DBinaryOperator accumulator, @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numCols != B.numCols || A.numRows != B.numRows)
             throw new MatrixDimensionException("All inputs must have the same number of rows and columns. " + stringShapes(A, B));
         DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, A.numRows, A.numCols) ? output.copy() : null;
@@ -284,7 +285,7 @@ public class CommonOpsWithSemiRing_DSCC {
 
         ImplCommonOpsWithSemiRing_DSCC.elementMult(A, B, output, semiRing, mask, gw, gx);
 
-        return combineOutputs(output, SECOND, initialOutput);
+        return combineOutputs(output, accumulator, initialOutput);
     }
 }
 

@@ -31,11 +31,18 @@ import static org.ejml.UtilEjml.adjust;
 import static org.ejml.UtilEjml.checkSameShape;
 
 public class MaskUtil_DSCC {
+    private static final DBinaryOperator SECOND = (x, y) -> y;
+
     // for applying mask and accumulator (output gets overwritten)
     // ! assumes that the mask is already applied to the output .. e.g. unset fields not even computed (and not assigned)
     // ! the mask is only needed for `apply` there the mask is not applied to the result structure before
-    static DMatrixSparseCSC combineOutputs(DMatrixSparseCSC output, @Nullable Mask mask, DBinaryOperator accum, DMatrixSparseCSC initialOutput) {
+    static DMatrixSparseCSC combineOutputs(DMatrixSparseCSC output, DMatrixSparseCSC initialOutput, @Nullable Mask mask, DBinaryOperator accum) {
         if (initialOutput != null) {
+            if(accum == null) {
+                // e.g. just take the newly computed value
+                accum = SECOND;
+            }
+
             // memory overhead .. maybe also can reuse something?
             DMatrixSparseCSC combinedOutput = output.createLike();
             // instead of "semiRing.add" this could be a dedicated accumulator
@@ -47,7 +54,7 @@ public class MaskUtil_DSCC {
     }
 
     static DMatrixSparseCSC combineOutputs(DMatrixSparseCSC output, DBinaryOperator accum, DMatrixSparseCSC initialOutput) {
-        return combineOutputs(output, null, accum, initialOutput);
+        return combineOutputs(output, initialOutput, null, accum);
     }
 
     static DMatrixRMaj combineOutputs(DMatrixRMaj output, DMatrixRMaj initialOutput, Mask mask, @Nullable DBinaryOperator accum) {

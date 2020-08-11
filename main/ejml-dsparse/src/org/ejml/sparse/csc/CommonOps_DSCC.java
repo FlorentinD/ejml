@@ -1916,7 +1916,7 @@ public class CommonOps_DSCC {
             output.nz_values[i] = func.apply(input.nz_values[i]);
         }
 
-        return combineOutputs(output, mask, accum,  initialOutput);
+        return combineOutputs(output, initialOutput, mask, accum);
     }
 
     /**
