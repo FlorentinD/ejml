@@ -46,7 +46,7 @@ public class TestMatrixMatrixMultWithSemiRing_DSCC extends BaseTestMatrixMatrixO
         vector.set(0, 3, 0.5);
         vector.set(0, 5, 0.6);
 
-        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.mult(vector, inputMatrix, null, semiRing, null);
+        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.mult(vector, inputMatrix, null, semiRing, null, null);
 
         assertEquals(expected[0], found.get(0, 0));
         assertEquals(expected[1], found.get(0, 2));
