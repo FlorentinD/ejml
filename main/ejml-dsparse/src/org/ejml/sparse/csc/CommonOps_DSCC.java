@@ -1811,10 +1811,16 @@ public class CommonOps_DSCC {
     public static DMatrixSparseCSC apply(DMatrixSparseCSC input, DUnaryOperator func,
                                          @Nullable DMatrixSparseCSC output, @Nullable Mask mask, @Nullable DBinaryOperator accum) {
         DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, input.numRows, input.numCols) ? output.copy() : null;
-        output = reshapeOrDeclare(output, input);
+        // set correct structure
+        if (output == null) {
+            output = input.createLike();
+        } else if (input != output) {
+            output.copyStructure(input);
+        }
         if (mask != null) {
             mask.compatible(output);
         }
+
 
         // dont check for the mask here as the computation is too simple to get any improvements when skipping
         // would more likely prohibit vectorisation
@@ -1822,7 +1828,7 @@ public class CommonOps_DSCC {
             output.nz_values[i] = func.apply(input.nz_values[i]);
         }
 
-        return combineOutputs(output, accum, initialOutput);
+        return combineOutputs(output, mask, accum,  initialOutput);
     }
 
     /**
