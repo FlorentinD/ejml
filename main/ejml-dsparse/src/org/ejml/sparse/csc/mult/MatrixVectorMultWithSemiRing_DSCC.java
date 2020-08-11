@@ -40,9 +40,9 @@ public class MatrixVectorMultWithSemiRing_DSCC {
      * @param semiRing Semi-Ring to define + and *
      * @param mask Mask for specifying which entries should be overwritten
      */
-    public static double[] mult(DMatrixSparseCSC A, double b[], double output[], DSemiRing semiRing,
-                            @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accumulator) {
-        double[] initialOutput = MaskUtil_DSCC.useInitialOutput(mask, accumulator, output) ? output.clone() : null;
+    public static double[] mult(DMatrixSparseCSC A, double[] b, double[] output, DSemiRing semiRing,
+                                @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accumulator) {
+        double[] initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(mask, accumulator, output);
         if (mask != null) {
             mask.compatible(output);
         }
@@ -52,7 +52,7 @@ public class MatrixVectorMultWithSemiRing_DSCC {
         return multAdd(A, b, output, initialOutput, semiRing, mask, accumulator);
     }
 
-    public static double[] mult(DMatrixSparseCSC A, double b[], double output[], DSemiRing semiRing) {
+    public static double[] mult(DMatrixSparseCSC A, double[] b, double[] output, DSemiRing semiRing) {
         return mult(A, b, output, semiRing, null, null);
     }
 
@@ -64,8 +64,8 @@ public class MatrixVectorMultWithSemiRing_DSCC {
      * @param b           (Input) vector
      * @param output      (Output) vector
      * @param mask        Mask for specifying which entries should be overwritten
-     * @param semiRing
-     * @param accumulator (Optional) accumulator for output + (A*b), elso use `add` from the semiRing
+     * @param semiRing    Semi-Ring to define + and *
+     * @param accumulator (Optional) accumulator for output + (A*b), else use `add` from the semiRing
      */
     public static double[] multAdd(DMatrixSparseCSC A, double[] b, double[] output, @Nullable double[] initialOutput,
                                DSemiRing semiRing, @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accumulator) {
@@ -95,9 +95,9 @@ public class MatrixVectorMultWithSemiRing_DSCC {
      * @param semiRing Semi-Ring to define + and *
      * @param mask Mask for specifying which entries should be overwritten
      */
-    public static double[] mult(double a[], DMatrixSparseCSC B, double output[], DSemiRing semiRing,
-                            @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accumulator) {
-        double[] initialOutput = MaskUtil_DSCC.useInitialOutput(mask, accumulator, output) ? output.clone() : null;
+    public static double[] mult(double[] a, DMatrixSparseCSC B, double[] output, DSemiRing semiRing,
+                                @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accumulator) {
+        double[] initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(mask, accumulator, output);
         if (mask != null) {
             mask.compatible(output);
         }
@@ -119,7 +119,7 @@ public class MatrixVectorMultWithSemiRing_DSCC {
         return MaskUtil_DSCC.combineOutputs(initialOutput, output, mask, accumulator);
     }
 
-    public static double[] mult(double a[], DMatrixSparseCSC B, double c[], DSemiRing semiRing) {
+    public static double[] mult(double[] a, DMatrixSparseCSC B, double[] c, DSemiRing semiRing) {
         return mult(a, B, c, semiRing, null, null);
     }
 
@@ -133,9 +133,9 @@ public class MatrixVectorMultWithSemiRing_DSCC {
      * @param offsetC (Output) first index in vector c
      * @param semiRing Semi-Ring to define + and *
      */
-    public static double innerProduct( double[] a, int offsetA,
-                                       DMatrixSparseCSC B,
-                                       double[] c, int offsetC, DSemiRing semiRing ) {
+    public static double innerProduct(double[] a, int offsetA,
+                                      DMatrixSparseCSC B,
+                                      double[] c, int offsetC, DSemiRing semiRing) {
         if (a.length - offsetA < B.numRows)
             throw new IllegalArgumentException("Length of 'a' isn't long enough");
         if (c.length - offsetC < B.numCols)

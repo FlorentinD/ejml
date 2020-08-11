@@ -61,7 +61,7 @@ public class CommonOpsWithSemiRing_DSCC {
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
 
         // !! important to do before reshape
-        DMatrixSparseCSC initialOutput = MaskUtil_DSCC.useInitialOutput(mask, accumulator, output) ? output.copy() : null;
+        DMatrixSparseCSC initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(mask, accumulator, output);
 
         output = reshapeOrDeclare(output, A, A.numRows, B.numCols);
         if (mask != null) {
@@ -207,7 +207,7 @@ public class CommonOpsWithSemiRing_DSCC {
                                        @Nullable Mask mask, @Nullable DBinaryOperator accumulator, @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numRows != B.numRows || A.numCols != B.numCols)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
-        DMatrixSparseCSC initialOutput = MaskUtil_DSCC.useInitialOutput(mask, accumulator, output) ? output.copy() : null;
+        DMatrixSparseCSC initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(mask, accumulator, output);
         output = reshapeOrDeclare(output, A, A.numRows, A.numCols);
         if (mask != null) {
             mask.compatible(output);
@@ -232,11 +232,11 @@ public class CommonOpsWithSemiRing_DSCC {
      * @param gw          (Optional) Storage for internal workspace.  Can be null.
      * @param gx          (Optional) Storage for internal workspace.  Can be null.
      */
-    public static DMatrixSparseCSC elementMult(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC output, DSemiRing semiRing,
+    public static DMatrixSparseCSC elementMult(DMatrixSparseCSC A, DMatrixSparseCSC B, @Nullable DMatrixSparseCSC output, DSemiRing semiRing,
                                                @Nullable Mask mask, @Nullable DBinaryOperator accumulator, @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numCols != B.numCols || A.numRows != B.numRows)
             throw new MatrixDimensionException("All inputs must have the same number of rows and columns. " + stringShapes(A, B));
-        DMatrixSparseCSC initialOutput = MaskUtil_DSCC.useInitialOutput(mask, accumulator, output) ? output.copy() : null;
+        DMatrixSparseCSC initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(mask, accumulator, output);
         output = reshapeOrDeclare(output, A, A.numRows, A.numCols);
         if (mask != null) {
             mask.compatible(output);

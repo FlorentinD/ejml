@@ -22,8 +22,7 @@ import org.ejml.data.*;
 import org.ejml.masks.Mask;
 import org.ejml.masks.PrimitiveDMask;
 import org.ejml.ops.DBinaryOperator;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import static org.ejml.UtilEjml.adjust;
 import static org.ejml.UtilEjml.checkSameShape;
@@ -34,7 +33,7 @@ public class MaskUtil_DSCC {
     // for applying mask and accumulator (output gets overwritten)
     // ! assumes that the mask is already applied to the output .. e.g. unset fields not even computed (and not assigned)
     // ! the mask is only needed for `apply` there the mask is not applied to the result structure before
-    public static DMatrixSparseCSC combineOutputs(DMatrixSparseCSC output, DMatrixSparseCSC initialOutput, @Nullable Mask mask, @Nullable DBinaryOperator accum) {
+    public static DMatrixSparseCSC combineOutputs(DMatrixSparseCSC output, @Nullable DMatrixSparseCSC initialOutput, @Nullable Mask mask, @Nullable DBinaryOperator accum) {
         if (initialOutput != null) {
             if(accum == null) {
                 // e.g. just take the newly computed value
@@ -51,11 +50,11 @@ public class MaskUtil_DSCC {
         return output;
     }
 
-    static DMatrixSparseCSC combineOutputs(DMatrixSparseCSC output, DBinaryOperator accum, DMatrixSparseCSC initialOutput) {
+    static DMatrixSparseCSC combineOutputs(DMatrixSparseCSC output, @Nullable DBinaryOperator accum, @Nullable DMatrixSparseCSC initialOutput) {
         return combineOutputs(output, initialOutput, null, accum);
     }
 
-    static DMatrixRMaj combineOutputs(DMatrixRMaj output, DMatrixRMaj initialOutput, Mask mask, @Nullable DBinaryOperator accum) {
+    static DMatrixRMaj combineOutputs(DMatrixRMaj output, @Nullable DMatrixRMaj initialOutput, @Nullable Mask mask, @Nullable DBinaryOperator accum) {
         if (initialOutput != null) {
             checkSameShape(initialOutput, output, true);
 
@@ -67,7 +66,7 @@ public class MaskUtil_DSCC {
             // TODO: operate on a bitset/boolean[] here -> also just one for-loop needed
             for (int col = 0; col < output.getNumCols(); col++) {
                 for (int row = 0; row < output.numRows; row++) {
-                    if (mask.isSet(row, col)) {
+                    if (mask != null && mask.isSet(row, col)) {
                         output.unsafe_set(row, col, accum.apply(initialOutput.get(row, col), output.get(row, col)));
                     } else {
                         // just use previous value as it shouldnt be computed in the first place
@@ -147,7 +146,7 @@ public class MaskUtil_DSCC {
                                    DMatrixSparseCSC C, int mark,
                                    @Nullable Mask mask,
                                    DBinaryOperator accum,
-                                   double x[], int w[]) {
+                                   double[] x, int[] w) {
         int idxA0 = A.col_idx[colA];
         int idxA1 = A.col_idx[colA + 1];
 
@@ -179,12 +178,22 @@ public class MaskUtil_DSCC {
      *
      * ! mask.replace takes precedence before existing accumlator
      */
-    public static boolean useInitialOutput(Mask mask, DBinaryOperator accumulator, Matrix initialOutput) {
-        return initialOutput != null && ((mask != null && !mask.replace) || (accumulator != null && mask == null));
+    public static <T extends Matrix> @Nullable T maybeCacheInitialOutput(@Nullable Mask mask, @Nullable DBinaryOperator accumulator, @Nullable T initialOutput) {
+        if (initialOutput != null && ((mask != null && !mask.replace) || (accumulator != null && mask == null))) {
+            return initialOutput.copy();
+        }
+        else {
+            return null;
+        }
     }
 
     // primitive version
-    public static boolean useInitialOutput(Mask mask, DBinaryOperator accumulator, double[] initialOutput) {
-        return initialOutput != null && ((mask != null && !mask.replace) || (accumulator != null && mask == null));
+    public static @Nullable double[] maybeCacheInitialOutput(@Nullable Mask mask, @Nullable DBinaryOperator accumulator, @Nullable double[] initialOutput) {
+        if (initialOutput != null && ((mask != null && !mask.replace) || (accumulator != null && mask == null))) {
+            return initialOutput.clone();
+        }
+        else {
+            return null;
+        }
     }
 }

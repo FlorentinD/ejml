@@ -33,7 +33,7 @@ public abstract class Mask {
     // same as the "GrB_REPLACE" descriptor
     public final boolean replace;
 
-    public Mask(boolean negated, boolean replace) {
+    protected Mask(boolean negated, boolean replace) {
         this.negated = negated;
         this.replace = replace;
     }
@@ -45,16 +45,16 @@ public abstract class Mask {
     public abstract int getNumRows();
 
     public void print() {
-        String result = "";
+        StringBuilder result = new StringBuilder();
         for (int row = 0; row < getNumRows(); row++) {
             for (int col = 0; col < getNumCols(); col++) {
-                result += isSet(row, col) ? "+ " : "- ";
+                result.append(isSet(row, col) ? "+ " : "- ");
             }
-            result += System.lineSeparator();
+            result.append(System.lineSeparator());
         }
 
         System.out.println(result);
-    };
+    }
 
     /**
      * Checks whether the dimensions of the mask and matrix match
