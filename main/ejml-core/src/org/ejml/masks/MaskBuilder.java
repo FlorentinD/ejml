@@ -18,26 +18,19 @@
 
 package org.ejml.masks;
 
-import org.ejml.data.*;
+public abstract class MaskBuilder<MASK> {
+    protected boolean negated = false;
+    protected boolean replace = true;
 
-/**
- * Helper class to get the corresponding mask builder based on a matrix or primitive array
- */
-public class DMasks {
-    public static PrimitiveDMask.Builder builder(double[] values) {
-        return new PrimitiveDMask.Builder(values);
+    public MaskBuilder<MASK> withNegated(boolean negated) {
+        this.negated = negated;
+        return this;
     }
 
-    public static PrimitiveDMask.Builder builder(DMatrixD1 matrix) {
-        return new PrimitiveDMask.Builder(matrix.data).withNumCols(matrix.numCols);
+    public MaskBuilder<MASK> withReplace(boolean replace) {
+        this.replace = replace;
+        return this;
     }
 
-    public static MaskBuilder builder(DMatrixSparseCSC matrix, boolean structural){
-        if (structural) {
-            return new SparseStructuralMask.Builder(matrix);
-        }
-        else {
-            return new SparseDMask.Builder(matrix);
-        }
-    }
+    public abstract MASK build();
 }

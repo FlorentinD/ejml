@@ -27,8 +27,8 @@ import org.ejml.data.MatrixSparse;
 public class SparseStructuralMask extends Mask {
     private final MatrixSparse matrix;
 
-    public SparseStructuralMask(MatrixSparse matrix, boolean negated) {
-        super(negated);
+    public SparseStructuralMask(MatrixSparse matrix, boolean negated, boolean replace) {
+        super(negated, replace);
         this.matrix = matrix;
     }
 
@@ -45,5 +45,18 @@ public class SparseStructuralMask extends Mask {
     @Override
     public int getNumRows() {
         return matrix.getNumRows();
+    }
+
+    public static class Builder extends MaskBuilder<SparseStructuralMask> {
+        private MatrixSparse matrix;
+
+        public Builder(MatrixSparse matrix) {
+            this.matrix = matrix;
+        }
+
+        @Override
+        public SparseStructuralMask build() {
+            return new SparseStructuralMask(matrix, negated, replace);
+        }
     }
 }

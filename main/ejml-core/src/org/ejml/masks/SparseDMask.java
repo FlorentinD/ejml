@@ -24,12 +24,8 @@ public class SparseDMask extends Mask {
     protected final DMatrixSparseCSC matrix;
     protected final double zeroElement;
 
-    public SparseDMask(DMatrixSparseCSC matrix, boolean negated) {
-        this(matrix, negated, 0);
-    }
-
-    public SparseDMask(DMatrixSparseCSC matrix, boolean negated, double zeroElement) {
-        super(negated);
+    public SparseDMask(DMatrixSparseCSC matrix, boolean negated, boolean replace, double zeroElement) {
+        super(negated, replace);
         this.matrix = matrix;
         this.zeroElement = zeroElement;
     }
@@ -47,5 +43,24 @@ public class SparseDMask extends Mask {
     @Override
     public int getNumRows() {
         return matrix.numRows;
+    }
+
+    public static class Builder extends MaskBuilder<SparseDMask> {
+        private DMatrixSparseCSC matrix;
+        private double zeroElement = 0;
+
+        public Builder(DMatrixSparseCSC matrix) {
+            this.matrix = matrix;
+        }
+
+        public Builder withZeroElement(double zeroElement) {
+            this.zeroElement = zeroElement;
+            return this;
+        }
+
+        @Override
+        public SparseDMask build() {
+            return new SparseDMask(matrix, negated, replace, zeroElement);
+        }
     }
 }

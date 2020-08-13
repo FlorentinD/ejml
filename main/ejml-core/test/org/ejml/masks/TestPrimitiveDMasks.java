@@ -32,8 +32,9 @@ public class TestPrimitiveDMasks {
     void testBasedOnPrimitiveArrays() {
         double[] values = {2, 0, 4, 0, 0, -1};
 
-        PrimitiveDMask mask = new PrimitiveDMask(values, false);
-        PrimitiveDMask negated_mask = new PrimitiveDMask(values, true);
+        PrimitiveDMask.Builder maskBuilder = new PrimitiveDMask.Builder(values);
+        PrimitiveDMask mask =  maskBuilder.withNegated(false).build();
+        PrimitiveDMask negated_mask = maskBuilder.withNegated(true).build();
 
         boolean[] expected = {true, false, true, false, false, true};
 
@@ -48,8 +49,9 @@ public class TestPrimitiveDMasks {
         int dim = 20;
         DMatrixRMaj matrix = RandomMatrices_DDRM.rectangle(dim, dim, new Random(42));
 
-        PrimitiveDMask mask = new PrimitiveDMask(matrix.data, matrix.numCols, false);
-        PrimitiveDMask negated_mask = new PrimitiveDMask(matrix.data, matrix.numCols, true);
+        PrimitiveDMask.Builder maskBuilder = DMasks.builder(matrix);
+        PrimitiveDMask mask =  maskBuilder.withNegated(false).build();
+        PrimitiveDMask negated_mask = maskBuilder.withNegated(true).build();
 
 
         for (int row = 0; row < dim; row++) {

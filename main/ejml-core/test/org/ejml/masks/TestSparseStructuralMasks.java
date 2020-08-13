@@ -33,8 +33,9 @@ public class TestSparseStructuralMasks {
         int dim = 20;
         DMatrixSparseCSC matrix = RandomMatrices_DSCC.rectangle(dim, dim, 5, new Random(42));
 
-        Mask mask = new SparseStructuralMask(matrix, false);
-        Mask negated_mask = new SparseStructuralMask(matrix, true);
+        SparseStructuralMask.Builder builder = new SparseStructuralMask.Builder(matrix);
+        Mask mask = builder.withNegated(false).build();
+        Mask negated_mask = builder.withNegated(true).build();
 
         var it = matrix.createCoordinateIterator();
 
