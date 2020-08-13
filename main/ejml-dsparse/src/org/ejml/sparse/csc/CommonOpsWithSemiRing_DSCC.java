@@ -19,7 +19,6 @@
 package org.ejml.sparse.csc;
 
 import org.ejml.MatrixDimensionException;
-import org.ejml.UtilEjml;
 import org.ejml.data.DGrowArray;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.data.DMatrixSparseCSC;
@@ -62,7 +61,7 @@ public class CommonOpsWithSemiRing_DSCC {
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
 
         // !! important to do before reshape
-        DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, A.numRows, B.numCols) ? output.copy() : null;
+        DMatrixSparseCSC initialOutput = MaskUtil_DSCC.useInitialOutput(mask, accumulator, output) ? output.copy() : null;
 
         output = reshapeOrDeclare(output, A, A.numRows, B.numCols);
         if (mask != null) {
@@ -80,7 +79,7 @@ public class CommonOpsWithSemiRing_DSCC {
         if (A.numRows != B.numRows)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
         // !! important to do before reshape
-        DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, A.numCols, B.numCols) ? output.copy() : null;
+        DMatrixSparseCSC initialOutput = MaskUtil_DSCC.useInitialOutput(mask, accumulator, output) ? output.copy() : null;
         output = reshapeOrDeclare(output, A, A.numCols, B.numCols);
         if (mask != null) {
             mask.compatible(output);
@@ -108,7 +107,7 @@ public class CommonOpsWithSemiRing_DSCC {
                                               @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numCols != B.numCols)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
-        DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, A.numRows, B.numRows) ? output.copy() : null;
+        DMatrixSparseCSC initialOutput = MaskUtil_DSCC.useInitialOutput(mask, accumulator, output) ? output.copy() : null;
         output = reshapeOrDeclare(output, A, A.numRows, B.numRows);
         if (mask != null) {
             mask.compatible(output);
@@ -119,7 +118,7 @@ public class CommonOpsWithSemiRing_DSCC {
     }
 
 
-    // sparse-dense variations
+    // sparse-dense variations (does not support masked yet. look at primitive versions for vector variants)
 
     /**
      * Performs matrix multiplication.  output = A*B
@@ -255,7 +254,7 @@ public class CommonOpsWithSemiRing_DSCC {
                                        @Nullable Mask mask, @Nullable DBinaryOperator accumulator, @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numRows != B.numRows || A.numCols != B.numCols)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
-        DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, A.numRows, A.numCols) ? output.copy() : null;
+        DMatrixSparseCSC initialOutput = MaskUtil_DSCC.useInitialOutput(mask, accumulator, output) ? output.copy() : null;
         output = reshapeOrDeclare(output, A, A.numRows, A.numCols);
         if (mask != null) {
             mask.compatible(output);
@@ -283,7 +282,7 @@ public class CommonOpsWithSemiRing_DSCC {
                                                @Nullable Mask mask, @Nullable DBinaryOperator accumulator, @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numCols != B.numCols || A.numRows != B.numRows)
             throw new MatrixDimensionException("All inputs must have the same number of rows and columns. " + stringShapes(A, B));
-        DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, A.numRows, A.numCols) ? output.copy() : null;
+        DMatrixSparseCSC initialOutput = MaskUtil_DSCC.useInitialOutput(mask, accumulator, output) ? output.copy() : null;
         output = reshapeOrDeclare(output, A, A.numRows, A.numCols);
         if (mask != null) {
             mask.compatible(output);
