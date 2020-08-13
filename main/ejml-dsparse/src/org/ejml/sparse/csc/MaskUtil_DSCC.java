@@ -34,7 +34,7 @@ public class MaskUtil_DSCC {
     // for applying mask and accumulator (output gets overwritten)
     // ! assumes that the mask is already applied to the output .. e.g. unset fields not even computed (and not assigned)
     // ! the mask is only needed for `apply` there the mask is not applied to the result structure before
-    static DMatrixSparseCSC combineOutputs(DMatrixSparseCSC output, DMatrixSparseCSC initialOutput, @Nullable Mask mask, DBinaryOperator accum) {
+    public static DMatrixSparseCSC combineOutputs(DMatrixSparseCSC output, DMatrixSparseCSC initialOutput, @Nullable Mask mask, @Nullable DBinaryOperator accum) {
         if (initialOutput != null) {
             if(accum == null) {
                 // e.g. just take the newly computed value

@@ -18,7 +18,7 @@
 
 package org.ejml.masks;
 
-public abstract class MaskBuilder<MASK> {
+public abstract class MaskBuilder<MASK extends Mask> {
     protected boolean negated = false;
     protected boolean replace = true;
 
