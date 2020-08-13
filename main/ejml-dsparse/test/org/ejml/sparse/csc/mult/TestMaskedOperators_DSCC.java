@@ -52,9 +52,10 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         prevResult[3] = 99;
         prevResult[0] = 42;
 
+        PrimitiveDMask.Builder maskBuilder = new PrimitiveDMask.Builder(prevResult);
         return Stream.of(
-                Arguments.of(inputVector, prevResult, new PrimitiveDMask(prevResult, true)),
-                Arguments.of(inputVector, prevResult, new PrimitiveDMask(prevResult, false))
+                Arguments.of(inputVector, prevResult, maskBuilder.withNegated(true).build()),
+                Arguments.of(inputVector, prevResult, maskBuilder.withNegated(false).build())
         );
     }
 
@@ -67,10 +68,10 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         prevResult.set(0, 2, 99);
 
         return Stream.of(
-                Arguments.of(otherMatrix, prevResult, DMasks.of(prevResult, false, true)),
-                Arguments.of(otherMatrix, prevResult, DMasks.of(prevResult, true, false)),
-                Arguments.of(otherMatrix, prevResult, DMasks.of(prevResult, false, false)),
-                Arguments.of(otherMatrix, prevResult, DMasks.of(prevResult, true, true))
+                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, false).withNegated(true).build()),
+                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, true).withNegated(false).build()),
+                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, false).withNegated(false).build()),
+                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, true).withNegated(true).build())
         );
     }
 
@@ -84,10 +85,10 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         prevResult.set(0, 3, 42);
 
         return Stream.of(
-                Arguments.of(otherMatrix, prevResult, DMasks.of(prevResult, false, true)),
-                Arguments.of(otherMatrix, prevResult, DMasks.of(prevResult, true, false)),
-                Arguments.of(otherMatrix, prevResult, DMasks.of(prevResult, false, false)),
-                Arguments.of(otherMatrix, prevResult, DMasks.of(prevResult, true, true))
+                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, false).withNegated(true).build()),
+                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, true).withNegated(false).build()),
+                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, false).withNegated(false).build()),
+                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, true).withNegated(true).build())
         );
     }
 
@@ -201,7 +202,7 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         prevPrimitiveResult[0] = 99;
 
         DMatrixRMaj prevResult = DMatrixRMaj.wrap(matrix.numRows, 1, prevPrimitiveResult);
-        Mask mask = DMasks.of(prevResult, negatedMask);
+        Mask mask = DMasks.builder(prevResult).withNegated(negatedMask).build();
 
         DMatrixRMaj result = CommonOps_DSCC.reduceRowWise(matrix, 0, Double::sum, prevResult.copy(), null, null);
         DMatrixRMaj resultWithMask = CommonOps_DSCC.reduceRowWise(matrix, 0, Double::sum, prevResult.copy(), mask, null);
@@ -223,7 +224,7 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         prevPrimitiveResult[0] = 99;
 
         DMatrixRMaj prevResult = DMatrixRMaj.wrap(1, matrix.numCols, prevPrimitiveResult);
-        Mask mask = DMasks.of(prevResult, negatedMask);
+        Mask mask = DMasks.builder(prevResult).withNegated(negatedMask).build();
 
         DMatrixRMaj result = CommonOps_DSCC.reduceColumnWise(matrix, 0, Double::sum, prevResult.copy(), null, null);
         DMatrixRMaj resultWithMask = CommonOps_DSCC.reduceColumnWise(matrix, 0, Double::sum, prevResult.copy(), mask, null);

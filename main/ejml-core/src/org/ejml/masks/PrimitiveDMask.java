@@ -26,21 +26,9 @@ public class PrimitiveDMask extends Mask {
     //
     private final double zeroElement;
 
-    public PrimitiveDMask(double[] values, boolean negated) {
-        this(values, 1, negated, 0);
-    }
-
-    public PrimitiveDMask(double[] values, boolean negated, double zeroElement) {
-        this(values, 1, negated, zeroElement);
-    }
-
-    public PrimitiveDMask(double[] values, int numCols, boolean negated) {
-        this(values, numCols, negated, 0);
-    }
-
-    public PrimitiveDMask(double[] values, int numCols, boolean negated, double zeroElement) {
+    public PrimitiveDMask(double[] values, int numCols, boolean negated, boolean replace, double zeroElement) {
         // for dense structures they cannot be used for structural masks
-        super(negated);
+        super(negated, replace);
         this.values = values;
         this.numCols = numCols;
         this.zeroElement = zeroElement;
@@ -65,4 +53,30 @@ public class PrimitiveDMask extends Mask {
     public boolean isSet(int index) {
         return negated ^ (values[index] != zeroElement);
     }
+
+    public static class Builder extends MaskBuilder<PrimitiveDMask> {
+        private double[] values;
+        private int numCols = 1;
+        private double zeroElement = 0;
+
+        public Builder(double[] values) {
+            this.values = values;
+        }
+
+        public Builder withNumCols(int numCols) {
+            this.numCols = numCols;
+            return this;
+        }
+
+        public Builder withZeroElement(double zeroElement) {
+            this.zeroElement = zeroElement;
+            return this;
+        }
+
+        @Override
+        public PrimitiveDMask build() {
+            return new PrimitiveDMask(values, numCols, negated, replace, zeroElement);
+        }
+    }
 }
+
