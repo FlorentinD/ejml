@@ -59,16 +59,16 @@ public class MaskUtil_DSCC {
         if (initialOutput != null) {
             checkSameShape(initialOutput, output, true);
 
+            if(accum == null) {
+                // e.g. just take the newly computed value
+                accum = SECOND;
+            }
+
             // TODO: operate on a bitset/boolean[] here -> also just one for-loop needed
             for (int col = 0; col < output.getNumCols(); col++) {
                 for (int row = 0; row < output.numRows; row++) {
                     if (mask.isSet(row, col)) {
-                        // TODO: use accum == SECOND by default (like above)
-                        if (accum != null) {
-                            // combine previous value and computed value
-                            output.unsafe_set(row, col, accum.apply(output.get(row, col), initialOutput.get(row, col)));
-                        }
-                        // else output value just keeps as it is
+                        output.unsafe_set(row, col, accum.apply(initialOutput.get(row, col), output.get(row, col)));
                     } else {
                         // just use previous value as it shouldnt be computed in the first place
                         output.unsafe_set(row, col, initialOutput.get(row, col));
