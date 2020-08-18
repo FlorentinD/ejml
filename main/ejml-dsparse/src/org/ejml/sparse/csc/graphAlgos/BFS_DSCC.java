@@ -35,39 +35,54 @@ import java.util.Arrays;
 
 // variants: boolean/parents/level/multi-bfs  + sparse/dense result vector
 public class BFS_DSCC {
+
     private static DSemiRing getSemiRing(BfsVariation variation) {
         return variation == BfsVariation.PARENTS ? DSemiRings.MIN_FIRST : DSemiRings.OR_AND;
     }
     // TODO: try to reuse working arrays/matrices e.g. gw, gx (and potentially initialOutput vector/array)
-
     // TODO: also return needed iterations
-
     // TODO: is the tmp iterationResult really necessary? (just the inputVector could be enough)
 
 
-    // FIXME: does not work yet
     // TODO: use dense matrix instead of pure primitive array (f.i. to use `apply` and to support MSBFS)
     public static double[] computeDense(DMatrixSparseCSC adjacencyMatrix, BfsVariation bfsVariation, int startNode, int maxIterations) {
         DSemiRing semiRing = getSemiRing(bfsVariation);
         double[] result = new double[adjacencyMatrix.numCols];
-        result[startNode] = 1;
+        Arrays.fill(result, semiRing.add.id);
+
+        if (bfsVariation == BfsVariation.PARENTS) {
+            result[startNode] = startNode + 1;
+        } else {
+            result[startNode] = 1;
+        }
+
 
         // or use dense matrix and reduceScalar to count non-zero elements
         double[] iterationResult = new double[adjacencyMatrix.numCols];
 
-        if (bfsVariation == BfsVariation.PARENTS) {
-            throw new UnsupportedOperationException("Not yet implemented");
-        }
+        int visitedNodes = 1;
+        int prevVisitedNodes = -1;
 
         double[] inputVector = result.clone();
+        boolean isFixPoint = false;
+        int iteration = 1;
 
-        // TODO: is this the best way to detect a fixPoint
-        for (int iteration = 1; !((iteration == maxIterations) || (Arrays.equals(result, iterationResult))); iteration++) {
+        for (; (iteration <= maxIterations) && !isFixPoint; iteration++) {
             // negated -> dont compute values for visited nodes
             // replace -> iterationResult is basically the new inputVector
-            PrimitiveDMask mask = DMasks.builder(result).withNegated(true).withReplace(true).build();
-            // FIXME: iterationResult gets wrong
+            PrimitiveDMask mask = DMasks.builder(result).withZeroElement(semiRing.add.id).withNegated(true).withReplace(true).build();
+            // clear iterationsResult to only contain newly discovered nodes
+            Arrays.fill(iterationResult, semiRing.add.id);
             iterationResult = MatrixVectorMultWithSemiRing_DSCC.mult(inputVector, adjacencyMatrix, iterationResult, semiRing, mask, null);
+
+            prevVisitedNodes = visitedNodes;
+
+            // add newly visited nodes
+            for (int i = 0; i < iterationResult.length; i++) {
+                if (iterationResult[i] != semiRing.add.id) {
+                    visitedNodes++;
+                }
+            }
 
             inputVector = iterationResult.clone();
 
@@ -80,7 +95,18 @@ public class BFS_DSCC {
                 }
             }
 
+            if (bfsVariation == BfsVariation.PARENTS) {
+                for (int i = 0; i < inputVector.length; i++) {
+                    if (inputVector[i] != semiRing.add.id) {
+                        inputVector[i] = i + 1;
+                    }
+                }
+            }
+
+            // FIXME: avoid cloning .. have a combine method that writes into the intialResult
             result = MaskUtil_DSCC.combineOutputs(result, iterationResult.clone(), mask, null);
+
+            isFixPoint = (visitedNodes == prevVisitedNodes) || (visitedNodes == adjacencyMatrix.numCols);
         }
 
         return result;
@@ -88,6 +114,7 @@ public class BFS_DSCC {
 
     public static DMatrixSparseCSC computeSparse(DMatrixSparseCSC adjacencyMatrix, BfsVariation bfsVariation, int[] startNodes, int maxIterations) {
         // TODO: use transposed result matrix as startNodes.length << adjacencyMatrix.length
+        //         need to transpose result of VxM before combining
         DMatrixSparseCSC result = new DMatrixSparseCSC(startNodes.length, adjacencyMatrix.numCols);
         // DMatrixSparseCSC iterationResult = result.createLike();
 
@@ -95,8 +122,7 @@ public class BFS_DSCC {
         for (int i = 0; i < startNodes.length; i++) {
             if (bfsVariation == BfsVariation.PARENTS) {
                 result.set(0, startNodes[i], i + 1);
-            }
-            else {
+            } else {
                 result.set(0, startNodes[i], 1);
             }
         }
@@ -113,11 +139,10 @@ public class BFS_DSCC {
 
         DSemiRing semiRing = getSemiRing(bfsVariation);
 
-        // TODO: parents version via using a different semiRing
-
         boolean isFixPoint = false;
+        int iteration = 1;
 
-        for (int iteration = 1; (iteration <= maxIterations) && !isFixPoint; iteration++) {
+        for (; (iteration <= maxIterations) && !isFixPoint; iteration++) {
             // negated -> dont compute values for visited nodes
             // replace -> iterationResult is basically the new inputVector
             Mask mask = DMasks.builder(result, true).withNegated(true).withReplace(true).build();
@@ -126,8 +151,7 @@ public class BFS_DSCC {
 
             if (mask.replace) {
                 visitedNodes += iterationResult.nz_length;
-            }
-            else {
+            } else {
                 visitedNodes = iterationResult.nz_length;
             }
 
@@ -156,8 +180,7 @@ public class BFS_DSCC {
             // combine iterationResult and result (basically poor mans `mask.replace=false`)
             result = MaskUtil_DSCC.combineOutputs(result, iterationResult, null, null);
 
-            result.print();
-
+            // TODO dont combine result if its known to be a fixPoint?
             isFixPoint = (visitedNodes == prevVisitedNodes) || (visitedNodes == adjacencyMatrix.numCols);
         }
 
