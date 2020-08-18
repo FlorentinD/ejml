@@ -83,11 +83,8 @@ public class BfsTest_DSCC {
         int startNode = 0;
         int maxIterations = 20;
 
-        if (variation != BfsVariation.PARENTS) {
-            double[] result = computeDense(inputMatrix, variation, startNode, maxIterations);
+        double[] result = computeDense(inputMatrix, variation, startNode, maxIterations);
 
-            System.out.println(Arrays.toString(result));
-            assertTrue(Arrays.equals(expected, result));
-        }
+        assertTrue(Arrays.equals(expected, result));
     }
 }
