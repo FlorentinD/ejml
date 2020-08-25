@@ -34,7 +34,7 @@ import org.ejml.sparse.csc.mult.MatrixVectorMultWithSemiRing_DSCC;
 import java.util.Arrays;
 
 // variants: boolean/parents/level/multi-bfs  + sparse/dense result vector
-public class BFS_DSCC {
+public class Bfs_DSCC {
 
     private static DSemiRing getSemiRing(BfsVariation variation) {
         return variation == BfsVariation.PARENTS ? DSemiRings.MIN_FIRST : DSemiRings.OR_AND;
@@ -45,7 +45,7 @@ public class BFS_DSCC {
 
 
     // TODO: use dense matrix instead of pure primitive array (f.i. to use `apply` and to support MSBFS)
-    public static double[] computeDense(DMatrixSparseCSC adjacencyMatrix, BfsVariation bfsVariation, int startNode, int maxIterations) {
+    public BfsDenseResult computeDense(DMatrixSparseCSC adjacencyMatrix, BfsVariation bfsVariation, int startNode, int maxIterations) {
         DSemiRing semiRing = getSemiRing(bfsVariation);
         double[] result = new double[adjacencyMatrix.numCols];
         Arrays.fill(result, semiRing.add.id);
@@ -78,8 +78,8 @@ public class BFS_DSCC {
             prevVisitedNodes = visitedNodes;
 
             // add newly visited nodes
-            for (int i = 0; i < iterationResult.length; i++) {
-                if (iterationResult[i] != semiRing.add.id) {
+            for (double v : iterationResult) {
+                if (v != semiRing.add.id) {
                     visitedNodes++;
                 }
             }
@@ -109,10 +109,10 @@ public class BFS_DSCC {
             isFixPoint = (visitedNodes == prevVisitedNodes) || (visitedNodes == adjacencyMatrix.numCols);
         }
 
-        return result;
+        return new BfsDenseResult(result, iteration - 1, semiRing.add.id);
     }
 
-    public static DMatrixSparseCSC computeSparse(DMatrixSparseCSC adjacencyMatrix, BfsVariation bfsVariation, int[] startNodes, int maxIterations) {
+    public BfsSparseResult computeSparse(DMatrixSparseCSC adjacencyMatrix, BfsVariation bfsVariation, int[] startNodes, int maxIterations) {
         // TODO: use transposed result matrix as startNodes.length << adjacencyMatrix.length
         //         need to transpose result of VxM before combining
         DMatrixSparseCSC result = new DMatrixSparseCSC(startNodes.length, adjacencyMatrix.numCols);
@@ -184,11 +184,73 @@ public class BFS_DSCC {
             isFixPoint = (visitedNodes == prevVisitedNodes) || (visitedNodes == adjacencyMatrix.numCols);
         }
 
-        return result;
+        return new BfsSparseResult(result, iteration - 1);
     }
 
 
     public enum BfsVariation {
         BOOLEAN, PARENTS, LEVEL
+    }
+
+    public interface BfsResult {
+        int iterations();
+        int nodesVisited();
+    }
+
+    public class BfsSparseResult implements BfsResult {
+        private final DMatrixSparseCSC result;
+        private final int iterations;
+
+        public BfsSparseResult(DMatrixSparseCSC result, int iterations) {
+            this.result = result;
+            this.iterations = iterations;
+        }
+
+        @Override
+        public int iterations() {
+            return this.iterations;
+        }
+
+        @Override
+        public int nodesVisited() {
+            return this.result.getNonZeroLength();
+        }
+
+
+        public DMatrixSparseCSC result() {
+            return this.result;
+        }
+    }
+
+    public class BfsDenseResult implements BfsResult {
+        private final double[] result;
+        private final double notFoundValue;
+        private final int iterations;
+
+        public BfsDenseResult(double[] result, int iterations, double notFoundValue) {
+            this.result = result;
+            this.iterations = iterations;
+            this.notFoundValue = notFoundValue;
+        }
+
+        @Override
+        public int iterations() {
+            return this.iterations;
+        }
+
+        @Override
+        public int nodesVisited() {
+            int visited = 0;
+
+            for (double v : result) {
+                if (v != notFoundValue) visited++;
+            }
+
+            return visited;
+        }
+
+        public double[] result() {
+            return this.result;
+        }
     }
 }
