@@ -61,7 +61,7 @@ public class Bfs_DSCC {
         double[] iterationResult = new double[adjacencyMatrix.numCols];
 
         int visitedNodes = 1;
-        int prevVisitedNodes = -1;
+        int prevVisitedNodes;
 
         double[] inputVector = result.clone();
         boolean isFixPoint = false;
@@ -135,7 +135,7 @@ public class Bfs_DSCC {
         DGrowArray gx = new DGrowArray();
 
         int visitedNodes = startNodes.length;
-        int prevVisitedNodes = -1;
+        int prevVisitedNodes;
 
         DSemiRing semiRing = getSemiRing(bfsVariation);
 
@@ -184,7 +184,8 @@ public class Bfs_DSCC {
             isFixPoint = (visitedNodes == prevVisitedNodes) || (visitedNodes == adjacencyMatrix.numCols);
         }
 
-        return new BfsSparseResult(result, iteration - 1);
+        // expect the result to be a row vector / row vectors
+        return new BfsSparseResult(result, iteration - 1, semiRing.add.id);
     }
 
 
@@ -195,15 +196,18 @@ public class Bfs_DSCC {
     public interface BfsResult {
         int iterations();
         int nodesVisited();
+        double get(int nodeId);
     }
 
     public class BfsSparseResult implements BfsResult {
         private final DMatrixSparseCSC result;
+        private final double notFoundValue;
         private final int iterations;
 
-        public BfsSparseResult(DMatrixSparseCSC result, int iterations) {
+        public BfsSparseResult(DMatrixSparseCSC result, int iterations, double fallBackValue) {
             this.result = result;
             this.iterations = iterations;
+            notFoundValue = fallBackValue;
         }
 
         @Override
@@ -216,6 +220,10 @@ public class Bfs_DSCC {
             return this.result.getNonZeroLength();
         }
 
+        @Override
+        public double get(int nodeId) {
+            return result.get(0, nodeId, notFoundValue);
+        }
 
         public DMatrixSparseCSC result() {
             return this.result;
@@ -247,6 +255,11 @@ public class Bfs_DSCC {
             }
 
             return visited;
+        }
+
+        @Override
+        public double get(int nodeId) {
+            return result[nodeId];
         }
 
         public double[] result() {
