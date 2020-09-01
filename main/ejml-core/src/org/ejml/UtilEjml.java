@@ -22,6 +22,7 @@ import org.ejml.data.*;
 import org.ejml.interfaces.linsol.LinearSolver;
 import org.ejml.interfaces.linsol.LinearSolverDense;
 import org.ejml.interfaces.linsol.LinearSolverSparse;
+import org.ejml.masks.Mask;
 import org.ejml.ops.ConvertDMatrixStruct;
 import org.ejml.ops.ConvertFMatrixStruct;
 import org.jetbrains.annotations.Nullable;
@@ -711,5 +712,13 @@ public class UtilEjml {
     public static void assertShape( boolean value, String message ) {
         if (!value)
             throw new MatrixDimensionException(message);
+    }
+
+    /**
+     * Check if output matrix needs to be cached for later merge with actual result
+     * (in order to prevent deleting entries which shouldnt be overwritten, e.g. !mask.isSet())
+     */
+    public static boolean useInitialOutput(Mask mask, Matrix output, int numRows, int numCols) {
+        return mask != null && output != null && output.getNumRows() == numRows && output.getNumCols() == numCols;
     }
 }
