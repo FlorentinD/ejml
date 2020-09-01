@@ -72,7 +72,6 @@ public class TestMatrixMatrixMultWithSemiRing_DSCC {
         assertEquals(expected[1], found.get(0, 2));
     }
 
-
     @ParameterizedTest(name = "{0}")
     @MethodSource("sparseMatrixSources")
     void elementMult(String desc, DMatrixSparseCSC matrix, DMatrixSparseCSC otherMatrix) {
