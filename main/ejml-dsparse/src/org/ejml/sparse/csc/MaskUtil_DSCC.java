@@ -18,11 +18,9 @@
 
 package org.ejml.sparse.csc;
 
-import org.ejml.data.DGrowArray;
-import org.ejml.data.DMatrixRMaj;
-import org.ejml.data.DMatrixSparseCSC;
-import org.ejml.data.IGrowArray;
+import org.ejml.data.*;
 import org.ejml.masks.Mask;
+import org.ejml.masks.PrimitiveDMask;
 import org.ejml.ops.DBinaryOperator;
 
 import javax.annotation.Nullable;
@@ -65,6 +63,7 @@ public class MaskUtil_DSCC {
             for (int col = 0; col < output.getNumCols(); col++) {
                 for (int row = 0; row < output.numRows; row++) {
                     if (mask.isSet(row, col)) {
+                        // TODO: use accum == SECOND by default (like above)
                         if (accum != null) {
                             // combine previous value and computed value
                             output.unsafe_set(row, col, accum.apply(output.get(row, col), initialOutput.get(row, col)));
@@ -77,6 +76,26 @@ public class MaskUtil_DSCC {
                 }
             }
         }
+        return output;
+    }
+
+    public static double[] combineOutputs(@Nullable double[] initialOutput, double[] output, @Nullable PrimitiveDMask mask, @Nullable  DBinaryOperator accum) {
+        if (initialOutput != null) {
+            if(accum == null) {
+                // e.g. just take the newly computed value
+                accum = SECOND;
+            }
+
+            for (int i = 0; i < output.length; i++) {
+                if (mask == null || mask.isSet(i)) {
+                    output[i] = accum.apply(initialOutput[i], output[i]);
+                }
+                else {
+                    output[i] = initialOutput[i];
+                }
+            }
+        }
+
         return output;
     }
 
@@ -150,5 +169,22 @@ public class MaskUtil_DSCC {
                 }
             }
         }
+    }
+
+    // TODO: remove replace flag and just decide based on accumulator and intialOutput? (replace flag seems redundant)
+    //       drawback: user has to specify accumulator everytime (e.g. not default to SECOND)
+
+    /**
+     * Check if initialOutput matrix needs to be cached for later merge with actual result
+     *
+     * ! mask.replace takes precedence before existing accumlator
+     */
+    public static boolean useInitialOutput(Mask mask, DBinaryOperator accumulator, Matrix initialOutput) {
+        return initialOutput != null && ((mask != null && !mask.replace) || (accumulator != null && mask == null));
+    }
+
+    // primitive version
+    public static boolean useInitialOutput(Mask mask, DBinaryOperator accumulator, double[] initialOutput) {
+        return initialOutput != null && ((mask != null && !mask.replace) || (accumulator != null && mask == null));
     }
 }

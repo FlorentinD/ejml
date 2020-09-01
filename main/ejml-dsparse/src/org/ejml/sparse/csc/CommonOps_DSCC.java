@@ -19,7 +19,6 @@
 package org.ejml.sparse.csc;
 
 import org.ejml.MatrixDimensionException;
-import org.ejml.UtilEjml;
 import org.ejml.data.DGrowArray;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.data.DMatrixSparseCSC;
@@ -1810,7 +1809,7 @@ public class CommonOps_DSCC {
     // !! FIXME: apply also calculates unneeded fields .. this can produce wrong results with another accumulator than "first"
     public static DMatrixSparseCSC apply(DMatrixSparseCSC input, DUnaryOperator func,
                                          @Nullable DMatrixSparseCSC output, @Nullable Mask mask, @Nullable DBinaryOperator accum) {
-        DMatrixSparseCSC initialOutput = UtilEjml.useInitialOutput(mask, output, input.numRows, input.numCols) ? output.copy() : null;
+        DMatrixSparseCSC initialOutput = MaskUtil_DSCC.useInitialOutput(mask, accum, output) ? output.copy() : null;
         // set correct structure
         if (output == null) {
             output = input.createLike();
@@ -1928,7 +1927,7 @@ public class CommonOps_DSCC {
      */
     public static DMatrixRMaj reduceColumnWise(DMatrixSparseCSC input, double initValue, DBinaryOperator func,
                                                @Nullable DMatrixRMaj output, @Nullable Mask mask, @Nullable DBinaryOperator accum) {
-        DMatrixRMaj initialOutput = UtilEjml.useInitialOutput(mask, output, 1, input.numCols) ? output.copy() : null;
+        DMatrixRMaj initialOutput = MaskUtil_DSCC.useInitialOutput(mask, accum, output) ? output.copy() : null;
         output = reshapeOrDeclare(output, 1, input.numCols);
         if (mask != null) {
             mask.compatible(output);
@@ -1972,7 +1971,7 @@ public class CommonOps_DSCC {
      */
     public static DMatrixRMaj reduceRowWise(DMatrixSparseCSC input, double initValue, DBinaryOperator func,
                                             @Nullable DMatrixRMaj output, @Nullable Mask mask, @Nullable DBinaryOperator accum) {
-        DMatrixRMaj initialOutput = UtilEjml.useInitialOutput(mask, output, input.numRows, 1) ? output.copy() : null;
+        DMatrixRMaj initialOutput = MaskUtil_DSCC.useInitialOutput(mask, accum, output) ? output.copy() : null;
         output = reshapeOrDeclare(output, input.numRows, 1);
         if (mask != null) {
             mask.compatible(output);

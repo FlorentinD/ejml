@@ -18,6 +18,8 @@
 
 package org.ejml.masks;
 
+import org.ejml.MatrixDimensionException;
+
 public class PrimitiveDMask extends Mask {
     // TODO: Check if creating dense boolean mask is worth it (currently converting to boolean on the fly)
     private final double[] values;
@@ -52,6 +54,15 @@ public class PrimitiveDMask extends Mask {
 
     public boolean isSet(int index) {
         return negated ^ (values[index] != zeroElement);
+    }
+
+    public void compatible(double[] vector) {
+        if (vector.length != values.length) {
+            throw new MatrixDimensionException(String.format(
+                    "Mask of length %d cannot be applied to vector of lenght %d",
+                    values.length, vector.length
+            ));
+        }
     }
 
     public static class Builder extends MaskBuilder<PrimitiveDMask> {
