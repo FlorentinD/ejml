@@ -1792,6 +1792,10 @@ public class CommonOps_DSCC {
         if (input != output) {
             output.copyStructure(input);
         }
+        // TODO: how to apply mask (space/time tradeoff)
+        //      only compute value if mask.isSet -> no SIMDI usage possible
+        //      compute in tmp matrix -> memory usage doubled
+        // also here Mask needs to be based on nz_value index
 
         for (int i = 0; i < input.nz_length; i++) {
             output.nz_values[i] = func.apply(input.nz_values[i]);

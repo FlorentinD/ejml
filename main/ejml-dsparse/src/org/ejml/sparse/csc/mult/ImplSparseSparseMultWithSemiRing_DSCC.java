@@ -22,6 +22,7 @@ import org.ejml.data.DGrowArray;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.data.DMatrixSparseCSC;
 import org.ejml.data.IGrowArray;
+import org.ejml.masks.Mask;
 import org.ejml.ops.DSemiRing;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,10 +39,11 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
      * @param A  Matrix
      * @param B  Matrix
      * @param C  Storage for results.  Data length is increased if increased if insufficient.
+     * @param mask Mask for specifying which entries should be overwritten
      * @param gw (Optional) Storage for internal workspace.  Can be null.
      * @param gx (Optional) Storage for internal workspace.  Can be null.
      */
-    public static void mult(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC C, DSemiRing semiRing,
+    public static void mult(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC C, DSemiRing semiRing, @Nullable Mask mask,
                             @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         double[] x = adjust(gx, A.numRows);
         int[] w = adjust(gw, A.numRows, A.numRows);
@@ -74,7 +76,10 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
             int idxC1 = C.col_idx[colB + 1];
 
             for (int i = idxC0; i < idxC1; i++) {
-                C.nz_values[i] = x[C.nz_rows[i]];
+                //  this will destroy simdi usage here .. (hopefully not if mask == null)
+                if (mask == null || mask.isSet(C.nz_rows[i], bj)) {
+                    C.nz_values[i] = x[C.nz_rows[i]];
+                }
             }
 
             idx0 = idx1;
@@ -112,6 +117,8 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
             }
         }
     }
+
+    // sparse-dense variants
 
     public static void mult(DMatrixSparseCSC A, DMatrixRMaj B, DMatrixRMaj C, DSemiRing semiRing) {
         C.fill(semiRing.add.id);
