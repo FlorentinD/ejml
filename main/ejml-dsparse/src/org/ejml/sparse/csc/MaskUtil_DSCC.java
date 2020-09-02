@@ -66,14 +66,13 @@ public class MaskUtil_DSCC {
             // TODO: operate on a bitset/boolean[] here -> also just one for-loop needed
             for (int col = 0; col < output.getNumCols(); col++) {
                 for (int row = 0; row < output.numRows; row++) {
-                    if (mask != null && mask.isSet(row, col)) {
-                        output.unsafe_set(row, col, accum.apply(initialOutput.get(row, col), output.get(row, col)));
-                    } else {
-                        // just use previous value as it shouldnt be computed in the first place
-                        output.unsafe_set(row, col, initialOutput.get(row, col));
+                    if (mask == null || mask.isSet(row, col)) {
+                        initialOutput.unsafe_set(row, col, accum.apply(initialOutput.get(row, col), output.get(row, col)));
                     }
                 }
             }
+
+            output = initialOutput;
         }
         return output;
     }
@@ -87,12 +86,11 @@ public class MaskUtil_DSCC {
 
             for (int i = 0; i < output.length; i++) {
                 if (mask == null || mask.isSet(i)) {
-                    output[i] = accum.apply(initialOutput[i], output[i]);
-                }
-                else {
-                    output[i] = initialOutput[i];
+                    initialOutput[i] = accum.apply(initialOutput[i], output[i]);
                 }
             }
+
+            output = initialOutput;
         }
 
         return output;
