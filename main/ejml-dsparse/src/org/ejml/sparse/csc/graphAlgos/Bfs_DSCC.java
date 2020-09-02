@@ -24,6 +24,7 @@ import org.ejml.data.IGrowArray;
 import org.ejml.masks.DMasks;
 import org.ejml.masks.Mask;
 import org.ejml.masks.PrimitiveDMask;
+import org.ejml.ops.CommonOps_DArray;
 import org.ejml.ops.DSemiRing;
 import org.ejml.ops.DSemiRings;
 import org.ejml.sparse.csc.CommonOpsWithSemiRing_DSCC;
@@ -87,12 +88,9 @@ public class Bfs_DSCC {
             inputVector = iterationResult.clone();
 
             if (bfsVariation == BfsVariation.LEVEL) {
-                // poor mans apply on primitive array
-                for (int i = 0; i < iterationResult.length; i++) {
-                    if (iterationResult[i] != semiRing.add.id) {
-                        iterationResult[i] = iteration + 1;
-                    }
-                }
+                // TODO: check if apply has any overhead compared to inlined for-loop (potentially due to uneccesary assignments of semiRing.add.id)
+                int finalIteration = iteration;
+                CommonOps_DArray.apply(iterationResult, i -> (i != semiRing.add.id) ? finalIteration + 1 : semiRing.add.id);
             }
 
             if (bfsVariation == BfsVariation.PARENTS) {
@@ -103,7 +101,7 @@ public class Bfs_DSCC {
                 }
             }
 
-            // FIXME: avoid cloning .. have a combine method that writes into the intialResult
+            // FIXME: avoid cloning .. change combine method that writes into the initialResult
             result = MaskUtil_DSCC.combineOutputs(result, iterationResult.clone(), mask, null);
 
             isFixPoint = (visitedNodes == prevVisitedNodes) || (visitedNodes == adjacencyMatrix.numCols);
@@ -199,6 +197,7 @@ public class Bfs_DSCC {
         double get(int nodeId);
     }
 
+    // TODO move into extra file
     public class BfsSparseResult implements BfsResult {
         private final DMatrixSparseCSC result;
         private final double notFoundValue;

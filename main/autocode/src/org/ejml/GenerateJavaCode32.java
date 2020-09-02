@@ -37,6 +37,8 @@ public class GenerateJavaCode32 extends GenerateCode32 {
         suffices64.add("_F64");
         suffices32.add("_FDRB_to_FDRM");
         suffices32.add("_F32");
+        suffices64.add("_DArray");
+        suffices32.add("_FArray");
 
         for( String suffice : sufficeRoot ) {
             suffices64.add("_D"+suffice);
@@ -96,6 +98,7 @@ public class GenerateJavaCode32 extends GenerateCode32 {
         converter.replacePattern("DoubleStep", "FIXED_STEP");
         converter.replacePattern("double", "float");
         converter.replacePattern("Double", "Float");
+        converter.replacePattern("DArray", "FArray");
 
         for( String suffice : sufficeRoot) {
             converter.replacePattern("_D"+suffice, "_F"+suffice);

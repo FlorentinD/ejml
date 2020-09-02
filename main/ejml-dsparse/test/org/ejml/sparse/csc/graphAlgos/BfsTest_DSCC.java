@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 import static org.ejml.sparse.csc.graphAlgos.Bfs_DSCC.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+@SuppressWarnings({"UnusedMethod"})
 public class BfsTest_DSCC {
     DMatrixSparseCSC inputMatrix;
 
