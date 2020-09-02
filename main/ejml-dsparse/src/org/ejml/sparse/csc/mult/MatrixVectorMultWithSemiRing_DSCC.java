@@ -39,6 +39,7 @@ public class MatrixVectorMultWithSemiRing_DSCC {
      * @param output (Output) vector
      * @param semiRing Semi-Ring to define + and *
      * @param mask Mask for specifying which entries should be overwritten
+     * @param accumulator Operator to combine result with existing entries in output matrix
      */
     public static double[] mult(DMatrixSparseCSC A, double[] b, double[] output, DSemiRing semiRing,
                                 @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accumulator) {
@@ -46,7 +47,7 @@ public class MatrixVectorMultWithSemiRing_DSCC {
         if (mask != null) {
             mask.compatible(output);
         }
-
+        // could also just fill where mask.isSet()
         Arrays.fill(output, semiRing.add.id);
 
         return multAdd(A, b, output, initialOutput, semiRing, mask, accumulator);
@@ -94,6 +95,7 @@ public class MatrixVectorMultWithSemiRing_DSCC {
      * @param output       (Output) vector
      * @param semiRing Semi-Ring to define + and *
      * @param mask Mask for specifying which entries should be overwritten
+     * @param accumulator Operator to combine result with existing entries in output matrix
      */
     public static double[] mult(double[] a, DMatrixSparseCSC B, double[] output, DSemiRing semiRing,
                                 @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accumulator) {
@@ -124,7 +126,43 @@ public class MatrixVectorMultWithSemiRing_DSCC {
     }
 
     /**
-     * scalar = A<sup>T</sup>*B*C
+     * output = A<sup>T</sup>*b
+     * @param A     (Input) Matrix
+     * @param b     (Input) vector
+     * @param output    (Output) vector
+     * @param semiRing  Semi-Ring to define + and *
+     * @param mask      Mask for specifying which entries should be overwritten
+     * @param accumulator Operator to combine result with existing entries in output matrix
+     * @return output
+     */
+    public static double[] multTransA(DMatrixSparseCSC A, double[] b, double[] output,
+                                      DSemiRing semiRing, @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accumulator) {
+        double[] initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(mask, accumulator, output);
+        if (mask != null) {
+            mask.compatible(output);
+        }
+
+        // based on a*B (but replaced with A and b)
+        for (int k = 0; k < A.numCols; k++) {
+            if (mask == null || mask.isSet(k)) {
+                int idx0 = A.col_idx[k];
+                int idx1 = A.col_idx[k + 1];
+
+
+                double sum = semiRing.add.id;
+                for (int indexB = idx0; indexB < idx1; indexB++) {
+                    sum = semiRing.add.func.apply(sum, semiRing.mult.func.apply(b[A.nz_rows[indexB]], A.nz_values[indexB]));
+                }
+                output[k] = sum;
+            }
+        }
+
+
+        return MaskUtil_DSCC.combineOutputs(initialOutput, output, mask, accumulator);
+    }
+
+    /**
+     * scalar = a<sup>T</sup>*B*c
      *
      * @param a (Input) vector
      * @param offsetA Input) first index in vector a

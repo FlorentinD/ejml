@@ -38,6 +38,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@SuppressWarnings({"UnusedMethod"})
 public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRing_DSCC {
     // TODO test with replace = false and generate all possible masks (not hard-coded)
     //      test accumulator
