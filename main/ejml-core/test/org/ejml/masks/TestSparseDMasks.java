@@ -37,8 +37,6 @@ public class TestSparseDMasks {
         Mask mask = builder.withNegated(false).build();
         Mask negated_mask = builder.withNegated(true).build();
 
-        var it = matrix.createCoordinateIterator();
-
         for (int row = 0; row < dim; row++) {
             for (int col = 0; col < dim; col++) {
                 boolean expected = (matrix.get(row, col) != 0);

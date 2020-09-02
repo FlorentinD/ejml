@@ -18,6 +18,8 @@
 
 package org.ejml.ops;
 
+import org.ejml.masks.PrimitiveDMask;
+
 /**
  * @author Florentin Doerre
  *
@@ -44,10 +46,33 @@ public class CommonOps_DArray {
         return output;
     }
 
+    public static double[] elementWiseAdd(double[] a, double[] b, double[] output, DMonoid add) {
+        // dense version -> no difference between elementWiseMult or elementWiseAdd
+        return elementWiseMult(a, b, output, add.func);
+    }
+
     public static double reduceScalar(double[] v, DMonoid monoid) {
         double result = monoid.id;
+        for (double value : v) {
+            result = monoid.func.apply(result, value);
+        }
+
+        return result;
+    }
+
+    /**
+     *
+     * @param v     (Input) vector
+     * @param monoid Operator to use for reduction and intial value
+     * @param mask !! differs from normal mask (here for which elements should be included from v)
+     * @return      accumulated Value
+     */
+    public static double reduceScalar(double[] v, DMonoid monoid, PrimitiveDMask mask) {
+        double result = monoid.id;
         for (int i = 0; i < v.length; i++) {
-            result = monoid.func.apply(result, v[i]);
+            if (mask.isSet(i)) {
+                result = monoid.func.apply(result, v[i]);
+            }
         }
 
         return result;
