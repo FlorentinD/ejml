@@ -30,6 +30,113 @@ import org.ejml.sparse.csc.mult.MatrixVectorMultWithSemiRing_DSCC;
 import java.util.Arrays;
 
 public class PageRank_DSCC {
+    public final int DEFAULT_MAX_ITERATIONS = 20;
+    public final double DEFAULT_DAMPING_FACTOR = 0.85;
+    public final float DEFAULT_TOLERANCE = 1e-7f;
+
+    /**
+     * based on https://github.com/GraphBLAS/LAGraph/blob/master/Source/Algorithm/LAGraph_pagerank2.c
+     * and therefore LDBC-Graphalytics conform
+     *
+     * @param adjacencyMatrix (Input) Graph
+     * @param dampingFactor   How often are teleports
+     * @param tolerance       Minimum change in scores between iterations
+     * @param maxIterations   Maximum number of iterations
+     * @return pr-scores (sum of all scores = 1)
+     */
+    public PageRankResult compute(DMatrixSparseCSC adjacencyMatrix, double dampingFactor, double tolerance, int maxIterations) {
+        int nodeCount = adjacencyMatrix.getNumCols();
+        final double teleport = (1.0 - dampingFactor) / nodeCount;
+        // so first iteration is always run
+        double resultDiff = 1;
+        int iterations = 0;
+
+        // Calculating outbound degrees of all nodes
+        double[] outDegrees = CommonOps_DSCC.reduceRowWise(adjacencyMatrix, 0.0, (acc, b) -> acc + 1, null).data;
+
+        // Mask set for every node with a nodeDegree > 0
+        // In subsequent operations, this mask can be used to select dangling nodes.
+        // Difference to reference: not creating a boolean vector for non-dangling nodes and inverting at this point already
+        // as here we have explicit mask objects
+        PrimitiveDMask danglingNodesMask = DMasks.builder(outDegrees)
+                .withZeroElement(0)
+                .withReplace(true)
+                .withNegated(true)
+                .build();
+
+
+        // init result vector
+        double[] pr = new double[nodeCount];
+        double[] prevResult = new double[nodeCount];
+        Arrays.fill(pr, 1.0 / nodeCount);
+
+        double[] importanceVec = new double[nodeCount];
+        double[] importanceResultVec = new double[nodeCount];
+
+        //iterations
+        for (; iterations < maxIterations && resultDiff > tolerance; iterations++) {
+            // cache result from previous iteration
+            System.arraycopy(pr, 0, prevResult, 0, pr.length);
+
+            //
+            // Importance calculation
+            //
+
+            // Divide previous PageRank with number of outbound edges
+            // Difference to reference: need to use nonDanglingNodesMask here to avoid division by 0
+            // Reason: outDegrees vector would be sparse in other GraphBLAS implementations (here always dense)
+            // TODO: this should only be done if outDegree != 0? (otherwise division through 0, but result is ignored in next mult-op either way) (see Performance impact first)
+            importanceVec = CommonOps_DArray.elementWiseMult(pr, outDegrees, importanceVec, (a, b) -> a / b);
+
+            // Multiply importance by damping factor
+            CommonOps_DArray.apply(importanceVec, i -> i * dampingFactor);
+
+            // Calculate total PR of all inbound nodes
+            // !! Difference to reference: input vector must be different to initial output vector (otherwise dirty reads) for `multTransA`
+            //  --> importanceResultVec (instead of allocating a new result array per iteration)
+            importanceResultVec = MatrixVectorMultWithSemiRing_DSCC.multTransA(
+                    adjacencyMatrix,
+                    importanceVec,
+                    importanceResultVec,
+                    DSemiRings.PLUS_TIMES,
+                    null,
+                    null
+            );
+
+
+            //
+            // Dangling calculation
+            //
+
+            // Sum the previous PR values of dangling nodes together
+            // !! Difference to reference:  mask in reduceScalar is for the input-vector
+            // --> not extracting dangling pr entries before
+            double danglingSum = CommonOps_DArray.reduceScalar(pr, DMonoids.PLUS, danglingNodesMask);
+
+
+            // Multiply by damping factor and 1 / |V|
+            danglingSum *= (dampingFactor / nodeCount);
+
+            //
+            // PageRank summarization
+            // Add teleport, importanceVec, and dangling_vec components together
+            //
+            Arrays.fill(pr, teleport + danglingSum);
+            CommonOps_DArray.elementWiseAdd(pr, importanceResultVec, pr, DMonoids.PLUS);
+
+
+            // !! Difference to reference: no tolerance contained
+            // calculate diff (for tolerance check)
+            for (int i = 0; i < prevResult.length; i++) {
+                prevResult[i] = prevResult[i] - pr[i];
+            }
+            CommonOps_DArray.apply(prevResult, Math::abs);
+            resultDiff = CommonOps_DArray.reduceScalar(prevResult, DMonoids.PLUS);
+        }
+
+        return new PageRankResult(pr, iterations);
+    }
+
     /**
      * uses dense vectors (as pageRank is computed for every node)
      * based on https://github.com/GraphBLAS/LAGraph/blob/master/Source/Algorithm/LAGraph_pagerank3f.c
@@ -38,9 +145,8 @@ public class PageRank_DSCC {
      * using primitive arrays instead of dense matrix, as the dense matrix assumes if its dimensions to (1, n) or (n, 1) , eg column or row vector
      **/
     public PageRankResult compute2(DMatrixSparseCSC adjacencyMatrix, double damping, int maxIterations) {
-        // TODO: also return needed iterations
+        // TODO: test this implementation
         int nodeCount = adjacencyMatrix.numCols;
-
         double teleport = (1 - damping) / nodeCount;
         // TODO: make tolerance as a parameter
         float tolerance = 1e-4f;
@@ -52,7 +158,7 @@ public class PageRank_DSCC {
         // double, as method always returns a double matrix
         double[] outDegrees = CommonOps_DSCC.reduceRowWise(adjacencyMatrix, 0.0, (acc, b) -> acc + 1, null).data;
         // assert that every node has at least 1 outgoing edge
-        assert (CommonOps_DArray.reduceScalar(outDegrees, DMonoids.AND) == 1);
+        assert (CommonOps_DArray.reduceScalar(outDegrees, DMonoids.AND) == 1) : "Does not allow nodes with out-degree of 0";
 
         // r = 1/n
         double[] t = new double[nodeCount];
@@ -87,106 +193,20 @@ public class PageRank_DSCC {
             // e.g. initialOutput = r , matrix adjMatrix (transposed), semiRing = DSemiRings.PLUS_SECOND, accum = DMonoids.PLUS, mask = null
             MatrixVectorMultWithSemiRing_DSCC.multTransA(adjacencyMatrix, w, r, DSemiRings.PLUS_SECOND, null, DMonoids.PLUS.func);
 
-            // TODO outfactor into primitve assign .. or basically just accumulate
+            // TODO outfactor into primitve assign .. with accumulate
             // t -= r
             // e.g. accum = DMonoids.MINUS
             for (int i = 0; i < t.length; i++) {
                 t[i] = t[i] - r[i];
             }
 
-            // TODO apply for primitve arrays
             // t = abs (t)
             CommonOps_DArray.apply(t, Math::abs);
 
-            // TODO check with neo4j impl ... sum or max for aggregating diffs
             resultDiff = CommonOps_DArray.reduceScalar(t, DMonoids.PLUS);
         }
 
         return new PageRankResult(r, iterations);
-    }
-
-    /**
-     * based on https://github.com/GraphBLAS/LAGraph/blob/master/Source/Algorithm/LAGraph_pagerank2.c
-     * and therefore LDBC-Graphalytics conform
-     * @param adjacencyMatrix (Input) Graph
-     * @param dampingFactor   How often are teleports
-     * @param maxIterations   Maximum number of iterations
-     * @return pr-scores (sum of all scores = 1)
-     */
-    public PageRankResult compute(DMatrixSparseCSC adjacencyMatrix, double dampingFactor, int maxIterations) {
-        // TODO: define tolerance (to stop early)
-        int nodeCount = adjacencyMatrix.getNumCols();
-        final double teleport = (1.0 - dampingFactor) / nodeCount;
-        int iterations = 0;
-
-        // Calculating outbound degrees of all nodes
-        double[] outDegrees = CommonOps_DSCC.reduceRowWise(adjacencyMatrix, 0.0, (acc, b) -> acc + 1, null).data;
-
-        // Mask set for every node with a nodeDegree > 0
-        // In subsequent operations, this mask can be used to select dangling nodes.
-        // Difference to reference: not creating a boolean vector for non-dangling nodes
-        // TODO: negate mask or don't negate mask? (negated seems correct)
-        PrimitiveDMask nonDanglingNodesMask = DMasks.builder(outDegrees)
-                .withZeroElement(0)
-                .withReplace(true)
-                .withNegated(true)
-                .build();
-
-
-        // init result vector
-        double[] pr = new double[nodeCount];
-        Arrays.fill(pr, 1.0 / nodeCount);
-
-        double[] importance_vec = new double[nodeCount];
-
-        //iterations
-        for (; iterations < maxIterations; iterations++) {
-            //
-            // Importance calculation
-            //
-
-            // Divide previous PageRank with number of outbound edges
-            // TODO: this should only be done if outDegree != 0? (otherwise division through 0)
-            importance_vec = CommonOps_DArray.elementWiseMult(pr, outDegrees, importance_vec, (a, b) -> a / b);
-
-            // Multiply importance by damping factor
-            CommonOps_DArray.apply(importance_vec, i -> i * dampingFactor);
-
-            // Calculate total PR of all inbound nodes
-            // !! Difference to reference: input vector must be different to initial output vector (otherwise dirty reads)
-            // TODO: importance_result_vec (instead of allocating a new result array per iteration)
-            importance_vec = MatrixVectorMultWithSemiRing_DSCC.multTransA(
-                    adjacencyMatrix,
-                    importance_vec,
-                    importance_vec.clone(),
-                    DSemiRings.PLUS_TIMES,
-                    null,
-                    null
-            );
-
-
-            //
-            // Dangling calculation
-            //
-
-            // Sum the previous PR values of dangling nodes together
-            // !! Difference to reference:  mask in reduceScalar is for the input-vector
-            // --> not extracting dangling pr entries before
-            double danglingSum = CommonOps_DArray.reduceScalar(pr, DMonoids.PLUS, nonDanglingNodesMask);
-
-
-            // Multiply by damping factor and 1 / |V|
-            danglingSum *= (dampingFactor / nodeCount);
-
-            //
-            // PageRank summarization
-            // Add teleport, importance_vec, and dangling_vec components together
-            //
-            Arrays.fill(pr, teleport + danglingSum);
-            CommonOps_DArray.elementWiseAdd(pr, importance_vec, pr, DMonoids.PLUS);
-        }
-
-        return new PageRankResult(pr, iterations);
     }
 
     public class PageRankResult {

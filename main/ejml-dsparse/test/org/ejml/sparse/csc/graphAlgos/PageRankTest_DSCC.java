@@ -18,22 +18,12 @@
 
 package org.ejml.sparse.csc.graphAlgos;
 
-import org.ejml.EjmlUnitTests;
-import org.ejml.data.DMatrixRMaj;
 import org.ejml.data.DMatrixSparseCSC;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 
-import java.util.Arrays;
-import java.util.stream.Stream;
-
-import static org.ejml.sparse.csc.graphAlgos.Bfs_DSCC.BfsResult;
-import static org.ejml.sparse.csc.graphAlgos.Bfs_DSCC.BfsVariation;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings({"UnusedMethod"})
 public class PageRankTest_DSCC {
@@ -56,10 +46,24 @@ public class PageRankTest_DSCC {
 
     @Test
     public void pageRank() {
-        PageRank_DSCC.PageRankResult result = pageRank.compute(inputMatrix, 0.85, 40);
+        float tolerance = 1e-7f;
+        PageRank_DSCC.PageRankResult result = pageRank.compute(inputMatrix, 0.85, tolerance, 100);
 
-        System.out.println("result = " + Arrays.toString(result.result()));
-        System.out.println("iterations = " + result.iterations());
+        double[] expected = {
+                0.04881240953046283,
+                0.37252731373997194,
+                0.34566197629884704,
+                0.04658515322643894,
+                0.04134455015814745,
+                0.029013719409226278,
+                0.029013719409226278,
+                0.029013719409226278,
+                0.029013719409226278,
+                0.029013719409226278
+        };
+
+        assertEquals(88, result.iterations());
+        assertArrayEquals(expected, result.result(), tolerance);
     }
 
     // TODO test other pageRank impl. with a graph with only dangling nodes (compute2)
