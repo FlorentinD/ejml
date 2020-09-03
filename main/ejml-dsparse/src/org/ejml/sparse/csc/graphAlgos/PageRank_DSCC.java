@@ -30,9 +30,9 @@ import org.ejml.sparse.csc.mult.MatrixVectorMultWithSemiRing_DSCC;
 import java.util.Arrays;
 
 public class PageRank_DSCC {
-    public final int DEFAULT_MAX_ITERATIONS = 20;
-    public final double DEFAULT_DAMPING_FACTOR = 0.85;
-    public final float DEFAULT_TOLERANCE = 1e-7f;
+    public static final int DEFAULT_MAX_ITERATIONS = 20;
+    public static final double DEFAULT_DAMPING_FACTOR = 0.85;
+    public static final float DEFAULT_TOLERANCE = 1e-7f;
 
     /**
      * based on https://github.com/GraphBLAS/LAGraph/blob/master/Source/Algorithm/LAGraph_pagerank2.c
