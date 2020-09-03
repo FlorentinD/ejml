@@ -18,7 +18,10 @@
 
 package org.ejml.sparse.csc.mult;
 
-import org.ejml.data.*;
+import org.ejml.data.DMatrixD1;
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.data.DMatrixSparse;
+import org.ejml.data.DMatrixSparseCSC;
 import org.ejml.masks.DMasks;
 import org.ejml.masks.Mask;
 import org.ejml.masks.PrimitiveDMask;
@@ -56,9 +59,12 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
 
         PrimitiveDMask.Builder maskBuilder = new PrimitiveDMask.Builder(prevResult);
 
+        // TODO: test-case where prevResult == null but mask exists
         return Stream.of(
                 Arguments.of(inputVector, prevResult, maskBuilder.withNegated(true).withReplace(false).build()),
-                Arguments.of(inputVector, prevResult, maskBuilder.withNegated(false).withReplace(false).build())
+                Arguments.of(inputVector, prevResult, maskBuilder.withNegated(false).withReplace(false).build()),
+                Arguments.of(inputVector, prevResult, maskBuilder.withNegated(false).withReplace(true).build()),
+                Arguments.of(inputVector, prevResult, maskBuilder.withNegated(true).withReplace(true).build())
         );
     }
 
@@ -104,7 +110,7 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         found = MatrixVectorMultWithSemiRing_DSCC.mult(inputVector, inputMatrix, found, semiRing);
         foundWithMask = MatrixVectorMultWithSemiRing_DSCC.mult(inputVector, inputMatrix, foundWithMask, semiRing, mask, null);
 
-        assertMaskedResult(prevResult, found, foundWithMask, mask);
+        assertMaskedResult(prevResult, found, foundWithMask, mask, semiRing.add.id);
     }
 
     @ParameterizedTest
@@ -116,7 +122,19 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         found = MatrixVectorMultWithSemiRing_DSCC.mult(inputMatrix, inputVector, found, semiRing);
         foundWithMask = MatrixVectorMultWithSemiRing_DSCC.mult(inputMatrix, inputVector, foundWithMask, semiRing, mask, null);
 
-        assertMaskedResult(prevResult, found, foundWithMask, mask);
+        assertMaskedResult(prevResult, found, foundWithMask, mask, semiRing.add.id);
+    }
+
+    @ParameterizedTest
+    @MethodSource("primitiveVectorSource")
+    public void mult_Trans_A_v(double[] inputVector, double[] prevResult, PrimitiveDMask mask) {
+        double[] found = prevResult.clone();
+        double[] foundWithMask = prevResult.clone();
+
+        found = MatrixVectorMultWithSemiRing_DSCC.multTransA(inputMatrix, inputVector, found, semiRing, null, null);
+        foundWithMask = MatrixVectorMultWithSemiRing_DSCC.multTransA(inputMatrix, inputVector, foundWithMask, semiRing, mask, null);
+
+        assertMaskedResult(prevResult, found, foundWithMask, mask, semiRing.add.id);
     }
 
     // matrix, matrix ops
@@ -234,6 +252,7 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
     }
 
 
+
     private void assertMaskedResult(DMatrixSparseCSC prevResult, DMatrixSparseCSC found, DMatrixSparseCSC foundWithMask, Mask mask) {
         Iterator<DMatrixSparse.CoordinateRealValue> it = found.createCoordinateIterator();
         // check that existing result were not overwritten
@@ -268,10 +287,12 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         }
     }
 
-    private void assertMaskedResult(double[] prevResult, double[] found, double[] foundWithMask, PrimitiveDMask mask) {
+    private void assertMaskedResult(double[] prevResult, double[] found, double[] foundWithMask, PrimitiveDMask mask, double id) {
         for (int i = 0; i < found.length; i++) {
-            if (mask.isSet(i) || mask.replace) {
+            if (mask.isSet(i)) {
                 assertEquals(foundWithMask[i], found[i], "Computation differs");
+            } else if (!mask.isSet(i) && mask.replace) {
+                assertEquals(id, foundWithMask[i], "Wrongly computed");
             } else {
                 assertEquals(prevResult[i], foundWithMask[i], "Initial result was overwritten");
             }

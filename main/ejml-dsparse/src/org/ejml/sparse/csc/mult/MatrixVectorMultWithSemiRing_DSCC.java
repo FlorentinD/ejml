@@ -115,6 +115,9 @@ public class MatrixVectorMultWithSemiRing_DSCC {
                     sum = semiRing.add.func.apply(sum, semiRing.mult.func.apply(a[B.nz_rows[indexB]], B.nz_values[indexB]));
                 }
                 output[k] = sum;
+            } else if (mask.replace) {
+                // overwrite old value (alternatively also use Arrays.fill(output, semiRing.add.id))
+                output[k] = semiRing.add.id;
             }
         }
 
@@ -154,6 +157,9 @@ public class MatrixVectorMultWithSemiRing_DSCC {
                     sum = semiRing.add.func.apply(sum, semiRing.mult.func.apply(b[A.nz_rows[indexB]], A.nz_values[indexB]));
                 }
                 output[k] = sum;
+            } else if (mask.replace) {
+                // overwrite old value (alternatively also use Arrays.fill(output, semiRing.add.id))
+                output[k] = semiRing.add.id;
             }
         }
 
