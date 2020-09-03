@@ -150,6 +150,7 @@ public class MaskUtil_DSCC {
 
         for (int j = idxA0; j < idxA1; j++) {
             int row = A.nz_rows[j];
+            // TODO: are there cases, where the mask is checked twice this way?
             if (mask == null || mask.isSet(row, mark - 1)) {
                 if (w[row] < mark) {
                     if (C.nz_length >= C.nz_rows.length) {

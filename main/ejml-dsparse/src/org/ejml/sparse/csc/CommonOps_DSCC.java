@@ -27,6 +27,7 @@ import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.interfaces.decomposition.LUSparseDecomposition_F64;
 import org.ejml.interfaces.linsol.LinearSolverSparse;
 import org.ejml.masks.Mask;
+import org.ejml.masks.PrimitiveDMask;
 import org.ejml.ops.DBinaryOperator;
 import org.ejml.ops.DUnaryOperator;
 import org.ejml.ops.IDBinaryOperator;
@@ -1806,7 +1807,6 @@ public class CommonOps_DSCC {
         return apply(input, func, input);
     }
 
-    // !! FIXME: apply also calculates unneeded fields .. this can produce wrong results with another accumulator than "first"
     public static DMatrixSparseCSC apply(DMatrixSparseCSC input, DUnaryOperator func,
                                          @Nullable DMatrixSparseCSC output, @Nullable Mask mask, @Nullable DBinaryOperator accum) {
         DMatrixSparseCSC initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(mask, accum, output);
@@ -1821,10 +1821,30 @@ public class CommonOps_DSCC {
         }
 
 
-        // dont check for the mask here as the computation is too simple to get any improvements when skipping
-        // would more likely prohibit vectorisation
-        for (int i = 0; i < input.nz_length; i++) {
-            output.nz_values[i] = func.apply(input.nz_values[i]);
+        if (initialOutput == null && mask != null && mask.replace) {
+            // catch corner-case - otherwise mask would not be applied at all
+            // need actual coordinate as Mask has no .isSet(index) (only PrimitiveMasks)
+            for (int col = 0; col < input.numCols; col++) {
+                int start = input.col_idx[col];
+                int end = input.col_idx[col + 1];
+
+                for (int i = start; i < end; i++) {
+                    if (mask.isSet(output.nz_rows[i], col)) {
+                        output.nz_values[i] = func.apply(input.nz_values[i]);
+                    } else {
+                        // assuming this would be right ...
+                        output.nz_values[i] = 0;
+                    }
+                }
+            }
+        }
+        else {
+            // dont check for the mask here as the computation is too simple to get any improvements when skipping
+            // would more likely prohibit vectorisation
+            // mask is applied in combineOutputs
+            for (int i = 0; i < input.nz_length; i++) {
+                output.nz_values[i] = func.apply(input.nz_values[i]);
+            }
         }
 
         return combineOutputs(output, initialOutput, mask, accum);
@@ -1919,14 +1939,16 @@ public class CommonOps_DSCC {
      *   output[j] = result
      * </pre>
      *
-     * @param input (Input) input matrix. Not modified
+     * NOTE: this produces only dense vectors (no entry in this column -> initValue)
+     *
+     * @param input     (Input) input matrix. Not modified
      * @param initValue initial value for accumulator
      * @param func Accumulator function defining "+" for accumulator +=  cellValue
      * @param output output (Output) Vector, where result can be stored in
      * @return a column-vector, where v[i] == values of column i reduced to scalar based on `func`
      */
     public static DMatrixRMaj reduceColumnWise(DMatrixSparseCSC input, double initValue, DBinaryOperator func,
-                                               @Nullable DMatrixRMaj output, @Nullable Mask mask, @Nullable DBinaryOperator accum) {
+                                               @Nullable DMatrixRMaj output, @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accum) {
         DMatrixRMaj initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(mask, accum, output);
         output = reshapeOrDeclare(output, 1, input.numCols);
         if (mask != null) {
@@ -1938,9 +1960,11 @@ public class CommonOps_DSCC {
             int end = input.col_idx[col + 1];
 
             double acc = initValue;
-            for (int i = start; i < end; i++) {
-                // (assumption) not checking for mask here as computation should be faster than check
-                acc = func.apply(acc, input.nz_values[i]);
+
+            if (mask == null || mask.isSet(col)) {
+                for (int i = start; i < end; i++) {
+                    acc = func.apply(acc, input.nz_values[i]);
+                }
             }
 
             output.data[col] = acc;
@@ -1963,14 +1987,16 @@ public class CommonOps_DSCC {
      *   output[j] = result
      * </pre>
      *
-     * @param input (Input) input matrix. Not modified
+     * NOTE: this produces only dense vectors (no entry in this column -> initValue)
+     *
+     * @param input     (Input) input matrix. Not modified
      * @param initValue initial value for accumulator
      * @param func Accumulator function defining "+" for accumulator += cellValue
      * @param output output (Output) Vector, where result can be stored in
      * @return a row-vector, where v[i] == values of row i reduced to scalar based on `func`
      */
     public static DMatrixRMaj reduceRowWise(DMatrixSparseCSC input, double initValue, DBinaryOperator func,
-                                            @Nullable DMatrixRMaj output, @Nullable Mask mask, @Nullable DBinaryOperator accum) {
+                                            @Nullable DMatrixRMaj output, @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accum) {
         DMatrixRMaj initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(mask, accum, output);
         output = reshapeOrDeclare(output, input.numRows, 1);
         if (mask != null) {
@@ -1979,16 +2005,31 @@ public class CommonOps_DSCC {
 
         Arrays.fill(output.data, initValue);
 
-        // TODO here it might be cheaper to have a bitset for the mask as isSet() gets called multiple times for each entry
-        //boolean[] isAssigned = mask.createBitSet();
 
-        for (int col = 0; col < input.numCols; col++) {
-            int start = input.col_idx[col];
-            int end = input.col_idx[col + 1];
+        if (initialOutput == null && mask != null && mask.replace) {
+            // corner-case, where we need to apply the mask at this point
+            // TODO: try using a bitset (e.g. materialized mask)
+            // TODO: test performance impact when inlining this check into the first for-loop
+            for (int col = 0; col < input.numCols; col++) {
+                int start = input.col_idx[col];
+                int end = input.col_idx[col + 1];
 
-            for (int i = start; i < end; i++) {
+                for (int i = start; i < end; i++) {
+                    if (mask.isSet(input.nz_rows[i])) {
+                        output.data[input.nz_rows[i]] = func.apply(output.data[input.nz_rows[i]], input.nz_values[i]);
+                    }
+                }
+            }
+        }
+        else {
+            for (int col = 0; col < input.numCols; col++) {
+                int start = input.col_idx[col];
+                int end = input.col_idx[col + 1];
+
                 // (assumption) not checking for mask here as computation should be faster than check
-                output.data[input.nz_rows[i]] = func.apply(output.data[input.nz_rows[i]], input.nz_values[i]);
+                for (int i = start; i < end; i++) {
+                    output.data[input.nz_rows[i]] = func.apply(output.data[input.nz_rows[i]], input.nz_values[i]);
+                }
             }
         }
 
