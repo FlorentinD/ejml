@@ -55,6 +55,8 @@ public class ImplCommonOps_DSCC {
 
             if (output.nz_rows.length < (selectCount + (end - start))) {
                 int maxLength = Integer.max(output.nz_length * 2 + 1, A.nz_length);
+                // otherwise the value preserving wouldn't work ..
+                output.nz_length = selectCount;
                 output.growMaxLength(maxLength, true);
             }
 

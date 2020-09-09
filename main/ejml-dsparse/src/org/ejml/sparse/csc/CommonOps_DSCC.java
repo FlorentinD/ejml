@@ -1231,7 +1231,6 @@ public class CommonOps_DSCC {
                                           @Nullable DBinaryOperator accumulator, @Nullable DMatrixSparseCSC output) {
         DMatrixSparseCSC initialOutput = maybeCacheInitialOutput(null, accumulator, output);
 
-        // TODO: test this case
         if (output != A) {
             output = reshapeOrDeclare(output, A);
         }
