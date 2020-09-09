@@ -53,8 +53,10 @@ public class ImplCommonOps_DSCC {
 
             output.col_idx[col] = selectCount;
 
-            if (output.nz_rows.length < selectCount)
-                output.growMaxLength(output.nz_length*2+1, true);
+            if (output.nz_rows.length < (selectCount + (end - start))) {
+                int maxLength = Integer.max(output.nz_length * 2 + 1, A.nz_length);
+                output.growMaxLength(maxLength, true);
+            }
 
             for (int i = start; i < end; i++) {
                 int row = A.nz_rows[i];
