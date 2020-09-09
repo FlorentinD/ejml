@@ -24,6 +24,8 @@ import org.ejml.data.DMatrixSparseCSC;
 import org.ejml.data.DMatrixSparseTriplet;
 import org.ejml.data.IGrowArray;
 import org.ejml.ops.ConvertDMatrixStruct;
+import org.ejml.ops.IBinaryPredicate;
+import org.ejml.ops.IBinaryPredicates;
 import org.ejml.sparse.csc.CommonOps_DSCC;
 import org.ejml.sparse.csc.MatrixFeatures_DSCC;
 import org.ejml.sparse.csc.RandomMatrices_DSCC;
@@ -32,8 +34,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Random;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Abeles
@@ -265,6 +266,27 @@ public class TestImplCommonOps_DSCC {
                 CommonOps_DSCC.divide(B,2.0,B);
                 B.sortIndices(null);
                 assertTrue(MatrixFeatures_DSCC.isEquals(A, B, UtilEjml.TEST_F64));
+            }
+        }
+    }
+
+    @Test
+    public void extract() {
+        int dim = 5;
+        DMatrixSparseCSC A = RandomMatrices_DSCC.rectangle(dim, dim, 10, 1, 2, rand);
+        DMatrixSparseCSC B = A.copy();
+
+        IBinaryPredicate selector = IBinaryPredicates.higherTriangle;
+        ImplCommonOps_DSCC.select(B, B, selector);
+
+        for (int row = 0; row < dim; row++) {
+            for (int col = 0; col < dim; col++) {
+                if (selector.apply(row, col)) {
+                    assertEquals(A.get(row, col), B.get(row, col));
+                }
+                else {
+                    assertFalse(B.isAssigned(row, col));
+                }
             }
         }
     }

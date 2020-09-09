@@ -30,6 +30,7 @@ import org.ejml.masks.Mask;
 import org.ejml.masks.PrimitiveDMask;
 import org.ejml.ops.DBinaryOperator;
 import org.ejml.ops.DUnaryOperator;
+import org.ejml.ops.IBinaryPredicate;
 import org.ejml.ops.IDBinaryOperator;
 import org.ejml.sparse.FillReducing;
 import org.ejml.sparse.csc.factory.DecompositionFactory_DSCC;
@@ -42,6 +43,7 @@ import java.util.Arrays;
 
 import static org.ejml.UtilEjml.*;
 import static org.ejml.sparse.csc.MaskUtil_DSCC.combineOutputs;
+import static org.ejml.sparse.csc.MaskUtil_DSCC.maybeCacheInitialOutput;
 
 /**
  * @author Peter Abeles
@@ -1209,6 +1211,34 @@ public class CommonOps_DSCC {
                 }
             }
         }
+    }
+
+    /**
+     * Select entries from A and save them in C.
+     * A more generic but probably also slower version of `extract`
+     * <p>
+     * Can be used to select f.i. the lower or upper triangle of a matrix
+     * <p>
+     * Simplified version of: GxB_Select
+     *
+     * @param A           (Input) Matrix. Not modified.
+     * @param selector    Function to decide whether an entry gets selected
+     * @param accumulator (Optional) How to combine existing entries in output with the selected ones
+     * @param output      (Optional/Output) Matrix to use for the output. Can be the same as A
+     * @return Matrix storing the selected entries of A
+     */
+    public static DMatrixSparseCSC select(DMatrixSparseCSC A, IBinaryPredicate selector,
+                                          @Nullable DBinaryOperator accumulator, @Nullable DMatrixSparseCSC output) {
+        DMatrixSparseCSC initialOutput = maybeCacheInitialOutput(null, accumulator, output);
+
+        // TODO: test this case
+        if (output != A) {
+            output = reshapeOrDeclare(output, A);
+        }
+
+        ImplCommonOps_DSCC.select(A, output, selector);
+
+        return combineOutputs(output, initialOutput, null, accumulator);
     }
 
     /**
