@@ -75,17 +75,14 @@ public class MatrixVectorMultWithSemiRing_DSCC {
             int idx1 = A.col_idx[k + 1];
 
             for (int indexA = idx0; indexA < idx1; indexA++) {
-                // TODO: applying the mask here might be too costly
-                if (mask == null || mask.isSet(A.nz_rows[indexA])) {
-                    output[A.nz_rows[indexA]] = semiRing.add.func.apply(
-                            output[A.nz_rows[indexA]],
-                            semiRing.mult.func.apply(A.nz_values[indexA], b[k]));
-                }
+                output[A.nz_rows[indexA]] = semiRing.add.func.apply(
+                        output[A.nz_rows[indexA]],
+                        semiRing.mult.func.apply(A.nz_values[indexA], b[k]));
             }
         }
 
-        // initialOutput + output
-        return MaskUtil_DSCC.combineOutputs(initialOutput, output, mask, accumulator);
+        // initialOutput + output (+apply mask)
+        return MaskUtil_DSCC.combineOutputs(initialOutput, output, mask, accumulator, false);
     }
 
     /**
@@ -122,7 +119,7 @@ public class MatrixVectorMultWithSemiRing_DSCC {
             }
         }
 
-        return MaskUtil_DSCC.combineOutputs(initialOutput, output, mask, accumulator);
+        return MaskUtil_DSCC.combineOutputs(initialOutput, output, mask, accumulator, true);
     }
 
     public static double[] mult(double[] a, DMatrixSparseCSC B, double[] c, DSemiRing semiRing) {
@@ -152,7 +149,6 @@ public class MatrixVectorMultWithSemiRing_DSCC {
                 int idx0 = A.col_idx[k];
                 int idx1 = A.col_idx[k + 1];
 
-
                 double sum = semiRing.add.id;
                 for (int indexB = idx0; indexB < idx1; indexB++) {
                     sum = semiRing.add.func.apply(sum, semiRing.mult.func.apply(b[A.nz_rows[indexB]], A.nz_values[indexB]));
@@ -164,8 +160,7 @@ public class MatrixVectorMultWithSemiRing_DSCC {
             }
         }
 
-
-        return MaskUtil_DSCC.combineOutputs(initialOutput, output, mask, accumulator);
+        return MaskUtil_DSCC.combineOutputs(initialOutput, output, mask, accumulator, true);
     }
 
     /**

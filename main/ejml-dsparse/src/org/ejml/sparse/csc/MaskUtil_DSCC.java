@@ -86,7 +86,7 @@ public class MaskUtil_DSCC {
         return output;
     }
 
-    public static double[] combineOutputs(@Nullable double[] initialOutput, double[] output, @Nullable PrimitiveDMask mask, @Nullable  DBinaryOperator accum) {
+    public static double[] combineOutputs(@Nullable double[] initialOutput, double[] output, @Nullable PrimitiveDMask mask, @Nullable  DBinaryOperator accum, boolean maskApplied) {
         // TODO also use maskApplied here
         if (initialOutput != null) {
             if(accum == null) {
@@ -101,6 +101,15 @@ public class MaskUtil_DSCC {
             }
 
             output = initialOutput;
+        }
+        else if (mask != null && !maskApplied) {
+            // in case the mask wasn't applied during computation f.i. reduceRowWise
+            for (int i = 0; i < output.length; i++) {
+                // zero unwanted elements
+                if (!mask.isSet(i)) {
+                    output[i] = mask.getZeroElement();
+                }
+            }
         }
 
         return output;
