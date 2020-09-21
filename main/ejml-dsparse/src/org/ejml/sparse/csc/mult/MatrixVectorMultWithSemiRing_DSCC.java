@@ -23,8 +23,8 @@ import org.ejml.masks.PrimitiveDMask;
 import org.ejml.ops.DBinaryOperator;
 import org.ejml.ops.DSemiRing;
 import org.ejml.sparse.csc.MaskUtil_DSCC;
-
 import org.jetbrains.annotations.Nullable;
+
 import java.util.Arrays;
 
 /**
@@ -43,14 +43,7 @@ public class MatrixVectorMultWithSemiRing_DSCC {
      */
     public static double[] mult(DMatrixSparseCSC A, double[] b, double[] output, DSemiRing semiRing,
                                 @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accumulator) {
-        double[] initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(mask, accumulator, output);
-        if (mask != null) {
-            mask.compatible(output);
-        }
-        // could also just fill where mask.isSet()
-        Arrays.fill(output, semiRing.add.id);
-
-        return multAdd(A, b, output, initialOutput, semiRing, mask, accumulator);
+        return multAdd(A, b, output, semiRing, mask, accumulator);
     }
 
     public static double[] mult(DMatrixSparseCSC A, double[] b, double[] output, DSemiRing semiRing) {
@@ -68,13 +61,21 @@ public class MatrixVectorMultWithSemiRing_DSCC {
      * @param semiRing    Semi-Ring to define + and *
      * @param accumulator (Optional) accumulator for output + (A*b), else use `add` from the semiRing
      */
-    public static double[] multAdd(DMatrixSparseCSC A, double[] b, double[] output, @Nullable double[] initialOutput,
-                               DSemiRing semiRing, @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accumulator) {
+    public static double[] multAdd(DMatrixSparseCSC A, double[] b, double[] output,
+                                   DSemiRing semiRing, @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accumulator) {
+        double[] initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(mask, accumulator, output);
+        if (mask != null) {
+            mask.compatible(output);
+        }
+        // could also just fill where mask.isSet()
+        Arrays.fill(output, semiRing.add.id);
+
         for (int k = 0; k < A.numCols; k++) {
             int idx0 = A.col_idx[k];
             int idx1 = A.col_idx[k + 1];
 
             for (int indexA = idx0; indexA < idx1; indexA++) {
+                // TODO: applying the mask here might be too costly
                 if (mask == null || mask.isSet(A.nz_rows[indexA])) {
                     output[A.nz_rows[indexA]] = semiRing.add.func.apply(
                             output[A.nz_rows[indexA]],

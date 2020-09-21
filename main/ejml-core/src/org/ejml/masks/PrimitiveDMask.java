@@ -42,6 +42,8 @@ public class PrimitiveDMask extends Mask {
         return negated ^ (values[row * numCols + col] != zeroElement);
     }
 
+    public double getZeroElement() { return  zeroElement;}
+
     @Override
     public int getNumCols() {
         return numCols;

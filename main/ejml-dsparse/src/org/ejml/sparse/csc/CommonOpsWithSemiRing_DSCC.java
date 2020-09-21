@@ -70,7 +70,7 @@ public class CommonOpsWithSemiRing_DSCC {
 
         ImplSparseSparseMultWithSemiRing_DSCC.mult(A, B, output, semiRing, mask, gw, gx);
 
-        return combineOutputs(output, accumulator, initialOutput);
+        return combineOutputs(output, initialOutput, accumulator);
     }
 
     /**
@@ -215,7 +215,7 @@ public class CommonOpsWithSemiRing_DSCC {
 
         ImplCommonOpsWithSemiRing_DSCC.add(alpha, A, beta, B, output, semiRing, mask, gw, gx);
 
-        return combineOutputs(output, accumulator, initialOutput);
+        return combineOutputs(output, initialOutput, accumulator);
     }
 
     /**
@@ -244,6 +244,6 @@ public class CommonOpsWithSemiRing_DSCC {
 
         ImplCommonOpsWithSemiRing_DSCC.elementMult(A, B, output, semiRing, mask, gw, gx);
 
-        return combineOutputs(output, accumulator, initialOutput);
+        return combineOutputs(output, initialOutput, accumulator);
     }
 }

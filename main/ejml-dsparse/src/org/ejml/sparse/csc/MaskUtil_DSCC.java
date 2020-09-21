@@ -50,20 +50,20 @@ public class MaskUtil_DSCC {
         return output;
     }
 
-    static DMatrixSparseCSC combineOutputs(DMatrixSparseCSC output, @Nullable DBinaryOperator accum, @Nullable DMatrixSparseCSC initialOutput) {
+    static DMatrixSparseCSC combineOutputs(DMatrixSparseCSC output, @Nullable DMatrixSparseCSC initialOutput, @Nullable DBinaryOperator accum) {
         return combineOutputs(output, initialOutput, null, accum);
     }
 
-    static DMatrixRMaj combineOutputs(DMatrixRMaj output, @Nullable DMatrixRMaj initialOutput, @Nullable Mask mask, @Nullable DBinaryOperator accum) {
+    static DMatrixRMaj combineOutputs(DMatrixRMaj output, @Nullable DMatrixRMaj initialOutput, @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accum, boolean maskApplied) {
         if (initialOutput != null) {
             checkSameShape(initialOutput, output, true);
 
-            if(accum == null) {
+            if (accum == null) {
                 // e.g. just take the newly computed value
                 accum = SECOND;
             }
 
-            // TODO: operate on a bitset/boolean[] here -> also just one for-loop needed
+            // TODO simplify to mask.isSet(index)
             for (int col = 0; col < output.getNumCols(); col++) {
                 for (int row = 0; row < output.numRows; row++) {
                     if (mask == null || mask.isSet(row, col)) {
@@ -73,11 +73,21 @@ public class MaskUtil_DSCC {
             }
 
             output = initialOutput;
+        } else if (mask != null && !maskApplied) {
+            // in case the mask wasnt applied during computation f.i. reduceRowWise
+            for (int i = 0; i < output.data.length; i++) {
+                // zero unwanted elements
+                if (!mask.isSet(i)) {
+                    output.data[i] = mask.getZeroElement();
+                }
+            }
         }
+
         return output;
     }
 
     public static double[] combineOutputs(@Nullable double[] initialOutput, double[] output, @Nullable PrimitiveDMask mask, @Nullable  DBinaryOperator accum) {
+        // TODO also use maskApplied here
         if (initialOutput != null) {
             if(accum == null) {
                 // e.g. just take the newly computed value

@@ -1853,6 +1853,7 @@ public class CommonOps_DSCC {
         if (initialOutput == null && mask != null && mask.replace) {
             // catch corner-case - otherwise mask would not be applied at all
             // need actual coordinate as Mask has no .isSet(index) (only PrimitiveMasks)
+            // TODO: check this corner case in combineOutputs()
             for (int col = 0; col < input.numCols; col++) {
                 int start = input.col_idx[col];
                 int end = input.col_idx[col + 1];
@@ -1999,7 +2000,7 @@ public class CommonOps_DSCC {
             output.data[col] = acc;
         }
 
-        return combineOutputs(output, initialOutput, mask, accum);
+        return combineOutputs(output, initialOutput, mask, accum, true);
     }
 
     public static DMatrixRMaj reduceColumnWise(DMatrixSparseCSC input, double initValue, DBinaryOperator func, @Nullable DMatrixRMaj output) {
@@ -2034,35 +2035,17 @@ public class CommonOps_DSCC {
 
         Arrays.fill(output.data, initValue);
 
+        for (int col = 0; col < input.numCols; col++) {
+            int start = input.col_idx[col];
+            int end = input.col_idx[col + 1];
 
-        if (initialOutput == null && mask != null && mask.replace) {
-            // corner-case, where we need to apply the mask at this point
-            // TODO: try using a bitset (e.g. materialized mask)
-            // TODO: test performance impact when inlining this check into the first for-loop
-            for (int col = 0; col < input.numCols; col++) {
-                int start = input.col_idx[col];
-                int end = input.col_idx[col + 1];
-
-                for (int i = start; i < end; i++) {
-                    if (mask.isSet(input.nz_rows[i])) {
-                        output.data[input.nz_rows[i]] = func.apply(output.data[input.nz_rows[i]], input.nz_values[i]);
-                    }
-                }
-            }
-        }
-        else {
-            for (int col = 0; col < input.numCols; col++) {
-                int start = input.col_idx[col];
-                int end = input.col_idx[col + 1];
-
-                // (assumption) not checking for mask here as computation should be faster than check
-                for (int i = start; i < end; i++) {
-                    output.data[input.nz_rows[i]] = func.apply(output.data[input.nz_rows[i]], input.nz_values[i]);
-                }
+            // (assumption) not checking for mask here as computation should be faster than check
+            for (int i = start; i < end; i++) {
+                output.data[input.nz_rows[i]] = func.apply(output.data[input.nz_rows[i]], input.nz_values[i]);
             }
         }
 
-        return combineOutputs(output, initialOutput, mask, accum);
+        return combineOutputs(output, initialOutput, mask, accum, false);
     }
 
     public static DMatrixRMaj reduceRowWise(DMatrixSparseCSC input, double initValue, DBinaryOperator func, @Nullable DMatrixRMaj output) {
