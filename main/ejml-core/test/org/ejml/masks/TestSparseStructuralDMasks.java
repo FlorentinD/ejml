@@ -26,14 +26,14 @@ import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class TestSparseStructuralMasks {
+public class TestSparseStructuralDMasks {
 
     @Test
     void testSparseStructuralMasks() {
         int dim = 20;
         DMatrixSparseCSC matrix = RandomMatrices_DSCC.rectangle(dim, dim, 5, new Random(42));
 
-        SparseStructuralMask.Builder builder = new SparseStructuralMask.Builder(matrix);
+        SparseStructuralDMask.Builder builder = new SparseStructuralDMask.Builder(matrix);
         Mask mask = builder.withNegated(false).build();
         Mask negated_mask = builder.withNegated(true).build();
 
