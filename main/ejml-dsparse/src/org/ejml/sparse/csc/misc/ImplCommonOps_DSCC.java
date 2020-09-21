@@ -47,6 +47,9 @@ public class ImplCommonOps_DSCC {
             output.growMaxLength(A.nz_length / 2, false);
         }
 
+        // selecting a subset doesn't change the order
+        output.indicesSorted = A.indicesSorted;
+
         for (int col = 0; col < A.numCols; col++) {
             int start = A.col_idx[col];
             int end = A.col_idx[col+1];
