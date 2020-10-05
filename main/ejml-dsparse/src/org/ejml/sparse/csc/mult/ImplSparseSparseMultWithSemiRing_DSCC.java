@@ -69,6 +69,8 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
                 int rowB = B.nz_rows[bi];
                 double valB = B.nz_values[bi];  // B(k,j)  k=rowB j=colB
 
+                // TODO: mask is called multiple times here for the same result column
+                //  .. worth to have a iterator over this one?
                 multAddColA(A, rowB, valB, C, colB + 1, semiRing, mask, x, w);
             }
 
