@@ -50,7 +50,7 @@ public class MaskUtil_DSCC {
         return output;
     }
 
-    static DMatrixSparseCSC combineOutputs(DMatrixSparseCSC output, @Nullable DMatrixSparseCSC initialOutput, @Nullable DBinaryOperator accum) {
+    public static DMatrixSparseCSC combineOutputs(DMatrixSparseCSC output, @Nullable DMatrixSparseCSC initialOutput, @Nullable DBinaryOperator accum) {
         return combineOutputs(output, initialOutput, null, accum);
     }
 
