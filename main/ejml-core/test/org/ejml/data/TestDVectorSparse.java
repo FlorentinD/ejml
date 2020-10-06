@@ -42,4 +42,17 @@ public class TestDVectorSparse {
         assertEquals(2 ,v.get(0));
         assertEquals(3 ,v.get(2));
     }
+
+    @Test
+    void convertDenseVector() {
+        double[] values = {1, 0, 3, 0, 0, 4};
+
+        var v = new DVectorSparse(values, 0);
+
+        assertEquals(6, v.size());
+        assertEquals(3, v.nz_length());
+        assertEquals(1, v.get(0));
+        assertEquals(3, v.get(2));
+        assertEquals(4, v.get(5));
+    }
 }

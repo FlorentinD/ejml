@@ -46,6 +46,22 @@ public class DVectorSparse implements ReshapeMatrix {
         oneDimMatrix = original.oneDimMatrix.copy();
     }
 
+    public DVectorSparse(double[] values, double zeroElement) {
+        this(values.length);
+
+        for (int index = 0; index < values.length; index++) {
+            double value = values[index];
+
+            if (value != zeroElement) {
+                // safe way ..
+                // could also first gather and then do this in one step
+                append(index, value);
+            }
+        }
+
+        oneDimMatrix.indicesSorted = true;
+    }
+
     public DVectorSparse(DMatrixSparseCSC original) {
         assert original.numCols == 1;
 
