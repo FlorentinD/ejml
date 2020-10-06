@@ -84,6 +84,8 @@ public class GenerateJavaCode32 extends GenerateCode32 {
         prefix32.add("FEigen");
         prefix64.add("DSubmatrix");
         prefix32.add("FSubmatrix");
+        prefix64.add("DVector");
+        prefix32.add("FVector");
         prefix64.add("ConvertD");
         prefix32.add("ConvertF");
         prefix64.add("GenericTestsDMatrix");
@@ -121,6 +123,7 @@ public class GenerateJavaCode32 extends GenerateCode32 {
         converter.replacePattern("SparseStructuralDMask", "SparseStructuralFMask");
         converter.replacePattern("PrimitiveDMask", "PrimitiveFMask");
         converter.replacePattern("DMasks", "FMasks");
+        converter.replacePattern("DVector", "FVector");
         converter.replacePattern("ConvertD", "ConvertF");
         converter.replacePattern("DGrowArray", "FGrowArray");
         converter.replacePattern("DMatrix", "FMatrix");

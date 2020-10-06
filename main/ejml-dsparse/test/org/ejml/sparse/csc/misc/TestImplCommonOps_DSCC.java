@@ -39,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Peter Abeles
  */
+@SuppressWarnings({"UnusedMethod"})
 public class TestImplCommonOps_DSCC {
 
     private final Random rand = new Random(324);
@@ -278,6 +279,7 @@ public class TestImplCommonOps_DSCC {
 
         IBinaryPredicate selector = IBinaryPredicates.higherTriangle;
         ImplCommonOps_DSCC.select(B, B, selector);
+    }
 
     private void assertSelectResult(int dim, DMatrixSparseCSC input, DMatrixSparseCSC result, IBinaryPredicate selector) {
         for (int row = 0; row < dim; row++) {
@@ -307,7 +309,7 @@ public class TestImplCommonOps_DSCC {
     }
 
     @Test
-    public void selectAndSaveInAnotherMatrixl() {
+    public void selectAndSaveInAnotherMatrix() {
         DMatrixSparseCSC inputMatrix = new DMatrixSparseCSC(7, 7, 24);
         inputMatrix.set(0, 1, 1);
         inputMatrix.set(0, 3, 1);

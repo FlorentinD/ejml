@@ -25,7 +25,6 @@ import org.ejml.data.IGrowArray;
 import org.ejml.masks.Mask;
 import org.ejml.ops.DSemiRing;
 import org.jetbrains.annotations.Nullable;
-import org.ejml.sparse.csc.misc.ImplCommonOpsWithSemiRing_DSCC;
 
 import static org.ejml.UtilEjml.adjust;
 

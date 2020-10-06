@@ -155,32 +155,6 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         assertMaskedResult(prevResult, found, foundWithMask, mask, semiRing.add.id);
     }
 
-    @ParameterizedTest
-    @MethodSource("sparseVectorSource")
-    public void mult_T_A_B(DMatrixSparseCSC sparseVector, DMatrixSparseCSC prevResult, Mask mask) {
-        DMatrixSparseCSC transposed_vector = CommonOps_DSCC.transpose(sparseVector, null, null);
-
-        DMatrixSparseCSC foundTA = CommonOpsWithSemiRing_DSCC.multTransA(
-                transposed_vector, inputMatrix, prevResult.copy(), semiRing, null, null, null, null);
-        DMatrixSparseCSC foundTAWithMask = CommonOpsWithSemiRing_DSCC.multTransA(
-                transposed_vector, inputMatrix, prevResult.copy(), semiRing, mask, null, null, null);
-
-        assertMaskedResult(prevResult, foundTA, foundTAWithMask, mask, semiRing.add.id);
-    }
-
-    @ParameterizedTest
-    @MethodSource("sparseVectorSource")
-    public void mult_A_T_B(DMatrixSparseCSC sparseVector, DMatrixSparseCSC prevResult, Mask mask) {
-        DMatrixSparseCSC transposed_matrix = CommonOps_DSCC.transpose(inputMatrix, null, null);
-
-        DMatrixSparseCSC foundTB = CommonOpsWithSemiRing_DSCC.multTransB(
-                sparseVector, transposed_matrix, prevResult.copy(), semiRing, null, null, null, null);
-        DMatrixSparseCSC foundTBWithMask = CommonOpsWithSemiRing_DSCC.multTransB(
-                sparseVector, transposed_matrix, prevResult.copy(), semiRing, mask, null, null, null);
-
-        assertMaskedResult(prevResult, foundTB, foundTBWithMask, mask, semiRing.add.id);
-    }
-
 
     @ParameterizedTest
     @MethodSource("sparseMatrixSource")
