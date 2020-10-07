@@ -18,12 +18,13 @@
 
 package org.ejml.ops;
 
+import org.ejml.data.DMatrixSparseCSC;
+import org.ejml.sparse.csc.CommonOps_DSCC;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestCommops_DArray {
 
@@ -52,5 +53,29 @@ public class TestCommops_DArray {
     @Test
     void reduceScalar() {
         assertEquals(-1D ,CommonOps_DArray.reduceScalar(values, DMonoids.MIN));
+    }
+
+    @Test
+    void assignColumnVector() {
+        DMatrixSparseCSC sparseVector = new DMatrixSparseCSC(values.length, 1);
+        sparseVector.set(0, 0, -42);
+        sparseVector.set(2, 0, -1337);
+
+        var output = CommonOps_DArray.assign(values.clone(), sparseVector);
+
+        double[] expected = {-42, values[1], -1337};
+        assertArrayEquals(expected, output);
+    }
+
+    @Test
+    void assignRowVector() {
+        DMatrixSparseCSC sparseVector = new DMatrixSparseCSC(1, values.length);
+        sparseVector.set(0, 0, -42);
+        sparseVector.set(0, 2, -1337);
+
+        var output = CommonOps_DArray.assign(values.clone(), sparseVector);
+
+        double[] expected = {-42, values[1], -1337};
+        assertArrayEquals(expected, output);
     }
 }

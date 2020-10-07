@@ -18,6 +18,7 @@
 
 package org.ejml.ops;
 
+import org.ejml.data.DMatrixSparseCSC;
 import org.ejml.masks.PrimitiveDMask;
 
 /**
@@ -31,6 +32,36 @@ public class CommonOps_DArray {
     public static double[] apply(double[] v, DUnaryOperator func) {
         for (int i = 0; i < v.length; i++) {
             v[i] = func.apply(v[i]);
+        }
+
+        return v;
+    }
+
+    /**
+     * Assigns the elements in the sparse matrix to the primitive vector.
+     * ! Assuming the Matrix has only 1 row .
+     *
+     * @param v Vector of size N
+     * @param w Vector stored as a 1-dim matrix
+     * @return
+     */
+    public static double[] assign( double[] v, DMatrixSparseCSC w) {
+        if (w.numRows != 1 && w.numCols != 1) {
+            throw new IllegalArgumentException("Matrix is not a vector");
+        }
+
+        if (w.numRows == 1) {
+            // column vector
+            for (int i = 0; i < w.numCols; i++) {
+                if (w.col_idx[i] != w.col_idx[i+1]) {
+                    v[i] = w.nz_values[w.col_idx[i]];
+                }
+            }
+        } else {
+            // row vector
+            for (int i = 0; i < w.nz_length; i++) {
+                v[w.nz_rows[i]] = w.nz_values[i];
+            }
         }
 
         return v;
