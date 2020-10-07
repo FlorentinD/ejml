@@ -39,6 +39,8 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
     // TODO implement matrix-vector mult & multTrans
     //      -> this can be O(N) again and potentially faster than the a * B (e.g. merge whole columns with existing result)
 
+    // TODO: get this faster (scales really bad ...)
+
     /**
      * output = a<sup>T</sup>*B
      *
@@ -71,11 +73,12 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
         int[] vectorIndices = a.nz_indices();
         double[] vectorValues = a.nz_values();
 
-//        BitSet vectorEntries = new BitSet();
-//
-//        for (int i = 0; i < vectorIndices.length; i++) {
-//            vectorEntries.set(vectorIndices[i]);
-//        }
+        // worth to create a bitset?
+        BitSet vectorEntries = new BitSet();
+
+        for (int i = 0; i < a.nz_length(); i++) {
+            vectorEntries.set(vectorIndices[i]);
+        }
 
 
         for (int k = 0; k < B.numCols; k++) {
@@ -84,32 +87,20 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
                 int start = B.col_idx[k];
                 int end = B.col_idx[k + 1];
 
-                int matrixIndex = start;
-                int vectorIndex = 0;
                 boolean interSection = false;
                 double sum = semiRing.add.id;
-                int vectorLength = a.nz_length();
+                int currentVectorIndex = 0;
 
-                while(matrixIndex < end && vectorIndex < vectorLength) {
-                    int currentMatrixRow = B.nz_rows[matrixIndex];
-                    int currentVectorEntry = vectorIndices[vectorIndex];
-                    if (currentMatrixRow == currentVectorEntry) {
-                       interSection = true;
-                       sum = semiRing.add.func.apply(sum, semiRing.mult.func.apply(vectorValues[vectorIndex], B.nz_values[matrixIndex]));
-
-                       matrixIndex++;
-                       vectorIndex++;
-                   } else if (currentMatrixRow > currentVectorEntry) {
-                        // fast-forward
-                       while (vectorIndex < vectorLength && currentMatrixRow > vectorIndices[vectorIndex]) {
-                           vectorIndex++;
-                       }
-                   } else {
-                        // fast-forward
-                        while (matrixIndex < end && B.nz_rows[matrixIndex] < currentVectorEntry) {
-                            matrixIndex++;
+                for (int i = start; i < end; i++) {
+                    int currentMatrixRow = B.nz_rows[i];
+                    if (vectorEntries.get(currentMatrixRow)) {
+                        while (vectorIndices[currentVectorIndex] != currentMatrixRow) {
+                            currentVectorIndex++;
                         }
-                   }
+
+                        interSection = true;
+                        sum = semiRing.add.func.apply(sum, semiRing.mult.func.apply(vectorValues[currentVectorIndex], B.nz_values[i]));
+                    }
                 }
 
                 if (interSection) {
