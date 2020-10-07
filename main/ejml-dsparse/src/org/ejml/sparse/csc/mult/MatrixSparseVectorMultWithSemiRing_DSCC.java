@@ -68,34 +68,50 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
             a.sortIndices();
         }
 
+        int[] vectorIndices = a.nz_indices();
+        double[] vectorValues = a.nz_values();
+
+//        BitSet vectorEntries = new BitSet();
+//
+//        for (int i = 0; i < vectorIndices.length; i++) {
+//            vectorEntries.set(vectorIndices[i]);
+//        }
+
+
         for (int k = 0; k < B.numCols; k++) {
             // TODO: use index version .isSet(k)
             if (mask == null || mask.isSet(k, 0)) {
                 int start = B.col_idx[k];
                 int end = B.col_idx[k + 1];
 
-
-                // TODO: think about using a bitset to represent sparse vector indices
-
                 int matrixIndex = start;
                 int vectorIndex = 0;
                 boolean interSection = false;
                 double sum = semiRing.add.id;
+                int vectorLength = a.nz_length();
 
-                while(matrixIndex < end && vectorIndex < a.nz_length()) {
-                   if (B.nz_rows[matrixIndex] == a.nz_indices()[vectorIndex]) {
+                while(matrixIndex < end && vectorIndex < vectorLength) {
+                    int currentMatrixRow = B.nz_rows[matrixIndex];
+                    int currentVectorEntry = vectorIndices[vectorIndex];
+                    if (currentMatrixRow == currentVectorEntry) {
                        interSection = true;
-                       sum = semiRing.add.func.apply(sum, semiRing.mult.func.apply(a.nz_values()[vectorIndex], B.nz_values[matrixIndex]));
+                       sum = semiRing.add.func.apply(sum, semiRing.mult.func.apply(vectorValues[vectorIndex], B.nz_values[matrixIndex]));
 
                        matrixIndex++;
                        vectorIndex++;
-                   } else if (B.nz_rows[matrixIndex] > a.nz_indices()[vectorIndex]) {
-                       vectorIndex++;
+                   } else if (currentMatrixRow > currentVectorEntry) {
+                        // fast-forward
+                       while (vectorIndex < vectorLength && currentMatrixRow > vectorIndices[vectorIndex]) {
+                           vectorIndex++;
+                       }
                    } else {
-                       matrixIndex++;
+                        // fast-forward
+                        while (matrixIndex < end && B.nz_rows[matrixIndex] < currentVectorEntry) {
+                            matrixIndex++;
+                        }
                    }
                 }
-                // TODO: TEST !!!
+
                 if (interSection) {
                     output.append(k, sum);
                 }
