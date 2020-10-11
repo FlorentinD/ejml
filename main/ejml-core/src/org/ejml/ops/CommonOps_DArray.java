@@ -29,9 +29,20 @@ import org.ejml.masks.PrimitiveDMask;
 public class CommonOps_DArray {
     // TODO: support for mask and accumulator (when needed)
 
-    public static double[] apply(double[] v, DUnaryOperator func) {
+    public static double[] apply( double[] v, DUnaryOperator func ) {
+        return apply(v, v, func);
+    }
+
+    /**
+     * Apply a unary function on every element in v and store it in out
+     */
+    public static double[] apply(double[] v, double[] out, DUnaryOperator func) {
+        if (v.length != out.length) {
+            throw new IllegalArgumentException("Input and Output vectors must have the same length");
+        }
+
         for (int i = 0; i < v.length; i++) {
-            v[i] = func.apply(v[i]);
+            out[i] = func.apply(v[i]);
         }
 
         return v;

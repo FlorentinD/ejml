@@ -40,6 +40,16 @@ public class TestCommops_DArray {
     }
 
     @Test
+    void applyAndStoreInOtherArray() {
+        double[] expected = {3.0, -2, 60};
+
+        double[] out = new double[expected.length];
+        CommonOps_DArray.apply(values, out, i -> i*2);
+
+        assertTrue(Arrays.equals(expected, out));
+    }
+
+    @Test
     void elementWiseMult() {
         double[] otherValues = {4, 2, 5};
         double[] output = new double[3];
