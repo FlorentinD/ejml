@@ -50,4 +50,5 @@ public final class DSemiRings {
     public static final DSemiRing MAX_FIRST = new DSemiRing(MAX, FIRST);
     public static final DSemiRing MAX_SECOND = new DSemiRing(MAX, SECOND);
     public static final DSemiRing PLUS_SECOND = new DSemiRing(PLUS, SECOND);
+    public static final DSemiRing PLUS_FIRST = new DSemiRing(PLUS, FIRST);
 }
