@@ -25,6 +25,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.util.Arrays;
 import java.util.Random;
 import java.util.stream.Stream;
 
@@ -84,9 +85,11 @@ public class TestRandomMatrices_DSCC {
 
         for (int rowCount : rowCounts) {
             for (int colCount : colCounts) {
-                for (double density : densities) {
-                    streamBuilder.accept(Arguments.of(rowCount, colCount, (int)Math.round(density*rowCount)));
-                }
+                // distinct to avoid multiple test cases with the same avg entry count
+                Arrays.stream(densities)
+                        .mapToInt(density -> (int)Math.round(density*rowCount))
+                        .distinct()
+                        .forEach(avgEntriesPerCol -> streamBuilder.accept(Arguments.of(rowCount, colCount, avgEntriesPerCol)));
             }
         }
 
@@ -96,9 +99,18 @@ public class TestRandomMatrices_DSCC {
     @ParameterizedTest
     @MethodSource("randomMatrixDimensions")
     void generateUniform( int numRows, int numCols, int entriesPerColumn ) {
-        DMatrixSparseCSC a = RandomMatrices_DSCC.generateUniform(numRows, numCols, entriesPerColumn, -1, 1, rand);
+        DMatrixSparseCSC a = RandomMatrices_DSCC.generate(numRows, numCols, entriesPerColumn, -1, 1, RandomMatrices_DSCC.EntryDistribution.UNIFORM,rand);
 
-        assertEquals(entriesPerColumn*numCols, a.nz_length);
+        assertEquals(entriesPerColumn*numCols, a.nz_length, 1);
+        assertTrue(CommonOps_DSCC.checkStructure(a));
+    }
+
+    @ParameterizedTest
+    @MethodSource("randomMatrixDimensions")
+    void generateGaussian( int numRows, int numCols, int entriesPerColumn ) {
+        DMatrixSparseCSC a = RandomMatrices_DSCC.generate(numRows, numCols, entriesPerColumn, -1, 1, RandomMatrices_DSCC.EntryDistribution.GAUSSIAN,rand);
+
+        assertEquals(entriesPerColumn, a.nz_length / numCols);
         assertTrue(CommonOps_DSCC.checkStructure(a));
     }
 

@@ -18,10 +18,6 @@
 
 package org.ejml.sparse.csc;
 
-import org.ejml.data.DGrowArray;
-import org.ejml.data.DMatrixRMaj;
-import org.ejml.data.DMatrixSparseCSC;
-import org.ejml.data.IGrowArray;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
@@ -51,7 +47,7 @@ public class BenchmarkRandomMatrices_DSCC {
     Random rand = new Random(345);
 
     @Benchmark public void rectangle() { RandomMatrices_DSCC.rectangle(dimension, dimension, avgEntriesPerColumn * dimension, -1, 1, rand); }
-    @Benchmark public void generateUniform() { RandomMatrices_DSCC.generateUniform(dimension, dimension, avgEntriesPerColumn, -1, 1, rand); }
+    @Benchmark public void generateUniform() { RandomMatrices_DSCC.generate(dimension, dimension, avgEntriesPerColumn, -1, 1, RandomMatrices_DSCC.EntryDistribution.UNIFORM, rand); }
 
     public static void main( String[] args ) throws RunnerException {
         Options opt = new OptionsBuilder()

@@ -298,14 +298,13 @@ public class RandomMatrices_DSCC {
      * @param rand Random number generator
      * @return Randomly generated matrix
      */
-    public static DMatrixSparseCSC generateUniform( int numRows, int numCols, int nzEntriesPerColumn,
-                                                    double min, double max, Random rand ) {
+    public static DMatrixSparseCSC generate( int numRows, int numCols, int nzEntriesPerColumn,
+                                                    double min, double max, EntryDistribution distribution, Random rand ) {
         if (nzEntriesPerColumn > numRows) {
             throw new IllegalArgumentException("numRows must be greater than nzEntriesPerColumn");
         }
 
         int nz_total = Math.toIntExact(nzEntriesPerColumn*numCols);
-
         DMatrixSparseCSC matrix = new DMatrixSparseCSC(numRows, numCols, nz_total);
         matrix.indicesSorted = true;
 
@@ -314,64 +313,85 @@ public class RandomMatrices_DSCC {
         }
 
         int[] nz_hist = new int[numCols];
-        Arrays.fill(nz_hist, nzEntriesPerColumn);
+
+        switch (distribution) {
+            case UNIFORM:
+                Arrays.fill(nz_hist, nzEntriesPerColumn);
+                break;
+            case GAUSSIAN:
+                for (int i = 0; i < nz_hist.length; i++) {
+                    nz_hist[i] = (int) Math.round(rand.nextGaussian() + nzEntriesPerColumn) % numRows;
+                }
+        }
+
         matrix.histogramToStructure(nz_hist);
 
         boolean[] selectedRows = new boolean[numRows];
 
-        // if the density is high enough, picking random rows will be very slow
-        // in this case we unselect (numRows-nzEntriesPerColumn) rows
-        boolean dropRows = ((float)nzEntriesPerColumn/numRows) > 0.5;
-
         for (int col = 0; col < numCols; col++) {
-            if (dropRows) {
-                // select all rows at first
-                Arrays.fill(selectedRows, true);
-            } else {
-                Arrays.fill(selectedRows, false);
+            generateColumnEntries(matrix, col, nzEntriesPerColumn, min, max, selectedRows, rand);
+        }
+
+        return matrix;
+    }
+
+    private static void generateColumnEntries( DMatrixSparseCSC matrix, int col, int nzEntries, double min, double max,
+                                               boolean[] selectedRows, Random rand ) {
+        //  If the density is high enough, picking random rows will be very slow.
+        // In this case we unselect (maximumEntries-nzEntries) rows
+        int numRows = matrix.numRows;
+        boolean dropRows = ((float)nzEntries/numRows) > 0.5;
+
+        if (dropRows) {
+            // select all rows at first
+            Arrays.fill(selectedRows, true);
+        } else {
+            Arrays.fill(selectedRows, false);
+        }
+
+        int nz_index = col*nzEntries;
+
+        // selecting rows
+        if (dropRows) {
+            for (int colEntry = 0; colEntry < (numRows - nzEntries); colEntry++) {
+                int row = rand.nextInt(numRows);
+
+                while (!selectedRows[row]) {
+                    row = rand.nextInt(numRows);
+                }
+
+                selectedRows[row] = false;
             }
 
-            int nz_index = col*nzEntriesPerColumn;
-
-            // selecting rows
-            if (dropRows) {
-                for (int colEntry = 0; colEntry < (numRows - nzEntriesPerColumn); colEntry++) {
-                    int row = rand.nextInt(numRows);
-
-                    while (!selectedRows[row]) {
-                        row = rand.nextInt(numRows);
-                    }
-
-                    selectedRows[row] = false;
-                }
-
-                for (int row = 0; row < selectedRows.length; row++) {
-                    if (selectedRows[row]) {
-                        matrix.nz_rows[nz_index] = row;
-                        matrix.nz_values[nz_index] = rand.nextDouble()*(max - min) + min;
-                        nz_index++;
-                    }
-                }
-            } else {
-                for (int colEntry = 0; colEntry < nzEntriesPerColumn; colEntry++) {
-                    int row = rand.nextInt(numRows);
-                    // avoid duplicate entries
-
-                    while (selectedRows[row]) {
-                        row = rand.nextInt(numRows);
-                    }
-
-                    selectedRows[row] = true;
+            for (int row = 0; row < selectedRows.length; row++) {
+                if (selectedRows[row]) {
                     matrix.nz_rows[nz_index] = row;
                     matrix.nz_values[nz_index] = rand.nextDouble()*(max - min) + min;
                     nz_index++;
                 }
-
-                Arrays.sort(matrix.nz_rows, nz_index - nzEntriesPerColumn, nz_index);
             }
-        }
+        } else {
+            for (int colEntry = 0; colEntry < nzEntries; colEntry++) {
+                int row = rand.nextInt(numRows);
+                // avoid duplicate entries
 
-        return matrix;
+                while (selectedRows[row]) {
+                    row = rand.nextInt(numRows);
+                }
+
+                selectedRows[row] = true;
+                matrix.nz_rows[nz_index] = row;
+                matrix.nz_values[nz_index] = rand.nextDouble()*(max - min) + min;
+                nz_index++;
+            }
+
+            Arrays.sort(matrix.nz_rows, nz_index - nzEntries, nz_index);
+        }
+    }
+
+    public enum EntryDistribution {
+        UNIFORM,
+        GAUSSIAN
     }
 
     /**
