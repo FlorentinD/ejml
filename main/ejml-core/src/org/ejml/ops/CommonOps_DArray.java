@@ -93,10 +93,10 @@ public class CommonOps_DArray {
         return elementWiseMult(a, b, output, add.func);
     }
 
-    public static double reduceScalar(double[] v, DMonoid monoid) {
-        double result = monoid.id;
+    public static double reduceScalar(double[] v, double initValue, DBinaryOperator accumulator) {
+        double result = initValue;
         for (double value : v) {
-            result = monoid.func.apply(result, value);
+            result = accumulator.apply(result, value);
         }
 
         return result;
@@ -105,15 +105,15 @@ public class CommonOps_DArray {
     /**
      *
      * @param v     (Input) vector
-     * @param monoid Operator to use for reduction and intial value
+     * @param accumulator Operator to use for reduction
      * @param mask !! differs from normal mask (here for which elements should be included from v)
      * @return      accumulated Value
      */
-    public static double reduceScalar(double[] v, DMonoid monoid, PrimitiveDMask mask) {
-        double result = monoid.id;
+    public static double reduceScalar(double[] v, double initValue, DBinaryOperator accumulator, PrimitiveDMask mask) {
+        double result = initValue;
         for (int i = 0; i < v.length; i++) {
             if (mask.isSet(i)) {
-                result = monoid.func.apply(result, v[i]);
+                result = accumulator.apply(result, v[i]);
             }
         }
 
