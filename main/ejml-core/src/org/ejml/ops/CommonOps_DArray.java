@@ -49,12 +49,26 @@ public class CommonOps_DArray {
     }
 
     /**
+     * Apply a function on (index, value) pairs
+     */
+    public static double[] applyIdx( double[] v, double[] out, IDBinaryOperator func) {
+        if (v.length != out.length) {
+            throw new IllegalArgumentException("Input and Output vectors must have the same length");
+        }
+
+        for (int i = 0; i < v.length; i++) {
+            out[i] = func.apply(i, v[i]);
+        }
+
+        return v;
+    }
+
+    /**
      * Assigns the elements in the sparse matrix to the primitive vector.
      * ! Assuming the Matrix has only 1 row .
      *
      * @param v Vector of size N
      * @param w Vector stored as a 1-dim matrix
-     * @return
      */
     public static double[] assign( double[] v, DMatrixSparseCSC w) {
         if (w.numRows != 1 && w.numCols != 1) {

@@ -19,14 +19,13 @@
 package org.ejml.ops;
 
 import org.ejml.data.DMatrixSparseCSC;
-import org.ejml.sparse.csc.CommonOps_DSCC;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TestCommops_DArray {
+public class TestCommonOps_DArray {
 
     private final double[] values = new double[]{1.5, -1, 30};
 
@@ -35,6 +34,15 @@ public class TestCommops_DArray {
         double[] expected = {3.0, -2, 60};
 
         CommonOps_DArray.apply(values, i -> i * 2);
+
+        assertTrue(Arrays.equals(expected, values));
+    }
+
+    @Test
+    void applyIdx() {
+        double[] expected = {1.5, 0, 32};
+
+        CommonOps_DArray.applyIdx(values, values, (r, i) -> r + i);
 
         assertTrue(Arrays.equals(expected, values));
     }
@@ -62,7 +70,7 @@ public class TestCommops_DArray {
 
     @Test
     void reduceScalar() {
-        assertEquals(-1D ,CommonOps_DArray.reduceScalar(values, DMonoids.MIN));
+        assertEquals(-1D ,CommonOps_DArray.reduceScalar(values, 0, DMonoids.MIN.func));
     }
 
     @Test
