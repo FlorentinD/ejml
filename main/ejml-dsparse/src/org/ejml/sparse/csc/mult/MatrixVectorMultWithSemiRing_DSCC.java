@@ -77,7 +77,7 @@ public class MatrixVectorMultWithSemiRing_DSCC {
             for (int indexA = idx0; indexA < idx1; indexA++) {
                 output[A.nz_rows[indexA]] = semiRing.add.func.apply(
                         output[A.nz_rows[indexA]],
-                        semiRing.mult.func.apply(A.nz_values[indexA], b[k]));
+                        semiRing.mult.apply(A.nz_values[indexA], b[k]));
             }
         }
 
@@ -110,7 +110,7 @@ public class MatrixVectorMultWithSemiRing_DSCC {
 
                 double sum = semiRing.add.id;
                 for (int indexB = idx0; indexB < idx1; indexB++) {
-                    sum = semiRing.add.func.apply(sum, semiRing.mult.func.apply(a[B.nz_rows[indexB]], B.nz_values[indexB]));
+                    sum = semiRing.add.func.apply(sum, semiRing.mult.apply(a[B.nz_rows[indexB]], B.nz_values[indexB]));
                 }
                 output[k] = sum;
             } else if (mask.replace) {
@@ -151,7 +151,7 @@ public class MatrixVectorMultWithSemiRing_DSCC {
 
                 double sum = semiRing.add.id;
                 for (int indexB = idx0; indexB < idx1; indexB++) {
-                    sum = semiRing.add.func.apply(sum, semiRing.mult.func.apply(b[A.nz_rows[indexB]], A.nz_values[indexB]));
+                    sum = semiRing.add.func.apply(sum, semiRing.mult.apply(b[A.nz_rows[indexB]], A.nz_values[indexB]));
                 }
                 output[k] = sum;
             } else if (mask.replace) {
@@ -189,9 +189,9 @@ public class MatrixVectorMultWithSemiRing_DSCC {
 
             double sum = 0;
             for (int indexB = idx0; indexB < idx1; indexB++) {
-                sum = semiRing.add.func.apply(sum, semiRing.mult.func.apply(a[offsetA + B.nz_rows[indexB]], B.nz_values[indexB]));
+                sum = semiRing.add.func.apply(sum, semiRing.mult.apply(a[offsetA + B.nz_rows[indexB]], B.nz_values[indexB]));
             }
-            output = semiRing.add.func.apply(output, semiRing.mult.func.apply(sum, c[offsetC + k]));
+            output = semiRing.add.func.apply(output, semiRing.mult.apply(sum, c[offsetC + k]));
         }
 
         return output;

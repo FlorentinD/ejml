@@ -99,7 +99,7 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
                         }
 
                         interSection = true;
-                        sum = semiRing.add.func.apply(sum, semiRing.mult.func.apply(vectorValues[currentVectorIndex], B.nz_values[i]));
+                        sum = semiRing.add.func.apply(sum, semiRing.mult.apply(vectorValues[currentVectorIndex], B.nz_values[i]));
                     }
                 }
 

@@ -171,7 +171,7 @@ public class ImplCommonOpsWithSemiRing_DSCC {
                 int row = B.nz_rows[i];
                 if (w[row] == col) {
                     if (mask == null || mask.isSet(row, col)) {
-                        C.nz_values[C.nz_length] = semiRing.mult.func.apply(x[row], B.nz_values[i]);
+                        C.nz_values[C.nz_length] = semiRing.mult.apply(x[row], B.nz_values[i]);
                         C.nz_rows[C.nz_length++] = row;
                     }
                 }

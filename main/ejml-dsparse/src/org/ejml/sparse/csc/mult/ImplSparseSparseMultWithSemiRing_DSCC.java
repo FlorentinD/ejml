@@ -90,11 +90,11 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
      *
      * <p>NOTE: This is the same as cs_scatter() in csparse.</p>
      */
-    public static void multAddColA(DMatrixSparseCSC A, int colA,
-                                   double alpha,
-                                   DMatrixSparseCSC C, int mark,
-                                   DSemiRing semiRing, @Nullable Mask mask,
-                                   double x[], int w[]) {
+    public static void multAddColA( DMatrixSparseCSC A, int colA,
+                                    double alpha,
+                                    DMatrixSparseCSC C, int mark,
+                                    DSemiRing semiRing, @Nullable Mask mask,
+                                    double[] x, int[] w ) {
         int idxA0 = A.col_idx[colA];
         int idxA1 = A.col_idx[colA + 1];
 
@@ -111,9 +111,9 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
                     w[row] = mark;
                     C.nz_rows[C.nz_length] = row;
                     C.col_idx[mark] = ++C.nz_length;
-                    x[row] = semiRing.mult.func.apply(A.nz_values[j], alpha);
+                    x[row] = semiRing.mult.apply(A.nz_values[j], alpha);
                 } else {
-                    x[row] = semiRing.add.func.apply(x[row], semiRing.mult.func.apply(A.nz_values[j], alpha));
+                    x[row] = semiRing.add.func.apply(x[row], semiRing.mult.apply(A.nz_values[j], alpha));
                 }
             }
         }
@@ -142,7 +142,7 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
 
 //                for (int j = 0; j < B.numCols; j++) {
                 while (indexB < end) {
-                    C.data[indexC++] = semiRing.add.func.apply(C.data[indexC++], semiRing.mult.func.apply(valueA, B.data[indexB++]));
+                    C.data[indexC++] = semiRing.add.func.apply(C.data[indexC++], semiRing.mult.apply(valueA, B.data[indexB++]));
                 }
             }
         }
@@ -160,7 +160,7 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
                 double sum = semiRing.add.id;
                 for (int indexA = idx0; indexA < idx1; indexA++) {
                     int rowK = A.nz_rows[indexA];
-                    sum = semiRing.add.func.apply(sum, semiRing.mult.func.apply(A.nz_values[indexA], B.data[rowK * B.numCols + j]));
+                    sum = semiRing.add.func.apply(sum, semiRing.mult.apply(A.nz_values[indexA], B.data[rowK * B.numCols + j]));
                 }
 
                 C.data[i * C.numCols + j] = sum;
@@ -179,7 +179,7 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
                 double sum = semiRing.add.id;
                 for (int indexA = idx0; indexA < idx1; indexA++) {
                     int rowK = A.nz_rows[indexA];
-                    sum = semiRing.add.func.apply(sum, semiRing.mult.func.apply(A.nz_values[indexA], B.data[rowK * B.numCols + j]));
+                    sum = semiRing.add.func.apply(sum, semiRing.mult.apply(A.nz_values[indexA], B.data[rowK * B.numCols + j]));
                 }
 
                 C.data[i * C.numCols + j] = semiRing.add.func.apply(C.data[i * C.numCols + j], sum);
@@ -203,7 +203,7 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
                     int i = A.nz_rows[indexA];
                     C.data[i * C.numCols + j] = semiRing.add.func.apply(
                             C.data[i * C.numCols + j],
-                            semiRing.mult.func.apply(
+                            semiRing.mult.apply(
                                     A.nz_values[indexA],
                                     B.data[j * B.numCols + k]
                             )
@@ -232,7 +232,7 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
 
                     C.data[i * C.numCols + j] = semiRing.add.func.apply(
                             C.data[i * C.numCols + j],
-                            semiRing.mult.func.apply(
+                            semiRing.mult.apply(
                                     A.nz_values[indexA],
                                     B.data[indexB + k]
                             )
