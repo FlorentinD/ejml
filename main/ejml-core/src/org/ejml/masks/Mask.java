@@ -29,13 +29,8 @@ public abstract class Mask {
     // useful for sparse matrices, as actual negation would be costly and result in dense masks
     public final boolean negated;
 
-    // whether the result should replace the initial result (otherwise merge them)
-    // same as the "GrB_REPLACE" descriptor
-    public final boolean replace;
-
-    protected Mask(boolean negated, boolean replace) {
+    protected Mask( boolean negated ) {
         this.negated = negated;
-        this.replace = replace;
     }
 
     public abstract boolean isSet(int row, int col);

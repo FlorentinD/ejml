@@ -20,15 +20,9 @@ package org.ejml.masks;
 
 public abstract class MaskBuilder<MASK extends Mask> {
     protected boolean negated = false;
-    protected boolean replace = true;
 
     public MaskBuilder<MASK> withNegated(boolean negated) {
         this.negated = negated;
-        return this;
-    }
-
-    public MaskBuilder<MASK> withReplace(boolean replace) {
-        this.replace = replace;
         return this;
     }
 

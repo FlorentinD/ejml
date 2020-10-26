@@ -28,9 +28,9 @@ public class PrimitiveDMask extends Mask {
     //
     private final double zeroElement;
 
-    public PrimitiveDMask(double[] values, int numCols, boolean negated, boolean replace, double zeroElement) {
+    public PrimitiveDMask( double[] values, int numCols, boolean negated, double zeroElement ) {
         // for dense structures they cannot be used for structural masks
-        super(negated, replace);
+        super(negated);
         this.values = values;
         this.numCols = numCols;
         this.zeroElement = zeroElement;
@@ -88,7 +88,7 @@ public class PrimitiveDMask extends Mask {
 
         @Override
         public PrimitiveDMask build() {
-            return new PrimitiveDMask(values, numCols, negated, replace, zeroElement);
+            return new PrimitiveDMask(values, numCols, negated, zeroElement);
         }
     }
 }

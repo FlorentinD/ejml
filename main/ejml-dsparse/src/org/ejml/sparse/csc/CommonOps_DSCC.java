@@ -1225,11 +1225,12 @@ public class CommonOps_DSCC {
      * @param selector    Function to decide whether an entry gets selected
      * @param accumulator (Optional) How to combine existing entries in output with the selected ones
      * @param output      (Optional/Output) Matrix to use for the output. Can be the same as A
+     * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
      * @return Matrix storing the selected entries of A
      */
     public static DMatrixSparseCSC select(DMatrixSparseCSC A, IBinaryPredicate selector,
-                                          @Nullable DBinaryOperator accumulator, @Nullable DMatrixSparseCSC output) {
-        DMatrixSparseCSC initialOutput = maybeCacheInitialOutput(null, accumulator, output);
+                                          @Nullable DBinaryOperator accumulator, @Nullable DMatrixSparseCSC output, boolean replaceOutput) {
+        DMatrixSparseCSC initialOutput = maybeCacheInitialOutput(output, replaceOutput);
 
         if (output != A) {
             output = reshapeOrDeclare(output, A);
@@ -1836,13 +1837,14 @@ public class CommonOps_DSCC {
         return apply(input, func, input);
     }
 
-    public static DMatrixSparseCSC apply(DMatrixSparseCSC input, DUnaryOperator func,
-                                         @Nullable DMatrixSparseCSC output, @Nullable Mask mask, @Nullable DBinaryOperator accum) {
-        DMatrixSparseCSC initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(mask, accum, output);
+    public static DMatrixSparseCSC apply(DMatrixSparseCSC input, DUnaryOperator func, @Nullable DMatrixSparseCSC output,
+                                         @Nullable Mask mask, @Nullable DBinaryOperator accum, boolean replaceOutput) {
+        DMatrixSparseCSC initialOutput = null;
         // set correct structure
         if (output == null) {
             output = input.createLike();
         } else if (input != output) {
+            initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
             output.copyStructure(input);
         }
         if (mask != null) {
@@ -1850,7 +1852,7 @@ public class CommonOps_DSCC {
         }
 
 
-        if (initialOutput == null && mask != null && mask.replace) {
+        if (mask != null && initialOutput == null) {
             // catch corner-case - otherwise mask would not be applied at all
             // need actual coordinate as Mask has no .isSet(index) (only PrimitiveMasks)
             // TODO: check this corner case in combineOutputs()
@@ -1975,11 +1977,12 @@ public class CommonOps_DSCC {
      * @param initValue initial value for accumulator
      * @param func Accumulator function defining "+" for accumulator +=  cellValue
      * @param output output (Output) Vector, where result can be stored in
+     * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
      * @return a column-vector, where v[i] == values of column i reduced to scalar based on `func`
      */
-    public static DMatrixRMaj reduceColumnWise(DMatrixSparseCSC input, double initValue, DBinaryOperator func,
-                                               @Nullable DMatrixRMaj output, @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accum) {
-        DMatrixRMaj initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(mask, accum, output);
+    public static DMatrixRMaj reduceColumnWise(DMatrixSparseCSC input, double initValue, DBinaryOperator func, @Nullable DMatrixRMaj output,
+                                               @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accum, boolean replaceOutput) {
+        DMatrixRMaj initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
         output = reshapeOrDeclare(output, 1, input.numCols);
         if (mask != null) {
             mask.compatible(output);
@@ -2003,8 +2006,9 @@ public class CommonOps_DSCC {
         return combineOutputs(output, initialOutput, mask, accum, true);
     }
 
-    public static DMatrixRMaj reduceColumnWise(DMatrixSparseCSC input, double initValue, DBinaryOperator func, @Nullable DMatrixRMaj output) {
-        return reduceColumnWise(input, initValue, func, output, null, null);
+    public static DMatrixRMaj reduceColumnWise(DMatrixSparseCSC input, double initValue, DBinaryOperator func,
+                                               @Nullable DMatrixRMaj output) {
+        return reduceColumnWise(input, initValue, func, output, null, null, true);
     }
 
     /**
@@ -2023,11 +2027,13 @@ public class CommonOps_DSCC {
      * @param initValue initial value for accumulator
      * @param func Accumulator function defining "+" for accumulator += cellValue
      * @param output output (Output) Vector, where result can be stored in
+     * @param accum Accumulator function defining "+" for oldOutput += newOutput
+     * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
      * @return a row-vector, where v[i] == values of row i reduced to scalar based on `func`
      */
-    public static DMatrixRMaj reduceRowWise(DMatrixSparseCSC input, double initValue, DBinaryOperator func,
-                                            @Nullable DMatrixRMaj output, @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accum) {
-        DMatrixRMaj initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(mask, accum, output);
+    public static DMatrixRMaj reduceRowWise(DMatrixSparseCSC input, double initValue, DBinaryOperator func, @Nullable DMatrixRMaj output,
+                                            @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accum, boolean replaceOutput) {
+        DMatrixRMaj initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
         output = reshapeOrDeclare(output, input.numRows, 1);
         if (mask != null) {
             mask.compatible(output);
@@ -2049,6 +2055,6 @@ public class CommonOps_DSCC {
     }
 
     public static DMatrixRMaj reduceRowWise(DMatrixSparseCSC input, double initValue, DBinaryOperator func, @Nullable DMatrixRMaj output) {
-        return reduceRowWise(input, initValue, func, output, null, null);
+        return reduceRowWise(input, initValue, func, output, null, null, true);
     }
 }

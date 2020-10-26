@@ -46,6 +46,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRing_DSCC {
     //      test accumulator
     static DSemiRing semiRing = DSemiRings.PLUS_TIMES;
+    private static final boolean[] BOOL_VALUES = {true, false};
 
     private static Stream<Arguments> primitiveVectorSource() {
         double[] inputVector = new double[7];
@@ -59,12 +60,15 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
 
         PrimitiveDMask.Builder maskBuilder = new PrimitiveDMask.Builder(prevResult);
 
-        return Stream.of(
-                Arguments.of(inputVector, prevResult, maskBuilder.withNegated(true).withReplace(false).build()),
-                Arguments.of(inputVector, prevResult, maskBuilder.withNegated(false).withReplace(false).build()),
-                Arguments.of(inputVector, prevResult, maskBuilder.withNegated(false).withReplace(true).build()),
-                Arguments.of(inputVector, prevResult, maskBuilder.withNegated(true).withReplace(true).build())
-        );
+        Stream.Builder<Arguments> builder = Stream.builder();
+
+        for (boolean negated : BOOL_VALUES) {
+            for (boolean replaceOutput : BOOL_VALUES) {
+                builder.accept(Arguments.of(inputVector, prevResult, maskBuilder.withNegated(negated).build(), replaceOutput));
+            }
+        }
+
+        return builder.build();
     }
 
     private static Stream<Arguments> sparseVectorSource() {
@@ -75,16 +79,19 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         DMatrixSparseCSC prevResult = otherMatrix.copy();
         prevResult.set(0, 2, 99);
 
-        return Stream.of(
-                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, false).withNegated(true).withReplace(false).build()),
-                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, true).withNegated(false).withReplace(false).build()),
-                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, false).withNegated(false).withReplace(false).build()),
-                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, true).withNegated(true).withReplace(false).build()),
-                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, false).withNegated(true).withReplace(true).build()),
-                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, true).withNegated(false).withReplace(true).build()),
-                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, false).withNegated(false).withReplace(true).build()),
-                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, true).withNegated(true).withReplace(true).build())
-        );
+        Stream.Builder<Arguments> builder = Stream.builder();
+
+        for (boolean structural : BOOL_VALUES) {
+            for (boolean negated : BOOL_VALUES) {
+                for (boolean replaceOutput : BOOL_VALUES) {
+                    Mask mask = DMasks.builder(prevResult, structural).withNegated(negated).build();
+                    builder.accept(Arguments.of(otherMatrix, prevResult, mask, replaceOutput));
+                }
+            }
+        }
+
+
+        return builder.build();
     }
 
     private static Stream<Arguments> sparseMatrixSource() {
@@ -96,96 +103,100 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         prevResult.set(0, 0, 99);
         prevResult.set(0, 3, 42);
 
-        return Stream.of(
-                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, false).withNegated(true).withReplace(false).build()),
-                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, true).withNegated(false).withReplace(false).build()),
-                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, false).withNegated(false).withReplace(false).build()),
-                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, true).withNegated(true).withReplace(false).build()),
-                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, false).withNegated(true).withReplace(true).build()),
-                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, true).withNegated(false).withReplace(true).build()),
-                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, false).withNegated(false).withReplace(true).build()),
-                Arguments.of(otherMatrix, prevResult, DMasks.builder(prevResult, true).withNegated(true).withReplace(true).build())
-        );
+        Stream.Builder<Arguments> builder = Stream.builder();
+
+        for (boolean structural : BOOL_VALUES) {
+            for (boolean negated : BOOL_VALUES) {
+                for (boolean replaceOutput : BOOL_VALUES) {
+                    Mask mask = DMasks.builder(prevResult, structural).withNegated(negated).build();
+                    builder.accept(Arguments.of(otherMatrix, prevResult, mask, replaceOutput));
+                }
+            }
+        }
+
+        return builder.build();
     }
 
     @ParameterizedTest
     @MethodSource("primitiveVectorSource")
-    public void mult_v_A(double[] inputVector, double[] prevResult, PrimitiveDMask mask) {
+    public void mult_v_A(double[] inputVector, double[] prevResult, PrimitiveDMask mask, boolean replaceOutput) {
         double[] found = prevResult.clone();
         double[] foundWithMask = prevResult.clone();
 
         found = MatrixVectorMultWithSemiRing_DSCC.mult(inputVector, inputMatrix, found, semiRing);
-        foundWithMask = MatrixVectorMultWithSemiRing_DSCC.mult(inputVector, inputMatrix, foundWithMask, semiRing, mask, null);
+        foundWithMask = MatrixVectorMultWithSemiRing_DSCC.mult(inputVector, inputMatrix, foundWithMask, semiRing, mask, null, replaceOutput);
 
-        assertMaskedResult(prevResult, found, foundWithMask, mask, semiRing.add.id);
+        assertMaskedResult(prevResult, found, foundWithMask, mask, semiRing.add.id, replaceOutput);
     }
 
     @ParameterizedTest
     @MethodSource("primitiveVectorSource")
-    public void mult_A_v(double[] inputVector, double[] prevResult, PrimitiveDMask mask) {
+    public void mult_A_v(double[] inputVector, double[] prevResult, PrimitiveDMask mask, boolean replaceOutput) {
         double[] found = prevResult.clone();
         double[] foundWithMask = prevResult.clone();
 
         found = MatrixVectorMultWithSemiRing_DSCC.mult(inputMatrix, inputVector, found, semiRing);
-        foundWithMask = MatrixVectorMultWithSemiRing_DSCC.mult(inputMatrix, inputVector, foundWithMask, semiRing, mask, null);
+        foundWithMask = MatrixVectorMultWithSemiRing_DSCC.mult(inputMatrix, inputVector, foundWithMask, semiRing, mask, null, replaceOutput);
 
-        assertMaskedResult(prevResult, found, foundWithMask, mask, semiRing.add.id);
+        assertMaskedResult(prevResult, found, foundWithMask, mask, semiRing.add.id, replaceOutput);
     }
 
     @ParameterizedTest
     @MethodSource("primitiveVectorSource")
-    public void mult_Trans_A_v(double[] inputVector, double[] prevResult, PrimitiveDMask mask) {
+    public void mult_Trans_A_v(double[] inputVector, double[] prevResult, PrimitiveDMask mask, boolean replaceOutput) {
         double[] found = prevResult.clone();
         double[] foundWithMask = prevResult.clone();
 
-        found = MatrixVectorMultWithSemiRing_DSCC.multTransA(inputMatrix, inputVector, found, semiRing, null, null);
-        foundWithMask = MatrixVectorMultWithSemiRing_DSCC.multTransA(inputMatrix, inputVector, foundWithMask, semiRing, mask, null);
+        found = MatrixVectorMultWithSemiRing_DSCC.multTransA(inputMatrix, inputVector, found, semiRing, null, null, replaceOutput);
+        foundWithMask = MatrixVectorMultWithSemiRing_DSCC.multTransA(inputMatrix, inputVector, foundWithMask, semiRing, mask, null, replaceOutput);
 
-        assertMaskedResult(prevResult, found, foundWithMask, mask, semiRing.add.id);
+        assertMaskedResult(prevResult, found, foundWithMask, mask, semiRing.add.id, replaceOutput);
     }
 
     // matrix, matrix ops
 
     @ParameterizedTest
     @MethodSource("sparseVectorSource")
-    public void mult_A_B(DMatrixSparseCSC sparseVector, DMatrixSparseCSC prevResult, Mask mask) {
-        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.mult(sparseVector, inputMatrix, prevResult.copy(), semiRing, null, null);
-        DMatrixSparseCSC foundWithMask = CommonOpsWithSemiRing_DSCC.mult(sparseVector, inputMatrix, prevResult.copy(), semiRing, mask, null);
+    public void mult_A_B(DMatrixSparseCSC sparseVector, DMatrixSparseCSC prevResult, Mask mask, boolean replaceOutput) {
+        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.mult(sparseVector, inputMatrix,
+                prevResult.copy(), semiRing, null, null, replaceOutput);
+        DMatrixSparseCSC foundWithMask = CommonOpsWithSemiRing_DSCC.mult(sparseVector, inputMatrix,
+                prevResult.copy(), semiRing, mask, null, replaceOutput);
 
-        assertMaskedResult(prevResult, found, foundWithMask, mask, semiRing.add.id);
+        assertMaskedResult(prevResult, found, foundWithMask, mask, semiRing.add.id, replaceOutput);
     }
 
 
     @ParameterizedTest
     @MethodSource("sparseMatrixSource")
-    public void add_A_B(DMatrixSparseCSC otherMatrix, DMatrixSparseCSC prevResult, Mask mask) {
+    public void add_A_B(DMatrixSparseCSC otherMatrix, DMatrixSparseCSC prevResult, Mask mask, boolean replaceOutput) {
         DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.add(
-                1, otherMatrix, 1, inputMatrix, prevResult.copy(), semiRing, null, null, null, null);
+                1, otherMatrix, 1, inputMatrix, prevResult.copy(), semiRing, null, null, replaceOutput, null, null);
         DMatrixSparseCSC foundWithMask = CommonOpsWithSemiRing_DSCC.add(
-                1, otherMatrix, 1, inputMatrix, prevResult.copy(), semiRing, mask, null, null, null);
+                1, otherMatrix, 1, inputMatrix, prevResult.copy(), semiRing, mask, null, replaceOutput, null, null);
 
-        assertMaskedResult(prevResult, found, foundWithMask, mask, semiRing.add.id);
+        assertMaskedResult(prevResult, found, foundWithMask, mask, semiRing.add.id, replaceOutput);
     }
 
     @ParameterizedTest
     @MethodSource("sparseMatrixSource")
-    public void elementWiseMult(DMatrixSparseCSC otherMatrix, DMatrixSparseCSC prevResult, Mask mask) {
+    public void elementWiseMult(DMatrixSparseCSC otherMatrix, DMatrixSparseCSC prevResult, Mask mask, boolean replaceOutput) {
         DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.elementMult(
-                otherMatrix, inputMatrix, prevResult.copy(), semiRing, null, null, null, null);
+                otherMatrix, inputMatrix, prevResult.copy(), semiRing, null, null, replaceOutput, null, null);
         DMatrixSparseCSC foundWithMask = CommonOpsWithSemiRing_DSCC.elementMult(
-                otherMatrix, inputMatrix, prevResult.copy(), semiRing, mask, null, null, null);
+                otherMatrix, inputMatrix, prevResult.copy(), semiRing, mask, null, replaceOutput, null, null);
 
-        assertMaskedResult(prevResult, found, foundWithMask, mask, semiRing.add.id);
+        assertMaskedResult(prevResult, found, foundWithMask, mask, semiRing.add.id, replaceOutput);
     }
 
     @ParameterizedTest
     @MethodSource("sparseVectorSource")
-    public void apply(DMatrixSparseCSC vector, DMatrixSparseCSC prevResult, Mask mask) {
+    public void apply(DMatrixSparseCSC vector, DMatrixSparseCSC prevResult, Mask mask, boolean replaceOutput) {
         DBinaryOperator second = (x, y) -> y;
-        DMatrixSparseCSC result = CommonOps_DSCC.apply(vector, a -> a * 2, prevResult.copy(), null, null);
-        DMatrixSparseCSC resultWithMask = CommonOps_DSCC.apply(vector, a -> a * 2, prevResult.copy(), mask, second);
+        DMatrixSparseCSC result = CommonOps_DSCC.apply(vector, a -> a * 2, prevResult.copy());
+        DMatrixSparseCSC resultWithMask = CommonOps_DSCC.apply(vector, a -> a * 2, prevResult.copy(), mask, second, replaceOutput);
 
-        assertMaskedResult(prevResult, result, resultWithMask, mask, 0);
+        assertMaskedResult(prevResult, result, resultWithMask, mask, 0, replaceOutput);
     }
 
     @ParameterizedTest
@@ -202,12 +213,13 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         prevPrimitiveResult[0] = 99;
 
         DMatrixRMaj prevResult = DMatrixRMaj.wrap(matrix.numRows, 1, prevPrimitiveResult);
-        PrimitiveDMask mask = DMasks.builder(prevResult).withNegated(negatedMask).withReplace(false).build();
+        boolean replaceOutput = false;
+        PrimitiveDMask mask = DMasks.builder(prevResult).withNegated(negatedMask).build();
 
-        DMatrixRMaj result = CommonOps_DSCC.reduceRowWise(matrix, 0, Double::sum, prevResult.copy(), null, null);
-        DMatrixRMaj resultWithMask = CommonOps_DSCC.reduceRowWise(matrix, 0, Double::sum, prevResult.copy(), mask, null);
+        DMatrixRMaj result = CommonOps_DSCC.reduceRowWise(matrix, 0, Double::sum, prevResult.copy(), null, null, replaceOutput);
+        DMatrixRMaj resultWithMask = CommonOps_DSCC.reduceRowWise(matrix, 0, Double::sum, prevResult.copy(), mask, null, replaceOutput);
 
-        assertMaskedResult(prevResult, result, resultWithMask, mask, 0);
+        assertMaskedResult(prevResult, result, resultWithMask, mask, 0, replaceOutput);
     }
 
     @ParameterizedTest
@@ -224,22 +236,24 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         prevPrimitiveResult[0] = 99;
 
         DMatrixRMaj prevResult = DMatrixRMaj.wrap(1, matrix.numCols, prevPrimitiveResult);
-        PrimitiveDMask mask = DMasks.builder(prevResult).withNegated(negatedMask).withReplace(false).build();
+        PrimitiveDMask mask = DMasks.builder(prevResult).withNegated(negatedMask).build();
 
-        DMatrixRMaj result = CommonOps_DSCC.reduceColumnWise(matrix, 0, Double::sum, prevResult.copy(), null, null);
-        DMatrixRMaj resultWithMask = CommonOps_DSCC.reduceColumnWise(matrix, 0, Double::sum, prevResult.copy(), mask, null);
+        boolean replaceOutput = false;
+        DMatrixRMaj result = CommonOps_DSCC.reduceColumnWise(matrix, 0, Double::sum, prevResult.copy(), null, null, replaceOutput);
+        DMatrixRMaj resultWithMask = CommonOps_DSCC.reduceColumnWise(matrix, 0, Double::sum, prevResult.copy(), mask, null, replaceOutput);
 
-        assertMaskedResult(prevResult, result, resultWithMask, mask, 0);
+        assertMaskedResult(prevResult, result, resultWithMask, mask, 0, replaceOutput);
     }
 
 
-    private void assertMaskedResult(DMatrixSparseCSC prevResult, DMatrixSparseCSC found, DMatrixSparseCSC foundWithMask, Mask mask, double id) {
+    private void assertMaskedResult(DMatrixSparseCSC prevResult, DMatrixSparseCSC found, DMatrixSparseCSC foundWithMask,
+                                    Mask mask, double id, boolean replaceOutput) {
         Iterator<DMatrixSparse.CoordinateRealValue> it = found.createCoordinateIterator();
         // check that existing result were not overwritten
         it.forEachRemaining(value -> {
             if (mask.isSet(value.row, value.col)) {
                 assertEquals(found.get(value.row, value.col), foundWithMask.get(value.row, value.col), "Field should have been computed");
-            } else if (!mask.replace) {
+            } else if (!replaceOutput) {
                 assertEquals(prevResult.get(value.row, value.col), foundWithMask.get(value.row, value.col), "Field from initial result was overwritten");
             } else if (!mask.isSet(value.row, value.col)) {
                 assertEquals(id, foundWithMask.get(value.row, value.col), "Field shouldn't be computed");
@@ -248,20 +262,21 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
 
         // checking that untouched cells are still present
         prevResult.createCoordinateIterator().forEachRemaining(value -> {
-            if (!mask.isSet(value.row, value.col) && !mask.replace) {
+            if (!mask.isSet(value.row, value.col) && !replaceOutput) {
                 assertEquals(prevResult.get(value.row, value.col), foundWithMask.get(value.row, value.col), "Field from initial result was deleted");
-            } else if (mask.replace && !found.isAssigned(value.row, value.col)) {
+            } else if (replaceOutput && !found.isAssigned(value.row, value.col)) {
                 assertFalse(foundWithMask.isAssigned(value.row, value.col), "Field from initial result was not cleared");
             }
         });
     }
 
-    private void assertMaskedResult(DMatrixD1 prevResult, DMatrixD1 found, DMatrixD1 foundWithMask, Mask mask, double id) {
+    private void assertMaskedResult(DMatrixD1 prevResult, DMatrixD1 found, DMatrixD1 foundWithMask,
+                                    Mask mask, double id, boolean replaceOutput) {
         for (int row = 0; row < found.getNumRows(); row++) {
             for (int col = 0; col < found.getNumCols(); col++) {
-                if (mask.isSet(row, col) && mask.replace) {
+                if (mask.isSet(row, col) && replaceOutput) {
                     assertEquals(found.get(row, col), foundWithMask.get(row, col), "Field should have been computed/Initial result cleared");
-                } else if (mask.replace && !mask.isSet(row, col)) {
+                } else if (replaceOutput && !mask.isSet(row, col)) {
                     assertEquals(id, foundWithMask.get(row, col), "Field should not be computed");
                 } else if (!mask.isSet(row, col)) {
                     assertEquals(prevResult.get(row, col), foundWithMask.get(row, col), "Field from initial result was overwritten");
@@ -270,11 +285,12 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         }
     }
 
-    private void assertMaskedResult(double[] prevResult, double[] found, double[] foundWithMask, PrimitiveDMask mask, double id) {
+    private void assertMaskedResult(double[] prevResult, double[] found, double[] foundWithMask,
+                                    PrimitiveDMask mask, double id, boolean replaceOutput) {
         for (int i = 0; i < found.length; i++) {
             if (mask.isSet(i)) {
                 assertEquals(foundWithMask[i], found[i], "Computation differs");
-            } else if (!mask.isSet(i) && mask.replace) {
+            } else if (!mask.isSet(i) && replaceOutput) {
                 assertEquals(id, foundWithMask[i], "Wrongly computed");
             } else {
                 assertEquals(prevResult[i], foundWithMask[i], "Initial result was overwritten");

@@ -45,7 +45,7 @@ public class TestMatrixMatrixMultWithSemiRing_DSCC extends BaseTestMatrixMatrixO
         vector.set(0, 3, 0.5);
         vector.set(0, 5, 0.6);
 
-        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.mult(vector, inputMatrix, null, semiRing, null, null);
+        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.mult(vector, inputMatrix, null, semiRing, null, null, true);
 
         assertEquals(expected[0], found.get(0, 0));
         assertEquals(expected[1], found.get(0, 2));
@@ -56,7 +56,7 @@ public class TestMatrixMatrixMultWithSemiRing_DSCC extends BaseTestMatrixMatrixO
     void elementMult(String desc, DMatrixSparseCSC matrix, DMatrixSparseCSC otherMatrix) {
         DSemiRing semiRing = DSemiRings.PLUS_TIMES;
 
-        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.elementMult(matrix, otherMatrix, null, semiRing, null, null, null, null);
+        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.elementMult(matrix, otherMatrix, null, semiRing, null, null, true, null, null);
         DMatrixSparseCSC expected = CommonOps_DSCC.elementMult(matrix, otherMatrix, null, null, null);
 
         EjmlUnitTests.assertEquals(expected, found);
@@ -67,7 +67,7 @@ public class TestMatrixMatrixMultWithSemiRing_DSCC extends BaseTestMatrixMatrixO
     void add(String desc, DMatrixSparseCSC matrix, DMatrixSparseCSC otherMatrix) {
         DSemiRing semiRing = DSemiRings.PLUS_TIMES;
 
-        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.add(1, matrix, 1, otherMatrix, null, semiRing, null, null, null, null);
+        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.add(1, matrix, 1, otherMatrix, null, semiRing, null, null, true, null, null);
         DMatrixSparseCSC expected = CommonOps_DSCC.add(1, matrix, 1, otherMatrix, null, null, null);
 
         EjmlUnitTests.assertEquals(expected, found);

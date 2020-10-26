@@ -55,6 +55,7 @@ public class MaskUtil_DSCC {
     }
 
     static DMatrixRMaj combineOutputs(DMatrixRMaj output, @Nullable DMatrixRMaj initialOutput, @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accum, boolean maskApplied) {
+        // TODO !! just check sameShape and then delegate to double[] variant
         if (initialOutput != null) {
             checkSameShape(initialOutput, output, true);
 
@@ -63,7 +64,6 @@ public class MaskUtil_DSCC {
                 accum = SECOND;
             }
 
-            // TODO simplify to mask.isSet(index)
             for (int col = 0; col < output.getNumCols(); col++) {
                 for (int row = 0; row < output.numRows; row++) {
                     if (mask == null || mask.isSet(row, col)) {
@@ -87,7 +87,6 @@ public class MaskUtil_DSCC {
     }
 
     public static double[] combineOutputs(@Nullable double[] initialOutput, double[] output, @Nullable PrimitiveDMask mask, @Nullable  DBinaryOperator accum, boolean maskApplied) {
-        // TODO also use maskApplied here
         if (initialOutput != null) {
             if(accum == null) {
                 // e.g. just take the newly computed value
@@ -169,7 +168,6 @@ public class MaskUtil_DSCC {
 
         for (int j = idxA0; j < idxA1; j++) {
             int row = A.nz_rows[j];
-            // TODO: are there cases, where the mask is checked twice this way?
             if (mask == null || mask.isSet(row, mark - 1)) {
                 if (w[row] < mark) {
                     if (C.nz_length >= C.nz_rows.length) {
@@ -188,16 +186,13 @@ public class MaskUtil_DSCC {
         }
     }
 
-    // TODO: remove replace flag and just decide based on accumulator and intialOutput? (replace flag seems redundant)
-    //       drawback: user has to specify accumulator everytime (e.g. not default to SECOND)
-
     /**
      * Check if initialOutput matrix needs to be cached for later merge with actual result
      *
      * ! mask.replace takes precedence before existing accumlator
      */
-    public static <T extends Matrix> @Nullable T maybeCacheInitialOutput(@Nullable Mask mask, @Nullable DBinaryOperator accumulator, @Nullable T initialOutput) {
-        if (initialOutput != null && ((mask != null && !mask.replace) || (accumulator != null && mask == null))) {
+    public static <T extends Matrix> @Nullable T maybeCacheInitialOutput(@Nullable T initialOutput, boolean replaceOutput ) {
+        if (initialOutput != null && !replaceOutput) {
             return initialOutput.copy();
         }
         else {
@@ -206,8 +201,8 @@ public class MaskUtil_DSCC {
     }
 
     // primitive version
-    public static @Nullable double[] maybeCacheInitialOutput(@Nullable Mask mask, @Nullable DBinaryOperator accumulator, @Nullable double[] initialOutput) {
-        if (initialOutput != null && ((mask != null && !mask.replace) || (accumulator != null && mask == null))) {
+    public static @Nullable double[] maybeCacheInitialOutput(@Nullable double[] initialOutput, boolean replaceOutput ) {
+        if (initialOutput != null && !replaceOutput) {
             return initialOutput.clone();
         }
         else {

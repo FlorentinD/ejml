@@ -29,8 +29,8 @@ import org.ejml.data.DMatrixSparseCSC;
 public class SparseStructuralDMask extends Mask {
     private final DMatrixSparseCSC matrix;
 
-    public SparseStructuralDMask(DMatrixSparseCSC matrix, boolean negated, boolean replace) {
-        super(negated, replace);
+    public SparseStructuralDMask( DMatrixSparseCSC matrix, boolean negated ) {
+        super(negated);
         this.matrix = matrix;
     }
 
@@ -58,7 +58,7 @@ public class SparseStructuralDMask extends Mask {
 
         @Override
         public SparseStructuralDMask build() {
-            return new SparseStructuralDMask(matrix, negated, replace);
+            return new SparseStructuralDMask(matrix, negated);
         }
     }
 }

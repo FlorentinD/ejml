@@ -21,13 +21,11 @@ package org.ejml.sparse.csc.mult;
 import org.ejml.data.DMatrixSparseCSC;
 import org.ejml.data.DVectorSparse;
 import org.ejml.masks.Mask;
-import org.ejml.masks.PrimitiveDMask;
 import org.ejml.ops.DBinaryOperator;
 import org.ejml.ops.DSemiRing;
 import org.ejml.sparse.csc.MaskUtil_DSCC;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.BitSet;
 
 import static org.ejml.UtilEjml.reshapeOrDeclare;
@@ -50,10 +48,11 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
      * @param semiRing Semi-Ring to define + and *
      * @param mask Mask for specifying which entries should be overwritten
      * @param accumulator Operator to combine result with existing entries in output matrix
+     * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
      */
     public static DVectorSparse mult(DVectorSparse a, DMatrixSparseCSC B, @Nullable DVectorSparse output, DSemiRing semiRing,
-                                @Nullable Mask mask, @Nullable DBinaryOperator accumulator) {
-        DVectorSparse initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(mask, accumulator, output);
+                                @Nullable Mask mask, @Nullable DBinaryOperator accumulator, boolean replaceOutput) {
+        DVectorSparse initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
         output = reshapeOrDeclare(output, a);
         output.setIndicesSorted(true);
 
@@ -118,6 +117,6 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
     }
 
     public static DVectorSparse mult(DVectorSparse a, DMatrixSparseCSC B, @Nullable DVectorSparse c, DSemiRing semiRing) {
-        return mult(a, B, c, semiRing, null, null);
+        return mult(a, B, c, semiRing, null, null, true);
     }
 }

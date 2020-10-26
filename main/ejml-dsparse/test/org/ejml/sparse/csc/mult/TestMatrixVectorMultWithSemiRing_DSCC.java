@@ -102,8 +102,8 @@ public class TestMatrixVectorMultWithSemiRing_DSCC {
         // assuming `mult` works correctly
         assertTrue(
                 Arrays.equals(
-                        MatrixVectorMultWithSemiRing_DSCC.mult(inputMatrix, v, expected, DSemiRings.PLUS_TIMES, null, null),
-                        MatrixVectorMultWithSemiRing_DSCC.multTransA(transposedMatrix, v, found, DSemiRings.PLUS_TIMES, null, null)
+                        MatrixVectorMultWithSemiRing_DSCC.mult(inputMatrix, v, expected, DSemiRings.PLUS_TIMES),
+                        MatrixVectorMultWithSemiRing_DSCC.multTransA(transposedMatrix, v, found, DSemiRings.PLUS_TIMES, null, null, true)
                 )
         );
 

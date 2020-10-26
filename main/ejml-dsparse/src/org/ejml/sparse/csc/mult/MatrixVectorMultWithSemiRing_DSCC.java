@@ -40,14 +40,15 @@ public class MatrixVectorMultWithSemiRing_DSCC {
      * @param semiRing Semi-Ring to define + and *
      * @param mask Mask for specifying which entries should be overwritten
      * @param accumulator Operator to combine result with existing entries in output matrix
+     * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
      */
     public static double[] mult(DMatrixSparseCSC A, double[] b, double[] output, DSemiRing semiRing,
-                                @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accumulator) {
-        return multAdd(A, b, output, semiRing, mask, accumulator);
+                                @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accumulator, boolean replaceOutput) {
+        return multAdd(A, b, output, semiRing, mask, accumulator, replaceOutput);
     }
 
     public static double[] mult(DMatrixSparseCSC A, double[] b, double[] output, DSemiRing semiRing) {
-        return mult(A, b, output, semiRing, null, null);
+        return mult(A, b, output, semiRing, null, null, true);
     }
 
     /**
@@ -60,10 +61,11 @@ public class MatrixVectorMultWithSemiRing_DSCC {
      * @param mask        Mask for specifying which entries should be overwritten
      * @param semiRing    Semi-Ring to define + and *
      * @param accumulator (Optional) accumulator for output + (A*b), else use `add` from the semiRing
+     * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
      */
-    public static double[] multAdd(DMatrixSparseCSC A, double[] b, double[] output,
-                                   DSemiRing semiRing, @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accumulator) {
-        double[] initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(mask, accumulator, output);
+    public static double[] multAdd(DMatrixSparseCSC A, double[] b, double[] output, DSemiRing semiRing, @Nullable PrimitiveDMask mask,
+                                   @Nullable DBinaryOperator accumulator, boolean replaceOutput) {
+        double[] initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
         if (mask != null) {
             mask.compatible(output);
         }
@@ -94,10 +96,11 @@ public class MatrixVectorMultWithSemiRing_DSCC {
      * @param semiRing Semi-Ring to define + and *
      * @param mask Mask for specifying which entries should be overwritten
      * @param accumulator Operator to combine result with existing entries in output matrix
+     * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
      */
     public static double[] mult(double[] a, DMatrixSparseCSC B, double[] output, DSemiRing semiRing,
-                                @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accumulator) {
-        double[] initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(mask, accumulator, output);
+                                @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accumulator, boolean replaceOutput) {
+        double[] initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
         if (mask != null) {
             mask.compatible(output);
         }
@@ -113,7 +116,7 @@ public class MatrixVectorMultWithSemiRing_DSCC {
                     sum = semiRing.add.func.apply(sum, semiRing.mult.apply(a[B.nz_rows[indexB]], B.nz_values[indexB]));
                 }
                 output[k] = sum;
-            } else if (mask.replace) {
+            } else if (replaceOutput) {
                 // overwrite old value (alternatively also use Arrays.fill(output, semiRing.add.id))
                 output[k] = semiRing.add.id;
             }
@@ -123,7 +126,7 @@ public class MatrixVectorMultWithSemiRing_DSCC {
     }
 
     public static double[] mult(double[] a, DMatrixSparseCSC B, double[] c, DSemiRing semiRing) {
-        return mult(a, B, c, semiRing, null, null);
+        return mult(a, B, c, semiRing, null, null, true);
     }
 
     /**
@@ -134,11 +137,12 @@ public class MatrixVectorMultWithSemiRing_DSCC {
      * @param semiRing  Semi-Ring to define + and *
      * @param mask      Mask for specifying which entries should be overwritten
      * @param accumulator Operator to combine result with existing entries in output matrix
-     * @return output
+     * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
      */
     public static double[] multTransA(DMatrixSparseCSC A, double[] b, double[] output,
-                                      DSemiRing semiRing, @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accumulator) {
-        double[] initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(mask, accumulator, output);
+                                      DSemiRing semiRing, @Nullable PrimitiveDMask mask,
+                                      @Nullable DBinaryOperator accumulator, boolean replaceOutput) {
+        double[] initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
         if (mask != null) {
             mask.compatible(output);
         }
@@ -154,7 +158,7 @@ public class MatrixVectorMultWithSemiRing_DSCC {
                     sum = semiRing.add.func.apply(sum, semiRing.mult.apply(b[A.nz_rows[indexB]], A.nz_values[indexB]));
                 }
                 output[k] = sum;
-            } else if (mask.replace) {
+            } else if (replaceOutput) {
                 // overwrite old value (alternatively also use Arrays.fill(output, semiRing.add.id))
                 output[k] = semiRing.add.id;
             }

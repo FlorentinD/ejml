@@ -328,7 +328,7 @@ public class TestImplCommonOps_DSCC {
         inputMatrix.copy().createCoordinateIterator().forEachRemaining(v -> inputMatrix.set(v.col, v.row, v.value));
 
         IBinaryPredicate selector = IBinaryPredicates.lowerTriangle;
-        DMatrixSparseCSC result = CommonOps_DSCC.select(inputMatrix, selector, null, null);
+        DMatrixSparseCSC result = CommonOps_DSCC.select(inputMatrix, selector, null, null, true);
 
         result.print();
 
