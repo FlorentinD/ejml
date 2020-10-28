@@ -119,6 +119,7 @@ public class MaskUtil_DSCC {
      * C = A + B
      *
      * .. f.i. to combine intialOutput and computedOutput (needed for masks and accumulators in GraphHBLAS)
+     *
      * @param A  Matrix
      * @param B  Matrix
      * @param C  Output matrix.
@@ -157,6 +158,8 @@ public class MaskUtil_DSCC {
     /**
      * Performs the performing operation x = x + A(:,i)
      * for applying a accumulator
+     *
+     * ! difference: no alpha and accumulator is not nullable
      */
     public static void multAddColA(DMatrixSparseCSC A, int colA,
                                    DMatrixSparseCSC C, int mark,

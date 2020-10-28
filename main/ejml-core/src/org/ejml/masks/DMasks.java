@@ -34,7 +34,7 @@ public class DMasks {
 
     public static MaskBuilder builder(DMatrixSparseCSC matrix, boolean structural){
         if (structural) {
-            return new SparseStructuralDMask.Builder(matrix);
+            return new SparseStructuralMask.Builder(matrix);
         }
         else {
             return new SparseDMask.Builder(matrix);

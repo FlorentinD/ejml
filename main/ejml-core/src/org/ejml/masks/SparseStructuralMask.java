@@ -18,18 +18,17 @@
 
 package org.ejml.masks;
 
-import org.ejml.data.DMatrixSparseCSC;
+import org.ejml.data.MatrixSparse;
 
 /**
  * only looking if the entry is assigned in the source(disregarding the actual stored value)
  * ! it does not copy the input matrix -> changing the matrix structure will also affect the mask
  *
- * TODO: this should be only MatrixSparseCSC (irrelevant if double or float)
  */
-public class SparseStructuralDMask extends Mask {
-    private final DMatrixSparseCSC matrix;
+public class SparseStructuralMask extends Mask {
+    private final MatrixSparse matrix;
 
-    public SparseStructuralDMask( DMatrixSparseCSC matrix, boolean negated ) {
+    public SparseStructuralMask( MatrixSparse matrix, boolean negated ) {
         super(negated);
         this.matrix = matrix;
     }
@@ -49,16 +48,16 @@ public class SparseStructuralDMask extends Mask {
         return matrix.getNumRows();
     }
 
-    public static class Builder extends MaskBuilder<SparseStructuralDMask> {
-        private DMatrixSparseCSC matrix;
+    public static class Builder extends MaskBuilder<SparseStructuralMask> {
+        private MatrixSparse matrix;
 
-        public Builder(DMatrixSparseCSC matrix) {
+        public Builder(MatrixSparse matrix) {
             this.matrix = matrix;
         }
 
         @Override
-        public SparseStructuralDMask build() {
-            return new SparseStructuralDMask(matrix, negated);
+        public SparseStructuralMask build() {
+            return new SparseStructuralMask(matrix, negated);
         }
     }
 }
