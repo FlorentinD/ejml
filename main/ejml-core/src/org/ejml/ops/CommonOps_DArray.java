@@ -92,6 +92,45 @@ public class CommonOps_DArray {
         return v;
     }
 
+    // TODO: use Mask instead of DMatrixSparseCSC if mask element iterator is implemented
+    public static double[] assignScalar( double[] v, double scalar, DMatrixSparseCSC mask) {
+        if (mask.numRows != 1 && mask.numCols != 1) {
+            throw new IllegalArgumentException("Matrix is not a vector");
+        }
+
+        if (mask.numRows == 1) {
+            // column vector
+            for (int i = 0; i < mask.numCols; i++) {
+                if (mask.col_idx[i] != mask.col_idx[i+1]) {
+                    v[i] = scalar;
+                }
+            }
+        } else {
+            // row vector
+            for (int i = 0; i < mask.nz_length; i++) {
+                v[mask.nz_rows[i]] = scalar;
+            }
+        }
+
+        return v;
+    }
+
+    public static double[] assignScalar( double[] v, double scalar, PrimitiveDMask mask) {
+        if (mask.getNumRows() != 1 && mask.getNumCols() != 1) {
+            throw new IllegalArgumentException("Matrix is not a vector");
+        }
+
+        mask.compatible(v);
+
+        for (int i = 0; i < v.length; i++) {
+            if (mask.isSet(i)) {
+                v[i] = scalar;
+            }
+        }
+
+        return v;
+    }
+
     public static double[] elementWiseMult(double[] a, double[] b, double[] output, DBinaryOperator mult) {
         assert(a.length == b.length && b.length == output.length);
 

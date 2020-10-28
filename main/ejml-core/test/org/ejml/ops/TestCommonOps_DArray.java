@@ -19,6 +19,8 @@
 package org.ejml.ops;
 
 import org.ejml.data.DMatrixSparseCSC;
+import org.ejml.masks.DMasks;
+import org.ejml.masks.Mask;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -94,6 +96,28 @@ public class TestCommonOps_DArray {
         var output = CommonOps_DArray.assign(values.clone(), sparseVector);
 
         double[] expected = {-42, values[1], -1337};
+        assertArrayEquals(expected, output);
+    }
+
+    @Test
+    void assignScalar() {
+        DMatrixSparseCSC mask = new DMatrixSparseCSC(1, values.length);
+        mask.set(0, 0, 5);
+        mask.set(0, 2, 5);
+
+        var output = CommonOps_DArray.assignScalar(values.clone(), 3, mask);
+
+        double[] expected = {3, values[1], 3};
+        assertArrayEquals(expected, output);
+    }
+
+    @Test
+    void assignScalarPrimitive() {
+        double[] mask = {1, -1, 1};
+
+        var output = CommonOps_DArray.assignScalar(values.clone(), 3,  DMasks.builder(mask).withZeroElement(-1).build());
+
+        double[] expected = {3, values[1], 3};
         assertArrayEquals(expected, output);
     }
 }
