@@ -54,6 +54,11 @@ public class PrimitiveDMask extends Mask {
         return values.length / numCols;
     }
 
+    @Override
+    public void setIndexColumn( int column ) {
+        return;
+    }
+
     public boolean isSet(int index) {
         return negated ^ (values[index] != zeroElement);
     }

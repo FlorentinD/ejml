@@ -20,24 +20,24 @@ package org.ejml.masks;
 
 import org.ejml.data.DMatrixSparseCSC;
 
-import java.util.Arrays;
-
-public class SparseDMask extends Mask {
-    protected final DMatrixSparseCSC matrix;
-    protected final double zeroElement;
+/**
+ * only looking if the entry is assigned in the source(disregarding the actual stored value)
+ * ! it does not copy the input matrix -> changing the matrix structure will also affect the mask
+ *
+ */
+public class SparseStructuralDMask extends Mask {
+    // TODO make independent of data-type
+    private final DMatrixSparseCSC matrix;
 
     private int indexedColumn = -1;
     // int[] instead of boolean[] to avoid clearing on multiple setActiveColumns()
-    // if row in indexed column -> rowIndicesInIndexedColumn[row] == nz_index + 1
+    // if row in indexed column -> rowIndicesInIndexedColumn[row] == col
     private int[] rowIndicesInIndexedColumn;
 
-    public SparseDMask( DMatrixSparseCSC matrix, boolean negated, double zeroElement, boolean indexFirstColumn ) {
+    public SparseStructuralDMask( DMatrixSparseCSC matrix, boolean negated, boolean indexFirstColumn ) {
         super(negated);
         this.matrix = matrix;
-        this.zeroElement = zeroElement;
-        // TODO allow reusing the array
         this.rowIndicesInIndexedColumn = new int[matrix.numRows];
-
         if (indexFirstColumn) {
             setIndexColumn(0);
         }
@@ -46,63 +46,48 @@ public class SparseDMask extends Mask {
     @Override
     public boolean isSet(int row, int col) {
         if (col != indexedColumn) {
-            return negated ^ (matrix.unsafe_get(row, col) != zeroElement);
+            return negated ^ matrix.isAssigned(row, col);
         } else {
-            int nz_index = rowIndicesInIndexedColumn[row] - 1;
-            if (nz_index < 0) {
-                // no entry in the matrix
-                return negated;
-            } else {
-                return negated ^ (matrix.nz_values[nz_index] != zeroElement);
-            }
-
+            return negated ^ (rowIndicesInIndexedColumn[row] - 1 == col);
         }
     }
 
     @Override
     public int getNumCols() {
-        return matrix.numCols;
+        return matrix.getNumCols();
     }
 
     @Override
     public int getNumRows() {
-        return matrix.numRows;
+        return matrix.getNumRows();
     }
 
     @Override
     public void setIndexColumn( int col ) {
         if (indexedColumn != col) {
-            // clear column
-            Arrays.fill(rowIndicesInIndexedColumn, 0);
             this.indexedColumn = col;
             for (int i = matrix.col_idx[col]; i < matrix.col_idx[col+1]; i++) {
-                rowIndicesInIndexedColumn[matrix.nz_rows[i]] = i + 1;
+                rowIndicesInIndexedColumn[matrix.nz_rows[i]] = col + 1;
             }
         }
     }
 
-    public static class Builder extends MaskBuilder<SparseDMask> {
+    public static class Builder extends MaskBuilder<SparseStructuralDMask> {
         private DMatrixSparseCSC matrix;
-        private double zeroElement = 0;
-        private boolean indexFirstColumn = false;
+        private boolean indexFirstColumn;
 
         public Builder(DMatrixSparseCSC matrix) {
             this.matrix = matrix;
         }
 
-        public Builder withZeroElement(double zeroElement) {
-            this.zeroElement = zeroElement;
-            return this;
-        }
-
-        public Builder withIndexFirstColumn(boolean indexFirstColumn) {
+        public Builder withIndexFirstColumn( boolean indexFirstColumn) {
             this.indexFirstColumn = indexFirstColumn;
             return this;
         }
 
         @Override
-        public SparseDMask build() {
-            return new SparseDMask(matrix, negated, zeroElement, indexFirstColumn);
+        public SparseStructuralDMask build() {
+            return new SparseStructuralDMask(matrix, negated, indexFirstColumn);
         }
     }
 }

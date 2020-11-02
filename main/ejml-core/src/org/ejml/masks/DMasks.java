@@ -34,10 +34,19 @@ public class DMasks {
 
     public static MaskBuilder builder(DMatrixSparseCSC matrix, boolean structural){
         if (structural) {
-            return new SparseStructuralMask.Builder(matrix);
+            return new SparseStructuralDMask.Builder(matrix);
         }
         else {
             return new SparseDMask.Builder(matrix);
+        }
+    }
+
+    public static MaskBuilder builder(DVectorSparse vector, boolean structural){
+        if (structural) {
+            return new SparseStructuralDMask.Builder(vector.oneDimMatrix).withIndexFirstColumn(true);
+        }
+        else {
+            return new SparseDMask.Builder(vector.oneDimMatrix).withIndexFirstColumn(true);
         }
     }
 }

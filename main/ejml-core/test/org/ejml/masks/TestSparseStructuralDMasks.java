@@ -26,19 +26,38 @@ import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class TestSparseStructuralMasks {
+public class TestSparseStructuralDMasks {
 
     @Test
     void testSparseStructuralMasks() {
-        int dim = 20;
-        DMatrixSparseCSC matrix = RandomMatrices_DSCC.rectangle(dim, dim, 5, new Random(42));
+        int dim = 10;
+        DMatrixSparseCSC matrix = RandomMatrices_DSCC.rectangle(dim, dim, 50, new Random(42));
 
-        SparseStructuralMask.Builder builder = new SparseStructuralMask.Builder(matrix);
+        SparseStructuralDMask.Builder builder = new SparseStructuralDMask.Builder(matrix);
         Mask mask = builder.withNegated(false).build();
         Mask negated_mask = builder.withNegated(true).build();
 
         for (int row = 0; row < dim; row++) {
             for (int col = 0; col < dim; col++) {
+                boolean expected = matrix.isAssigned(row, col);
+                assertEquals(mask.isSet(row, col), expected);
+                assertEquals(negated_mask.isSet(row, col), !expected);
+            }
+        }
+    }
+
+    @Test
+    void testIndexedMask() {
+        int dim = 10;
+        DMatrixSparseCSC matrix = RandomMatrices_DSCC.rectangle(dim, dim, 50, new Random(42));
+
+        SparseStructuralDMask.Builder builder = new SparseStructuralDMask.Builder(matrix);
+        Mask mask = builder.withNegated(false).build();
+        Mask negated_mask = builder.withNegated(true).build();
+
+        for (int col = 0; col < dim; col++) {
+            mask.setIndexColumn(col);
+            for (int row = 0; row < dim; row++) {
                 boolean expected = matrix.isAssigned(row, col);
                 assertEquals(mask.isSet(row, col), expected);
                 assertEquals(negated_mask.isSet(row, col), !expected);

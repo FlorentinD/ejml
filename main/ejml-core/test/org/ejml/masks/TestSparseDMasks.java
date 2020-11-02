@@ -30,15 +30,34 @@ public class TestSparseDMasks {
 
     @Test
     void testSparseMasks() {
-        int dim = 20;
-        DMatrixSparseCSC matrix = RandomMatrices_DSCC.rectangle(dim, dim, 5, new Random(42));
+        int dim = 10;
+        DMatrixSparseCSC matrix = RandomMatrices_DSCC.rectangle(dim, dim, 50, new Random(42));
 
-        SparseStructuralMask.Builder builder = new SparseStructuralMask.Builder(matrix);
+        SparseDMask.Builder builder = new SparseDMask.Builder(matrix);
         Mask mask = builder.withNegated(false).build();
         Mask negated_mask = builder.withNegated(true).build();
 
         for (int row = 0; row < dim; row++) {
             for (int col = 0; col < dim; col++) {
+                boolean expected = (matrix.get(row, col) != 0);
+                assertEquals(mask.isSet(row, col), expected);
+                assertEquals(negated_mask.isSet(row, col), !expected);
+            }
+        }
+    }
+
+    @Test
+    void testIndexedMask() {
+        int dim = 10;
+        DMatrixSparseCSC matrix = RandomMatrices_DSCC.rectangle(dim, dim, 50, new Random(42));
+
+        SparseDMask.Builder builder = new SparseDMask.Builder(matrix);
+        Mask mask = builder.withNegated(false).build();
+        Mask negated_mask = builder.withNegated(true).build();
+
+        for (int col = 0; col < dim; col++) {
+            mask.setIndexColumn(col);
+            for (int row = 0; row < dim; row++) {
                 boolean expected = (matrix.get(row, col) != 0);
                 assertEquals(mask.isSet(row, col), expected);
                 assertEquals(negated_mask.isSet(row, col), !expected);

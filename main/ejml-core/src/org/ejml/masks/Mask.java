@@ -52,6 +52,14 @@ public abstract class Mask {
     }
 
     /**
+     * For faster access on a specific column (on at a time)
+     * ! Only useful for sparse masks
+     *
+     * @param column column to index
+     */
+    public abstract void setIndexColumn( int column);
+
+    /**
      * Checks whether the dimensions of the mask and matrix match
      * @param matrix the mask is applied to
      */
