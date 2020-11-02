@@ -26,8 +26,6 @@ import org.ejml.ops.DSemiRing;
 import org.ejml.sparse.csc.MaskUtil_DSCC;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.BitSet;
-
 import static org.ejml.UtilEjml.reshapeOrDeclare;
 
 /**
@@ -72,12 +70,16 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
         int[] vectorIndices = a.nz_indices();
         double[] vectorValues = a.nz_values();
 
-        // worth to create a bitset?
-        BitSet vectorEntries = new BitSet();
+        int[] indicesInNzVectorEntries = new int[a.size()];
+
+        int maxIndex = vectorIndices[a.nz_length() - 1];
 
         for (int i = 0; i < a.nz_length(); i++) {
-            vectorEntries.set(vectorIndices[i]);
+            // locations + 1 (as 0 is the default value)
+            indicesInNzVectorEntries[vectorIndices[i]] = i + 1;
         }
+
+        int vectorIndex = 0;
 
 
         for (int k = 0; k < B.numCols; k++) {
@@ -88,17 +90,20 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
 
                 boolean interSection = false;
                 double sum = semiRing.add.id;
-                int currentVectorIndex = 0;
 
                 for (int i = start; i < end; i++) {
                     int currentMatrixRow = B.nz_rows[i];
-                    if (vectorEntries.get(currentMatrixRow)) {
-                        while (vectorIndices[currentVectorIndex] != currentMatrixRow) {
-                            currentVectorIndex++;
-                        }
 
+                    // the following value cannot find a match in `a`
+                    if (currentMatrixRow > maxIndex) {
+                        break;
+                    }
+
+                    vectorIndex = indicesInNzVectorEntries[currentMatrixRow] - 1;
+
+                    if (vectorIndex != -1) {
                         interSection = true;
-                        sum = semiRing.add.func.apply(sum, semiRing.mult.apply(vectorValues[currentVectorIndex], B.nz_values[i]));
+                        sum = semiRing.add.func.apply(sum, semiRing.mult.apply(vectorValues[vectorIndex], B.nz_values[i]));
                     }
                 }
 

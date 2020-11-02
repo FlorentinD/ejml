@@ -40,11 +40,10 @@ public class MaskUtil_DSCC {
                 accum = SECOND;
             }
 
-            // memory overhead .. maybe also can reuse something?
+            // FIXME: allow to reuse combinedOutput and also gw and gx
+            // !! memory overhead
             DMatrixSparseCSC combinedOutput = output.createLike();
-            // instead of "semiRing.add" this could be a dedicated accumulator
             add(initialOutput, output, combinedOutput, mask, accum, null, null);
-            // is the previous result of C gc-able? (should be)
             output = combinedOutput;
         }
         return output;
@@ -140,9 +139,9 @@ public class MaskUtil_DSCC {
 
             // always take the values of A
             // second as x[row] would be the first argument
-            multAddColA(A, col, C, col + 1, null, (a, b) -> b, x, w);
+            addColA(A, col, C, col + 1, null, ( a, b) -> b, x, w);
             // accum values of A and B (if entry is set in mask)
-            multAddColA(B, col, C, col + 1, mask, accum, x, w);
+            addColA(B, col, C, col + 1, mask, accum, x, w);
 
             // take the values in the dense vector 'x' and put them into 'C'
             int idxC0 = C.col_idx[col];
@@ -161,11 +160,11 @@ public class MaskUtil_DSCC {
      *
      * ! difference: no alpha and accumulator is not nullable
      */
-    public static void multAddColA(DMatrixSparseCSC A, int colA,
-                                   DMatrixSparseCSC C, int mark,
-                                   @Nullable Mask mask,
-                                   DBinaryOperator accum,
-                                   double[] x, int[] w) {
+    public static void addColA( DMatrixSparseCSC A, int colA,
+                                DMatrixSparseCSC C, int mark,
+                                @Nullable Mask mask,
+                                DBinaryOperator accum,
+                                double[] x, int[] w) {
         int idxA0 = A.col_idx[colA];
         int idxA1 = A.col_idx[colA + 1];
 
