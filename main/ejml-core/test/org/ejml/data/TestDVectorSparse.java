@@ -20,6 +20,7 @@ package org.ejml.data;
 
 import org.junit.jupiter.api.Test;
 
+import static org.ejml.UtilEjml.reshapeOrDeclare;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestDVectorSparse {
@@ -54,5 +55,11 @@ public class TestDVectorSparse {
         assertEquals(1, v.get(0));
         assertEquals(3, v.get(2));
         assertEquals(4, v.get(5));
+    }
+
+    @Test
+    void reshape() {
+        var v = new DVectorSparse(0, 0);
+        reshapeOrDeclare(v, new DVectorSparse(10, 10));
     }
 }

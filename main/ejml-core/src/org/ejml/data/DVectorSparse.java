@@ -100,15 +100,14 @@ public class DVectorSparse implements ReshapeMatrix {
     public void set(DVectorSparse original) {
         this.oneDimMatrix.set(original.oneDimMatrix);
     }
-
+    
     @Override
-    public int getNumRows() {
-        throw new UnsupportedOperationException("A vector has no rows");
+    public int getNumRows() { return oneDimMatrix.getNumRows();
     }
 
     @Override
     public int getNumCols() {
-        throw new UnsupportedOperationException("A vector has no columns");
+        return oneDimMatrix.getNumCols();
     }
 
     @Override

@@ -20,22 +20,20 @@ package org.ejml.sparse.csc.mult;
 
 import org.ejml.data.DMatrixSparseCSC;
 import org.ejml.data.DVectorSparse;
+import org.ejml.data.IGrowArray;
 import org.ejml.masks.Mask;
 import org.ejml.ops.DBinaryOperator;
 import org.ejml.ops.DSemiRing;
 import org.ejml.sparse.csc.MaskUtil_DSCC;
 import org.jetbrains.annotations.Nullable;
 
+import static org.ejml.UtilEjml.adjust;
 import static org.ejml.UtilEjml.reshapeOrDeclare;
 
 /**
  * based on MartrixVectorMult_DSCC
  */
 public class MatrixSparseVectorMultWithSemiRing_DSCC {
-    // TODO implement matrix-vector mult & multTrans
-    //      -> this can be O(N) again and potentially faster than the a * B (e.g. merge whole columns with existing result)
-
-    // TODO: get this faster (scales really bad ...)
 
     /**
      * output = a<sup>T</sup>*B
@@ -48,9 +46,11 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
      * @param accumulator Operator to combine result with existing entries in output matrix
      * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
      */
-    public static DVectorSparse mult(DVectorSparse a, DMatrixSparseCSC B, @Nullable DVectorSparse output, DSemiRing semiRing,
-                                @Nullable Mask mask, @Nullable DBinaryOperator accumulator, boolean replaceOutput) {
+    public static DVectorSparse mult( DVectorSparse a, DMatrixSparseCSC B, @Nullable DVectorSparse output, DSemiRing semiRing,
+                                      @Nullable Mask mask, @Nullable DBinaryOperator accumulator, boolean replaceOutput, @Nullable IGrowArray gw) {
         DVectorSparse initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
+        int[] indicesInNzVectorEntries = adjust(gw, a.size(), a.size());
+
         output = reshapeOrDeclare(output, a);
         output.setIndicesSorted(true);
 
@@ -69,8 +69,6 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
 
         int[] vectorIndices = a.nz_indices();
         double[] vectorValues = a.nz_values();
-
-        int[] indicesInNzVectorEntries = new int[a.size()];
 
         int maxIndex = vectorIndices[a.nz_length() - 1];
 
@@ -122,6 +120,6 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
     }
 
     public static DVectorSparse mult(DVectorSparse a, DMatrixSparseCSC B, @Nullable DVectorSparse c, DSemiRing semiRing) {
-        return mult(a, B, c, semiRing, null, null, true);
+        return mult(a, B, c, semiRing, null, null, true, null);
     }
 }
