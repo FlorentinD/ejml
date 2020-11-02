@@ -19,10 +19,7 @@
 package org.ejml.sparse.csc;
 
 import org.ejml.MatrixDimensionException;
-import org.ejml.data.DGrowArray;
-import org.ejml.data.DMatrixRMaj;
-import org.ejml.data.DMatrixSparseCSC;
-import org.ejml.data.IGrowArray;
+import org.ejml.data.*;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.interfaces.decomposition.LUSparseDecomposition_F64;
 import org.ejml.interfaces.linsol.LinearSolverSparse;
@@ -1905,6 +1902,15 @@ public class CommonOps_DSCC {
         }
 
         return output;
+    }
+
+    public static DVectorSparse applyIdx( DVectorSparse input, IDBinaryOperator func, @Nullable DVectorSparse output ) {
+        if (output == null) {
+            return new DVectorSparse(CommonOps_DSCC.applyRowIdx(input.oneDimMatrix, func, null));
+        } else {
+            output.oneDimMatrix = CommonOps_DSCC.applyRowIdx(input.oneDimMatrix, func, output.oneDimMatrix);
+            return output;
+        }
     }
 
     /**
