@@ -46,11 +46,11 @@ public class TestImplCommonOpsWithSemiRing_DSCC {
         b.set(1, 1, 3);
         b.set(0, 0, 4);
 
-        ImplCommonOpsWithSemiRing_DSCC.add(1, a, 1, b, c, semiRing, null, null, null);
+        ImplCommonOpsWithSemiRing_DSCC.add(a, b, c, semiRing.add.func, null, null, null);
 
         double[] found = new double[]{c.get(0, 0), c.get(1, 1)};
 
-        assertTrue(c.getNumElements() == 2);
+        assertEquals(c.getNumElements(), 2);
         assertTrue(Arrays.equals(expected, found));
     }
 
@@ -74,15 +74,16 @@ public class TestImplCommonOpsWithSemiRing_DSCC {
         ImplCommonOpsWithSemiRing_DSCC.elementMult(matrix, otherMatrix, result, semiRing, null, null, null);
 
         assertEquals(2, result.getNumElements());
-        assertTrue(expected[0] == result.get(1, 1));
-        assertTrue(expected[1] == result.get(1, 2));
+        assertEquals(result.get(1, 1), expected[0]);
+        assertEquals(result.get(1, 2), expected[1]);
     }
 
     private static Stream<Arguments> elementWiseAddSource() {
         return Stream.of(
                 Arguments.of(DSemiRings.PLUS_TIMES, new double[]{4, 5}),
                 Arguments.of(DSemiRings.MIN_MAX, new double[]{4, 2}),
-                Arguments.of(DSemiRings.OR_AND, new double[]{1, 1})
+                // 4 as the first value is just copied and nothign added
+                Arguments.of(DSemiRings.OR_AND, new double[]{4, 1})
         );
     }
 

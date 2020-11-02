@@ -171,9 +171,9 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
     @MethodSource("sparseMatrixSource")
     public void add_A_B(DMatrixSparseCSC otherMatrix, DMatrixSparseCSC prevResult, Mask mask, boolean replaceOutput) {
         DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.add(
-                1, otherMatrix, 1, inputMatrix, prevResult.copy(), semiRing, null, null, replaceOutput, null, null);
+                otherMatrix, inputMatrix, prevResult.copy(), semiRing, null, null, replaceOutput, null, null);
         DMatrixSparseCSC foundWithMask = CommonOpsWithSemiRing_DSCC.add(
-                1, otherMatrix, 1, inputMatrix, prevResult.copy(), semiRing, mask, null, replaceOutput, null, null);
+                otherMatrix, inputMatrix, prevResult.copy(), semiRing, mask, null, replaceOutput, null, null);
 
         assertMaskedResult(prevResult, found, foundWithMask, mask, semiRing.add.id, replaceOutput);
     }

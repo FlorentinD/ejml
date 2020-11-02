@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static org.ejml.UtilEjml.adjust;
 import static org.ejml.UtilEjml.checkSameShape;
+import static org.ejml.sparse.csc.misc.ImplCommonOpsWithSemiRing_DSCC.addColA;
 
 public class MaskUtil_DSCC {
     private static final DBinaryOperator SECOND = (x, y) -> y;
@@ -152,40 +153,6 @@ public class MaskUtil_DSCC {
             }
         }
         C.col_idx[A.numCols] = C.nz_length;
-    }
-
-    /**
-     * Performs the performing operation x = x + A(:,i)
-     * for applying a accumulator
-     *
-     * ! difference: no alpha and accumulator is not nullable
-     */
-    public static void addColA( DMatrixSparseCSC A, int colA,
-                                DMatrixSparseCSC C, int mark,
-                                @Nullable Mask mask,
-                                DBinaryOperator accum,
-                                double[] x, int[] w) {
-        int idxA0 = A.col_idx[colA];
-        int idxA1 = A.col_idx[colA + 1];
-
-        for (int j = idxA0; j < idxA1; j++) {
-            int row = A.nz_rows[j];
-            if (mask == null || mask.isSet(row, mark - 1)) {
-                if (w[row] < mark) {
-                    if (C.nz_length >= C.nz_rows.length) {
-                        C.growMaxLength(C.nz_length * 2 + 1, true);
-                    }
-
-                    w[row] = mark;
-                    C.nz_rows[C.nz_length] = row;
-                    C.col_idx[mark] = ++C.nz_length;
-                    x[row] = A.nz_values[j];
-                } else if (accum != null) {
-                    // if it is null .. x[row] can just stay the same
-                    x[row] = accum.apply(x[row], A.nz_values[j]);
-                }
-            }
-        }
     }
 
     /**

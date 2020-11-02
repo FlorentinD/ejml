@@ -195,11 +195,9 @@ public class CommonOpsWithSemiRing_DSCC {
 
     /**
      * Performs matrix addition:<br>
-     * output = &alpha;A + &beta;B
+     * output = A + B
      *
-     * @param alpha       scalar value multiplied against A
      * @param A           Matrix
-     * @param beta        scalar value multiplied against B
      * @param B           Matrix
      * @param output      (Optional)    Output matrix.
      * @param mask        Mask for specifying which entries should be overwritten
@@ -209,7 +207,7 @@ public class CommonOpsWithSemiRing_DSCC {
      * @param gw          (Optional) Storage for internal workspace.  Can be null.
      * @param gx          (Optional) Storage for internal workspace.  Can be null.
      */
-    public static DMatrixSparseCSC add(double alpha, DMatrixSparseCSC A, double beta, DMatrixSparseCSC B, @Nullable DMatrixSparseCSC output, DSemiRing semiRing,
+    public static DMatrixSparseCSC add(DMatrixSparseCSC A, DMatrixSparseCSC B, @Nullable DMatrixSparseCSC output, DSemiRing semiRing,
                                        @Nullable Mask mask, @Nullable DBinaryOperator accumulator, boolean replaceOutput,
                                        @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numRows != B.numRows || A.numCols != B.numCols)
@@ -220,7 +218,7 @@ public class CommonOpsWithSemiRing_DSCC {
             mask.compatible(output);
         }
 
-        ImplCommonOpsWithSemiRing_DSCC.add(alpha, A, beta, B, output, semiRing, mask, gw, gx);
+        ImplCommonOpsWithSemiRing_DSCC.add(A, B, output, semiRing.add.func, mask, gw, gx);
 
         return combineOutputs(output, initialOutput, accumulator);
     }

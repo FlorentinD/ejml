@@ -67,7 +67,7 @@ public class TestMatrixMatrixMultWithSemiRing_DSCC extends BaseTestMatrixMatrixO
     void add(String desc, DMatrixSparseCSC matrix, DMatrixSparseCSC otherMatrix) {
         DSemiRing semiRing = DSemiRings.PLUS_TIMES;
 
-        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.add(1, matrix, 1, otherMatrix, null, semiRing, null, null, true, null, null);
+        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.add(matrix, otherMatrix, null, semiRing, null, null, true, null, null);
         DMatrixSparseCSC expected = CommonOps_DSCC.add(1, matrix, 1, otherMatrix, null, null, null);
 
         EjmlUnitTests.assertEquals(expected, found);
