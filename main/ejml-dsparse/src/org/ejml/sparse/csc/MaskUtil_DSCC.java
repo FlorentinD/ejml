@@ -138,6 +138,10 @@ public class MaskUtil_DSCC {
         for (int col = 0; col < A.numCols; col++) {
             C.col_idx[col] = C.nz_length;
 
+            if (mask != null) {
+                mask.setIndexColumn(col);
+            }
+
             // always take the values of A
             // second as x[row] would be the first argument
             addColA(A, col, C, col + 1, null, ( a, b) -> b, x, w);

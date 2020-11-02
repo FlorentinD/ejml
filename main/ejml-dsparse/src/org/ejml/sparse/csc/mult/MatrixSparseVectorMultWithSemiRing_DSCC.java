@@ -59,6 +59,8 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
 
         if (mask != null) {
             mask.compatible(output.oneDimMatrix);
+            // create index if not already done
+            mask.setIndexColumn(0);
         }
 
         if (!B.indicesSorted) {

@@ -63,13 +63,16 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
                 continue;
             }
 
+            // as colB mask is accessed for each colB entry
+            if (mask != null) {
+                mask.setIndexColumn(colB);
+            }
+
             // C(:,j) = sum_k A(:,k)*B(k,j)
             for (int bi = idx0; bi < idx1; bi++) {
                 int rowB = B.nz_rows[bi];
                 double valB = B.nz_values[bi];  // B(k,j)  k=rowB j=colB
 
-                // TODO: mask is called multiple times here for the same result column
-                //  .. worth to have a iterator over this one?
                 multAddColA(A, rowB, valB, C, colB + 1, semiRing, mask, x, w);
             }
 
@@ -100,7 +103,6 @@ public class ImplSparseSparseMultWithSemiRing_DSCC {
 
         for (int j = idxA0; j < idxA1; j++) {
             int row = A.nz_rows[j];
-            // TODO: only use iterator over a single column mask values here
             // mark - 1 is the actual target column
             if (mask == null || mask.isSet(row, mark - 1)) {
                 if (w[row] < mark) {

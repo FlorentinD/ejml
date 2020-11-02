@@ -58,6 +58,10 @@ public class ImplCommonOpsWithSemiRing_DSCC {
         for (int col = 0; col < A.numCols; col++) {
             C.col_idx[col] = C.nz_length;
 
+            if (mask != null) {
+                mask.setIndexColumn(col);
+            }
+
             addColA(A, col, C, col + 1, mask, addOp, x, w);
             addColA(B, col, C, col + 1, mask, addOp, x, w);
 
