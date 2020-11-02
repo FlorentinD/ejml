@@ -56,10 +56,4 @@ public class TestDVectorSparse {
         assertEquals(3, v.get(2));
         assertEquals(4, v.get(5));
     }
-
-    @Test
-    void reshape() {
-        var v = new DVectorSparse(0, 0);
-        reshapeOrDeclare(v, new DVectorSparse(10, 10));
-    }
 }

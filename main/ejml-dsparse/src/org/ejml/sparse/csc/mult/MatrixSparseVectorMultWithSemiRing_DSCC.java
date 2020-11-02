@@ -51,8 +51,11 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
         DVectorSparse initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
         int[] indicesInNzVectorEntries = adjust(gw, a.size(), a.size());
 
-        output = reshapeOrDeclare(output, a);
-        output.setIndicesSorted(true);
+        if (output == null) {
+            output = new DVectorSparse(a.size(), a.nz_length());
+        } else {
+            output.reshape(a.size(), a.nz_length());
+        }
 
         if (mask != null) {
             mask.compatible(output.oneDimMatrix);
@@ -62,19 +65,18 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
             throw new IllegalArgumentException("For now the indices of B need to be sorted");
         }
 
-        if (!a.isIndicesSorted()) {
-            System.out.println("Sorting indices of sparse vector");
-            a.sortIndices();
-        }
-
         int[] vectorIndices = a.nz_indices();
         double[] vectorValues = a.nz_values();
 
-        int maxIndex = vectorIndices[a.nz_length() - 1];
+        int maxIndex = Integer.MIN_VALUE;
 
         for (int i = 0; i < a.nz_length(); i++) {
             // locations + 1 (as 0 is the default value)
-            indicesInNzVectorEntries[vectorIndices[i]] = i + 1;
+            int entry = vectorIndices[i];
+            indicesInNzVectorEntries[entry] = i + 1;
+            if (entry > maxIndex) {
+                maxIndex = entry;
+            }
         }
 
         int vectorIndex = 0;
@@ -87,7 +89,8 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
                 int end = B.col_idx[k + 1];
 
                 boolean interSection = false;
-                double sum = semiRing.add.id;
+                // just initialising as compiler complains
+                double sum = Double.NaN;
 
                 for (int i = start; i < end; i++) {
                     int currentMatrixRow = B.nz_rows[i];
@@ -100,8 +103,12 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
                     vectorIndex = indicesInNzVectorEntries[currentMatrixRow] - 1;
 
                     if (vectorIndex != -1) {
-                        interSection = true;
-                        sum = semiRing.add.func.apply(sum, semiRing.mult.apply(vectorValues[vectorIndex], B.nz_values[i]));
+                        if (!interSection) {
+                            sum = semiRing.mult.apply(vectorValues[vectorIndex], B.nz_values[i]);
+                            interSection = true;
+                        } else {
+                            sum = semiRing.add.func.apply(sum, semiRing.mult.apply(vectorValues[vectorIndex], B.nz_values[i]));
+                        }
                     }
                 }
 

@@ -18,9 +18,6 @@
 
 package org.ejml.data;
 
-import org.ejml.ops.SortCoupledArray_F64;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.Iterator;
 
 /**
@@ -30,7 +27,7 @@ import java.util.Iterator;
  *
  * wrapper around (n, 1) {@link DMatrixSparseCSC}
  */
-public class DVectorSparse implements ReshapeMatrix {
+public class DVectorSparse implements Matrix {
     // TODO make this private
     public DMatrixSparseCSC oneDimMatrix;
 
@@ -130,12 +127,23 @@ public class DVectorSparse implements ReshapeMatrix {
 
     @Override
     public void print() {
-        this.oneDimMatrix.print();
+        StringBuilder resultBuilder = new StringBuilder("[");
+        for (int i = 0; i < size(); i++) {
+            if (i != 0) {
+                resultBuilder.append(",");
+            }
+            if (isAssigned(i)) {
+                resultBuilder.append(get(i));
+            } else {
+                resultBuilder.append("*");
+            }
+        }
+        System.out.println(resultBuilder.append("]").toString());
     }
 
     @Override
     public void print(String format) {
-
+        oneDimMatrix.print(format);
     }
 
     @Override
@@ -191,6 +199,10 @@ public class DVectorSparse implements ReshapeMatrix {
         this.oneDimMatrix.reshape(size, 1);
     }
 
+    public void reshape(int size, int array_length) {
+        this.oneDimMatrix.reshape(size, 1, array_length);
+    }
+
     public void growMaxLength( int arrayLength, boolean preserveValues) {
         this.oneDimMatrix.growMaxLength(arrayLength, preserveValues);
     }
@@ -227,13 +239,6 @@ public class DVectorSparse implements ReshapeMatrix {
     @Override
     public DVectorSparse createLike() {
         return new DVectorSparse(this.size());
-    }
-
-    @Override
-    public void reshape(int numRows, int numCols) {
-        assert numRows == 1 || numCols == 1;
-        int size = numRows == 1 ? numCols : numRows;
-        reshape(size);
     }
 
     public void setMatrix(DMatrixSparseCSC matrix) {

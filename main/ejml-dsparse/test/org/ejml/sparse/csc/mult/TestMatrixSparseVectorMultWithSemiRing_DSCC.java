@@ -73,6 +73,7 @@ public class TestMatrixSparseVectorMultWithSemiRing_DSCC {
 
         var found = MatrixSparseVectorMultWithSemiRing_DSCC.mult(v, inputMatrix, null, semiRing);
 
+        CommonOps_DSCC.checkStructure(found.oneDimMatrix);
         assertEquals(2, found.nz_length());
         assertEquals(expected[0], found.get(0));
         assertEquals(expected[1], found.get(2));
