@@ -71,8 +71,4 @@ public abstract class Mask {
             ));
         }
     }
-
-    // TODO: use an Iterator as it should be faster as stepping can be used -> no need to call for each entry?
-    //      Problem .. dense matrices are row-based, whereas existing sparse matrix format is column based
-    //public abstract Iterator<BMatrixSparseCSC.CoordinateBoolValue>
 }
