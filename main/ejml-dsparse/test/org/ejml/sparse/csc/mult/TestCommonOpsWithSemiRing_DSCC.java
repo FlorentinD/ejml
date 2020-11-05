@@ -25,6 +25,7 @@ import org.ejml.ops.DSemiRing;
 import org.ejml.ops.DSemiRings;
 import org.ejml.sparse.csc.CommonOpsWithSemiRing_DSCC;
 import org.ejml.sparse.csc.CommonOps_DSCC;
+import org.ejml.sparse.csc.CommonVectorOps_DSCC;
 import org.ejml.sparse.csc.RandomMatrices_DSCC;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -73,18 +74,6 @@ public class TestCommonOpsWithSemiRing_DSCC extends BaseTestMatrixMatrixOpsWithS
         DMatrixSparseCSC expected = CommonOps_DSCC.add(1, matrix, 1, otherMatrix, null, null, null);
 
         EjmlUnitTests.assertEquals(expected, found);
-    }
-
-    @Test
-    void addInPlaceVector() {
-        Random rand = new Random(42);
-        var v = new DVectorSparse(RandomMatrices_DSCC.generateUniform(10, 1, 6, 1, 1, rand));
-        var u = new DVectorSparse(RandomMatrices_DSCC.generateUniform(10, 1, 6, 1, 1, rand));
-
-        var result = CommonOpsWithSemiRing_DSCC.add(u.copy(), v, Double::sum, null).oneDimMatrix;
-        var expected = CommonOps_DSCC.add(1, u.oneDimMatrix, 1, v.oneDimMatrix, null, null, null);
-
-        EjmlUnitTests.assertEquals(result, expected);
     }
 
     private static Stream<Arguments> sparseVectorMatrixMultSources() {

@@ -220,45 +220,6 @@ public class CommonOpsWithSemiRing_DSCC {
     }
 
     /**
-     * Performs in-place vector addition:<br>
-     * u += v
-     *
-     * @param u           Matrix
-     * @param v           Matrix
-     * @param add         Binary operator to define `+`
-     * @param gw          (Optional) Storage for internal workspace.  Can be null.
-     */
-    public static DVectorSparse add( DVectorSparse u, DVectorSparse v, DBinaryOperator add, @Nullable IGrowArray gw) {
-        // no mask, as inPlace is not possible if entries of u should not be computed
-        // no accumulator .. as inPlace add
-
-        if (u.size() != v.size())
-            throw new MatrixDimensionException("Inconsistent vector shapes. " + stringShapes(u, v));
-
-        u.setIndicesSorted(false);
-
-        int[] w = adjust(gw, u.size());
-
-        // mapping vector-index -> nz-index
-        for (int i = 0; i < u.nz_length(); i++) {
-            w[u.nz_indices()[i]] = i + 1;
-        }
-
-        for (int i = 0; i < v.nz_length(); i++) {
-            int vIndex = v.nz_indices()[i];
-            double v_value = v.nz_values()[i];
-            int u_nz_index = w[vIndex] - 1;
-            if (u_nz_index >= 0) {
-                u.nz_values()[u_nz_index] = add.apply(v_value, u.nz_values()[u_nz_index]);
-            } else {
-                u.append(vIndex, v_value);
-            }
-        }
-
-        return u;
-    }
-
-    /**
      * Performs an element-wise multiplication.<br>
      * output[i,j] = A[i,j]*B[i,j]<br>
      * All matrices must have the same shape.
