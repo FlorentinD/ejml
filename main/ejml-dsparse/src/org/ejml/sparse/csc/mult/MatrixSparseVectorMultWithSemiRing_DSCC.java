@@ -120,11 +120,7 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
             }
         }
 
-        // TODO have a combine outputs based on DVectorSparse
-        DMatrixSparseCSC maybeInitialOutputMatrix = initialOutput == null ? null : initialOutput.oneDimMatrix;
-
-        output.setMatrix(MaskUtil_DSCC.combineOutputs(output.oneDimMatrix, maybeInitialOutputMatrix, accumulator));
-
+        MaskUtil_DSCC.combineOutputs(output, initialOutput, null, accumulator);
         return output;
     }
 
