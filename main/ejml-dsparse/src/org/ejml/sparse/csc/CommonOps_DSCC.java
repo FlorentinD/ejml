@@ -1850,12 +1850,11 @@ public class CommonOps_DSCC {
 
 
         if (mask != null && initialOutput == null) {
-            // catch corner-case - otherwise mask would not be applied at all
-            // need actual coordinate as Mask has no .isSet(index) (only PrimitiveMasks)
-            // TODO: check this corner case in combineOutputs()
             for (int col = 0; col < input.numCols; col++) {
                 int start = input.col_idx[col];
                 int end = input.col_idx[col + 1];
+                // allow faster access per column
+                mask.setIndexColumn(col);
 
                 for (int i = start; i < end; i++) {
                     if (mask.isSet(output.nz_rows[i], col)) {
