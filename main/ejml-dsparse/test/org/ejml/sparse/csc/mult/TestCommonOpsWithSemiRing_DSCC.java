@@ -20,11 +20,13 @@ package org.ejml.sparse.csc.mult;
 
 import org.ejml.EjmlUnitTests;
 import org.ejml.data.DMatrixSparseCSC;
+import org.ejml.data.DVectorSparse;
 import org.ejml.ops.DSemiRing;
 import org.ejml.ops.DSemiRings;
 import org.ejml.sparse.csc.CommonOpsWithSemiRing_DSCC;
 import org.ejml.sparse.csc.CommonOps_DSCC;
 import org.ejml.sparse.csc.RandomMatrices_DSCC;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -35,7 +37,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings({"UnusedMethod"})
-public class TestMatrixMatrixMultWithSemiRing_DSCC extends BaseTestMatrixMatrixOpsWithSemiRing_DSCC {
+public class TestCommonOpsWithSemiRing_DSCC extends BaseTestMatrixMatrixOpsWithSemiRing_DSCC {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("sparseVectorMatrixMultSources")
@@ -71,6 +73,18 @@ public class TestMatrixMatrixMultWithSemiRing_DSCC extends BaseTestMatrixMatrixO
         DMatrixSparseCSC expected = CommonOps_DSCC.add(1, matrix, 1, otherMatrix, null, null, null);
 
         EjmlUnitTests.assertEquals(expected, found);
+    }
+
+    @Test
+    void addInPlaceVector() {
+        Random rand = new Random(42);
+        var v = new DVectorSparse(RandomMatrices_DSCC.generateUniform(10, 1, 6, 1, 1, rand));
+        var u = new DVectorSparse(RandomMatrices_DSCC.generateUniform(10, 1, 6, 1, 1, rand));
+
+        var result = CommonOpsWithSemiRing_DSCC.add(u.copy(), v, Double::sum, null).oneDimMatrix;
+        var expected = CommonOps_DSCC.add(1, u.oneDimMatrix, 1, v.oneDimMatrix, null, null, null);
+
+        EjmlUnitTests.assertEquals(result, expected);
     }
 
     private static Stream<Arguments> sparseVectorMatrixMultSources() {

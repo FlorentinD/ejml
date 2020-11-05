@@ -154,7 +154,7 @@ public class DVectorSparse implements Matrix {
     public void append(int index, double value) {
         int entry = nz_length();
         if (nz_length() == nz_indices().length) {
-            growMaxLength(nz_length()*2+1, true);
+            growMaxLength(Math.min(nz_length()*2+1, size()), true);
         }
 
         nz_indices()[entry] = index;

@@ -19,10 +19,7 @@
 package org.ejml.sparse.csc;
 
 import org.ejml.MatrixDimensionException;
-import org.ejml.data.DGrowArray;
-import org.ejml.data.DMatrixRMaj;
-import org.ejml.data.DMatrixSparseCSC;
-import org.ejml.data.IGrowArray;
+import org.ejml.data.*;
 import org.ejml.masks.Mask;
 import org.ejml.ops.DBinaryOperator;
 import org.ejml.ops.DSemiRing;
@@ -30,8 +27,7 @@ import org.ejml.sparse.csc.misc.ImplCommonOpsWithSemiRing_DSCC;
 import org.ejml.sparse.csc.mult.ImplSparseSparseMultWithSemiRing_DSCC;
 import org.jetbrains.annotations.Nullable;
 
-import static org.ejml.UtilEjml.reshapeOrDeclare;
-import static org.ejml.UtilEjml.stringShapes;
+import static org.ejml.UtilEjml.*;
 import static org.ejml.sparse.csc.MaskUtil_DSCC.combineOutputs;
 
 
@@ -221,6 +217,45 @@ public class CommonOpsWithSemiRing_DSCC {
         ImplCommonOpsWithSemiRing_DSCC.add(A, B, output, semiRing.add.func, mask, gw, gx);
 
         return combineOutputs(output, initialOutput, accumulator);
+    }
+
+    /**
+     * Performs in-place vector addition:<br>
+     * u += v
+     *
+     * @param u           Matrix
+     * @param v           Matrix
+     * @param add         Binary operator to define `+`
+     * @param gw          (Optional) Storage for internal workspace.  Can be null.
+     */
+    public static DVectorSparse add( DVectorSparse u, DVectorSparse v, DBinaryOperator add, @Nullable IGrowArray gw) {
+        // no mask, as inPlace is not possible if entries of u should not be computed
+        // no accumulator .. as inPlace add
+
+        if (u.size() != v.size())
+            throw new MatrixDimensionException("Inconsistent vector shapes. " + stringShapes(u, v));
+
+        u.setIndicesSorted(false);
+
+        int[] w = adjust(gw, u.size());
+
+        // mapping vector-index -> nz-index
+        for (int i = 0; i < u.nz_length(); i++) {
+            w[u.nz_indices()[i]] = i + 1;
+        }
+
+        for (int i = 0; i < v.nz_length(); i++) {
+            int vIndex = v.nz_indices()[i];
+            double v_value = v.nz_values()[i];
+            int u_nz_index = w[vIndex] - 1;
+            if (u_nz_index >= 0) {
+                u.nz_values()[u_nz_index] = add.apply(v_value, u.nz_values()[u_nz_index]);
+            } else {
+                u.append(vIndex, v_value);
+            }
+        }
+
+        return u;
     }
 
     /**
