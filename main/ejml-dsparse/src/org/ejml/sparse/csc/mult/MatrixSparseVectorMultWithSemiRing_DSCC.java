@@ -27,8 +27,7 @@ import org.ejml.ops.DSemiRing;
 import org.ejml.sparse.csc.MaskUtil_DSCC;
 import org.jetbrains.annotations.Nullable;
 
-import static org.ejml.UtilEjml.adjust;
-import static org.ejml.UtilEjml.reshapeOrDeclare;
+import static org.ejml.UtilEjml.adjustClear;
 
 /**
  * based on MartrixVectorMult_DSCC
@@ -38,8 +37,9 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
     /**
      * output = a<sup>T</sup>*B
      *
+     *
      * @param a       (Input) vector
-     * @param B       (Input) Matrix
+     * @param B       (Input) Matrix (ideally with sorted indices)
      * @param output       (Output) vector
      * @param semiRing Semi-Ring to define + and *
      * @param mask Mask for specifying which entries should be overwritten
@@ -49,7 +49,7 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
     public static DVectorSparse mult( DVectorSparse a, DMatrixSparseCSC B, @Nullable DVectorSparse output, DSemiRing semiRing,
                                       @Nullable Mask mask, @Nullable DBinaryOperator accumulator, boolean replaceOutput, @Nullable IGrowArray gw) {
         DVectorSparse initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
-        int[] indicesInNzVectorEntries = adjust(gw, a.size(), a.size());
+        int[] indicesInNzVectorEntries = adjustClear(gw, a.size());
 
         if (output == null) {
             output = new DVectorSparse(a.size(), a.nz_length());
@@ -63,22 +63,32 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
             mask.setIndexColumn(0);
         }
 
-        if (!B.indicesSorted) {
-            throw new IllegalArgumentException("For now the indices of B need to be sorted");
-        }
-
         int[] vectorIndices = a.nz_indices();
         double[] vectorValues = a.nz_values();
 
-        int maxIndex = Integer.MIN_VALUE;
+        int maxIndex;
 
-        for (int i = 0; i < a.nz_length(); i++) {
-            // locations + 1 (as 0 is the default value)
-            int entry = vectorIndices[i];
-            indicesInNzVectorEntries[entry] = i + 1;
-            if (entry > maxIndex) {
-                maxIndex = entry;
+        // optimization if B is sorted
+        if (B.indicesSorted) {
+            maxIndex = Integer.MIN_VALUE;
+
+            for (int i = 0; i < a.nz_length(); i++) {
+                // locations + 1 (as 0 is the default value)
+                int entry = vectorIndices[i];
+                indicesInNzVectorEntries[entry] = i + 1;
+                if (entry > maxIndex) {
+                    maxIndex = entry;
+                }
             }
+        } else {
+            for (int i = 0; i < a.nz_length(); i++) {
+                // locations + 1 (as 0 is the default value)
+                int entry = vectorIndices[i];
+                indicesInNzVectorEntries[entry] = i + 1;
+            }
+
+            // e.g. always iterate through all nz entries per matrix column
+            maxIndex = Integer.MAX_VALUE;
         }
 
         int vectorIndex = 0;
@@ -115,7 +125,7 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
                 }
 
                 if (interSection) {
-                    output.append(k, sum);
+                    output.unsafe_append(k, sum);
                 }
             }
         }

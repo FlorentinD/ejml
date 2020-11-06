@@ -24,8 +24,7 @@ import org.ejml.data.IGrowArray;
 import org.ejml.ops.DBinaryOperator;
 import org.jetbrains.annotations.Nullable;
 
-import static org.ejml.UtilEjml.adjust;
-import static org.ejml.UtilEjml.stringShapes;
+import static org.ejml.UtilEjml.*;
 
 public class CommonVectorOps_DSCC {
     /**
@@ -46,7 +45,7 @@ public class CommonVectorOps_DSCC {
 
         u.setIndicesSorted(false);
 
-        int[] w = adjust(gw, u.size());
+        int[] w = adjustClear(gw, u.size());
 
         // mapping vector-index -> nz-index
         for (int i = 0; i < u.nz_length(); i++) {
@@ -60,7 +59,7 @@ public class CommonVectorOps_DSCC {
             if (u_nz_index >= 0) {
                 u.nz_values()[u_nz_index] = add.apply(v_value, u.nz_values()[u_nz_index]);
             } else {
-                u.append(vIndex, v_value);
+                u.unsafe_append(vIndex, v_value);
             }
         }
 
@@ -91,7 +90,7 @@ public class CommonVectorOps_DSCC {
             if (u_nz_index >= 0) {
                 u.nz_values()[u_nz_index] = scalar;
             } else {
-                u.append(maskIndex, scalar);
+                u.unsafe_append(maskIndex, scalar);
             }
         }
 

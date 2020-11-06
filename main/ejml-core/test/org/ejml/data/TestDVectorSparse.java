@@ -36,8 +36,8 @@ public class TestDVectorSparse {
     @Test
     void append() {
         var v = new DVectorSparse(10, 1);
-        v.append(0, 2);
-        v.append(2, 3);
+        v.unsafe_append(0, 2);
+        v.unsafe_append(2, 3);
 
         assertEquals(v.nz_length(), 2);
         assertEquals(2 ,v.get(0));

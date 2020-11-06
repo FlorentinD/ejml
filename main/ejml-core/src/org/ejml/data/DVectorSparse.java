@@ -52,7 +52,7 @@ public class DVectorSparse implements Matrix {
             if (value != zeroElement) {
                 // safe way ..
                 // could also first gather and then do this in one step
-                append(index, value);
+                unsafe_append(index, value);
             }
         }
 
@@ -151,7 +151,9 @@ public class DVectorSparse implements Matrix {
         throw new UnsupportedOperationException("There is no matrix type for sparse vectors yet");
     }
 
-    public void append(int index, double value) {
+    public void unsafe_append( int index, double value) {
+        // ! indices might be unsorted due to this !
+
         int entry = nz_length();
         if (nz_length() == nz_indices().length) {
             growMaxLength(Math.min(nz_length()*2+1, size()), true);
