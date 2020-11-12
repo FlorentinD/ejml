@@ -77,7 +77,7 @@ public class CommonVectorOps_DSCC {
 
         u.setIndicesSorted(false);
 
-        int[] w = adjust(gw, u.size());
+        int[] w = adjustClear(gw, u.size());
 
         // mapping vector-index -> nz-index
         for (int i = 0; i < u.nz_length(); i++) {
