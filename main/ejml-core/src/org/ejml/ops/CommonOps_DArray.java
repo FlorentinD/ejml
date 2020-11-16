@@ -92,6 +92,20 @@ public class CommonOps_DArray {
         return v;
     }
 
+    /**
+     * v &lt; mask &gt;  = w
+     */
+    public static double[] assign( double[] v, double[] w, PrimitiveDMask mask) {
+        for (int i = 0; i < w.length; i++) {
+            if (mask == null || mask.isSet(i)) {
+                v[i] = w[i];
+            }
+        }
+
+        return v;
+    }
+
+
     // TODO: use Mask instead of DMatrixSparseCSC if mask element iterator is implemented
     public static double[] assignScalar( double[] v, double scalar, DMatrixSparseCSC mask) {
         if (mask.numRows != 1 && mask.numCols != 1) {
