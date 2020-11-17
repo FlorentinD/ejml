@@ -1989,7 +1989,7 @@ public class CommonOps_DSCC {
         DMatrixRMaj initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
         output = reshapeOrDeclare(output, 1, input.numCols);
         if (mask != null) {
-            mask.compatible(output);
+            mask.compatible(output.numCols);
         }
 
         for (int col = 0; col < input.numCols; col++) {
@@ -2040,7 +2040,7 @@ public class CommonOps_DSCC {
         DMatrixRMaj initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
         output = reshapeOrDeclare(output, input.numRows, 1);
         if (mask != null) {
-            mask.compatible(output);
+            mask.compatible(output.numRows);
         }
 
         Arrays.fill(output.data, initValue);

@@ -80,7 +80,7 @@ public class SparseStructuralDMask extends Mask {
 
     @Override
     public void compatible( int size ) {
-        if (size != matrix.numCols) {
+        if (size != matrix.numRows) {
             throw new MatrixDimensionException(String.format(
                     "Mask of length %d cannot be applied to vector of length %d",
                     matrix.numCols, size
