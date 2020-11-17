@@ -24,7 +24,6 @@ import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.interfaces.decomposition.LUSparseDecomposition_F64;
 import org.ejml.interfaces.linsol.LinearSolverSparse;
 import org.ejml.masks.Mask;
-import org.ejml.masks.PrimitiveDMask;
 import org.ejml.ops.DBinaryOperator;
 import org.ejml.ops.DUnaryOperator;
 import org.ejml.ops.IBinaryPredicate;
@@ -1986,7 +1985,7 @@ public class CommonOps_DSCC {
      * @return a column-vector, where v[i] == values of column i reduced to scalar based on `func`
      */
     public static DMatrixRMaj reduceColumnWise(DMatrixSparseCSC input, double initValue, DBinaryOperator func, @Nullable DMatrixRMaj output,
-                                               @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accum, boolean replaceOutput) {
+                                               @Nullable Mask mask, @Nullable DBinaryOperator accum, boolean replaceOutput) {
         DMatrixRMaj initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
         output = reshapeOrDeclare(output, 1, input.numCols);
         if (mask != null) {
@@ -2037,7 +2036,7 @@ public class CommonOps_DSCC {
      * @return a row-vector, where v[i] == values of row i reduced to scalar based on `func`
      */
     public static DMatrixRMaj reduceRowWise(DMatrixSparseCSC input, double initValue, DBinaryOperator func, @Nullable DMatrixRMaj output,
-                                            @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accum, boolean replaceOutput) {
+                                            @Nullable Mask mask, @Nullable DBinaryOperator accum, boolean replaceOutput) {
         DMatrixRMaj initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
         output = reshapeOrDeclare(output, input.numRows, 1);
         if (mask != null) {

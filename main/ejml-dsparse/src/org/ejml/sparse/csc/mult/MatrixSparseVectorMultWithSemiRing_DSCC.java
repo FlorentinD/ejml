@@ -91,12 +91,11 @@ public class MatrixSparseVectorMultWithSemiRing_DSCC {
             maxIndex = Integer.MAX_VALUE;
         }
 
-        int vectorIndex = 0;
+        int vectorIndex;
 
 
         for (int k = 0; k < B.numCols; k++) {
-            // TODO: use index version .isSet(k)
-            if (mask == null || mask.isSet(k, 0)) {
+            if (mask == null || mask.isSet(k)) {
                 int start = B.col_idx[k];
                 int end = B.col_idx[k + 1];
 

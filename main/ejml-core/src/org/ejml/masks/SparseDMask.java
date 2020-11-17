@@ -18,9 +18,8 @@
 
 package org.ejml.masks;
 
+import org.ejml.MatrixDimensionException;
 import org.ejml.data.DMatrixSparseCSC;
-
-import java.util.Arrays;
 
 public class SparseDMask extends Mask {
     protected final DMatrixSparseCSC matrix;
@@ -44,19 +43,18 @@ public class SparseDMask extends Mask {
     }
 
     @Override
-    public boolean isSet(int row, int col) {
+    public boolean isSet( int row, int col ) {
         if (col != indexedColumn) {
             return negated ^ (matrix.unsafe_get(row, col) != zeroElement);
         } else {
-            int nz_index = rowIndicesInIndexedColumn[row] - 1;
-            if (nz_index < 0) {
-                // no entry in the matrix
-                return negated;
-            } else {
-                return negated ^ (matrix.nz_values[nz_index] != zeroElement);
-            }
-
+            return negated ^ (rowIndicesInIndexedColumn[row] - 1 == col);
         }
+    }
+
+    @Override
+    public boolean isSet( int idx ) {
+        // assuming a column vector
+        return isSet(idx, 0);
     }
 
     @Override
@@ -69,15 +67,27 @@ public class SparseDMask extends Mask {
         return matrix.numRows;
     }
 
+    public double getZeroElement() { return zeroElement;}
+
     @Override
     public void setIndexColumn( int col ) {
         if (indexedColumn != col) {
-            // clear column
-            Arrays.fill(rowIndicesInIndexedColumn, 0);
             this.indexedColumn = col;
-            for (int i = matrix.col_idx[col]; i < matrix.col_idx[col+1]; i++) {
-                rowIndicesInIndexedColumn[matrix.nz_rows[i]] = i + 1;
+            for (int i = matrix.col_idx[col]; i < matrix.col_idx[col + 1]; i++) {
+                if (matrix.nz_values[i] != zeroElement) {
+                    rowIndicesInIndexedColumn[matrix.nz_rows[i]] = col + 1;
+                }
             }
+        }
+    }
+
+    @Override
+    public void compatible( int size ) {
+        if (size != matrix.numCols) {
+            throw new MatrixDimensionException(String.format(
+                    "Mask of length %d cannot be applied to vector of length %d",
+                    matrix.numCols, size
+            ));
         }
     }
 
@@ -86,16 +96,16 @@ public class SparseDMask extends Mask {
         private double zeroElement = 0;
         private boolean indexFirstColumn = false;
 
-        public Builder(DMatrixSparseCSC matrix) {
+        public Builder( DMatrixSparseCSC matrix ) {
             this.matrix = matrix;
         }
 
-        public Builder withZeroElement(double zeroElement) {
+        public Builder withZeroElement( double zeroElement ) {
             this.zeroElement = zeroElement;
             return this;
         }
 
-        public Builder withIndexFirstColumn(boolean indexFirstColumn) {
+        public Builder withIndexFirstColumn( boolean indexFirstColumn ) {
             this.indexFirstColumn = indexFirstColumn;
             return this;
         }

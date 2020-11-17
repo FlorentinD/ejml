@@ -21,6 +21,7 @@ package org.ejml.sparse.csc;
 import org.ejml.data.*;
 import org.ejml.masks.Mask;
 import org.ejml.masks.PrimitiveDMask;
+import org.ejml.masks.SparseDMask;
 import org.ejml.ops.DBinaryOperator;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +70,7 @@ public class MaskUtil_DSCC {
     static DMatrixRMaj combineOutputs(
             DMatrixRMaj output,
             @Nullable DMatrixRMaj initialOutput,
-            @Nullable PrimitiveDMask mask,
+            @Nullable Mask mask,
             @Nullable DBinaryOperator accum,
             boolean maskAppliedOnComputeResult
     ) {
@@ -86,7 +87,7 @@ public class MaskUtil_DSCC {
     public static double[] combineOutputs(
             @Nullable double[] initialOutput,
             double[] output,
-            @Nullable PrimitiveDMask mask,
+            @Nullable Mask mask,
             @Nullable  DBinaryOperator accum,
             boolean maskAppliedOnComputeResult
     ) {
@@ -105,11 +106,19 @@ public class MaskUtil_DSCC {
             output = initialOutput;
         }
         else if (mask != null && !maskAppliedOnComputeResult) {
+            double zeroElement = Double.NaN;
+            // TODO: avoid have a non-structural interface
+            if (mask instanceof PrimitiveDMask) {
+                zeroElement = ((PrimitiveDMask)mask).getZeroElement();
+            } else if ((mask instanceof SparseDMask)) {
+                zeroElement = ((SparseDMask)mask).getZeroElement();
+            }
+
             // in case the mask wasn't applied during computation f.i. reduceRowWise
             for (int i = 0; i < output.length; i++) {
                 // zero unwanted elements
                 if (!mask.isSet(i)) {
-                    output[i] = mask.getZeroElement();
+                    output[i] = zeroElement;
                 }
             }
         }

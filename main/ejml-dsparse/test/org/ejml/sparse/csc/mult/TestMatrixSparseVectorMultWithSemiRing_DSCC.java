@@ -79,43 +79,6 @@ public class TestMatrixSparseVectorMultWithSemiRing_DSCC {
         assertEquals(expected[1], found.get(2));
     }
 
-//    @ParameterizedTest(name = "{0}")
-//    @MethodSource("matrixVectorMultSources")
-//    void mult_A_v(String desc, DSemiRing semiRing, double[] expected) {
-//        // graphblas == following incoming edges of source nodes
-//        double[] v = new double[7];
-//        Arrays.fill(v, semiRing.add.id);
-//        v[3] = 0.5;
-//        v[4] = 0.6;
-//
-//        double[] found = new double[7];
-//
-//        MatrixVectorMultWithSemiRing_DSCC.mult(inputMatrix, v, found, semiRing);
-//
-//        assertTrue(Arrays.equals(found, expected));
-//    }
-
-//    @Test
-//    void multTransA() {
-//        DMatrixSparseCSC transposedMatrix = CommonOps_DSCC.transpose(inputMatrix, null, null);
-//
-//        double[] v = new double[7];
-//        v[3] = 0.5;
-//        v[4] = 0.6;
-//
-//        double[] expected = new double[7];
-//        double[] found = new double[7];
-//
-//        // assuming `mult` works correctly
-//        assertTrue(
-//                Arrays.equals(
-//                        MatrixVectorMultWithSemiRing_DSCC.mult(inputMatrix, v, expected, DSemiRings.PLUS_TIMES, null, null),
-//                        MatrixVectorMultWithSemiRing_DSCC.multTransA(transposedMatrix, v, found, DSemiRings.PLUS_TIMES, null, null)
-//                )
-//        );
-//
-//    }
-
     private static Stream<Arguments> vectorMatrixMultSources() {
         return Stream.of(
                 Arguments.of("Plus, Times", DSemiRings.PLUS_TIMES, new double[]{0.1, 0.5}),
@@ -128,15 +91,6 @@ public class TestMatrixSparseVectorMultWithSemiRing_DSCC {
                         new double[]{0.1, 0.2}),
                 Arguments.of("MAX, MIN", DSemiRings.MAX_MIN,
                         new double[]{0.2, 0.5})
-        );
-    }
-
-    private static Stream<Arguments> matrixVectorMultSources() {
-        return Stream.of(
-                Arguments.of("PLUS, TIMES", DSemiRings.PLUS_TIMES, new double[]{0.5, 0.6, 1.1}),
-                Arguments.of("OR, AND", DSemiRings.OR_AND, new double[]{1, 1, 1}),
-                Arguments.of("MIN, PLUS", DSemiRings.MIN_PLUS,
-                        new double[]{1.5, 1.6, 1.5})
         );
     }
 }

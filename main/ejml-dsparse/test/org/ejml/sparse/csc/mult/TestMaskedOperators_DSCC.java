@@ -58,7 +58,7 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         prevResult[2] = 99;
         prevResult[0] = 42;
 
-        PrimitiveDMask.Builder maskBuilder = new PrimitiveDMask.Builder(prevResult);
+        var maskBuilder = new PrimitiveDMask.Builder(prevResult);
 
         Stream.Builder<Arguments> builder = Stream.builder();
 
@@ -214,7 +214,7 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
 
         DMatrixRMaj prevResult = DMatrixRMaj.wrap(matrix.numRows, 1, prevPrimitiveResult);
         boolean replaceOutput = false;
-        PrimitiveDMask mask = DMasks.builder(prevResult).withNegated(negatedMask).build();
+        Mask mask = DMasks.builder(prevResult).withNegated(negatedMask).build();
 
         DMatrixRMaj result = CommonOps_DSCC.reduceRowWise(matrix, 0, Double::sum, prevResult.copy(), null, null, replaceOutput);
         DMatrixRMaj resultWithMask = CommonOps_DSCC.reduceRowWise(matrix, 0, Double::sum, prevResult.copy(), mask, null, replaceOutput);
@@ -236,7 +236,7 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
         prevPrimitiveResult[0] = 99;
 
         DMatrixRMaj prevResult = DMatrixRMaj.wrap(1, matrix.numCols, prevPrimitiveResult);
-        PrimitiveDMask mask = DMasks.builder(prevResult).withNegated(negatedMask).build();
+        Mask mask = DMasks.builder(prevResult).withNegated(negatedMask).build();
 
         boolean replaceOutput = false;
         DMatrixRMaj result = CommonOps_DSCC.reduceColumnWise(matrix, 0, Double::sum, prevResult.copy(), null, null, replaceOutput);
@@ -286,7 +286,7 @@ public class TestMaskedOperators_DSCC extends BaseTestMatrixMatrixOpsWithSemiRin
     }
 
     private void assertMaskedResult(double[] prevResult, double[] found, double[] foundWithMask,
-                                    PrimitiveDMask mask, double id, boolean replaceOutput) {
+                                    Mask mask, double id, boolean replaceOutput) {
         for (int i = 0; i < found.length; i++) {
             if (mask.isSet(i)) {
                 assertEquals(foundWithMask[i], found[i], "Computation differs");

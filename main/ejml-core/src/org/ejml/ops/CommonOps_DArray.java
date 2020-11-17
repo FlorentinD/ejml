@@ -19,7 +19,7 @@
 package org.ejml.ops;
 
 import org.ejml.data.DMatrixSparseCSC;
-import org.ejml.masks.PrimitiveDMask;
+import org.ejml.masks.Mask;
 
 /**
  * @author Florentin Doerre
@@ -95,7 +95,7 @@ public class CommonOps_DArray {
     /**
      * v &lt; mask &gt;  = w
      */
-    public static double[] assign( double[] v, double[] w, PrimitiveDMask mask) {
+    public static double[] assign( double[] v, double[] w, Mask mask) {
         for (int i = 0; i < w.length; i++) {
             if (mask == null || mask.isSet(i)) {
                 v[i] = w[i];
@@ -129,12 +129,12 @@ public class CommonOps_DArray {
         return v;
     }
 
-    public static double[] assignScalar( double[] v, double scalar, PrimitiveDMask mask) {
+    public static double[] assignScalar( double[] v, double scalar, Mask mask) {
         if (mask.getNumRows() != 1 && mask.getNumCols() != 1) {
             throw new IllegalArgumentException("Matrix is not a vector");
         }
 
-        mask.compatible(v);
+        mask.compatible(v.length);
 
         for (int i = 0; i < v.length; i++) {
             if (mask.isSet(i)) {
@@ -176,7 +176,7 @@ public class CommonOps_DArray {
      * @param mask !! differs from normal mask (here for which elements should be included from v)
      * @return      accumulated Value
      */
-    public static double reduceScalar(double[] v, double initValue, DBinaryOperator accumulator, PrimitiveDMask mask) {
+    public static double reduceScalar(double[] v, double initValue, DBinaryOperator accumulator, Mask mask) {
         double result = initValue;
         for (int i = 0; i < v.length; i++) {
             if (mask.isSet(i)) {

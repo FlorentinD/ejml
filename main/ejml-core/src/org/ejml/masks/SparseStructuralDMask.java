@@ -18,12 +18,12 @@
 
 package org.ejml.masks;
 
+import org.ejml.MatrixDimensionException;
 import org.ejml.data.DMatrixSparseCSC;
 
 /**
  * only looking if the entry is assigned in the source(disregarding the actual stored value)
  * ! it does not copy the input matrix -> changing the matrix structure will also affect the mask
- *
  */
 public class SparseStructuralDMask extends Mask {
     // TODO make independent of data-type
@@ -44,12 +44,18 @@ public class SparseStructuralDMask extends Mask {
     }
 
     @Override
-    public boolean isSet(int row, int col) {
+    public boolean isSet( int row, int col ) {
         if (col != indexedColumn) {
             return negated ^ matrix.isAssigned(row, col);
         } else {
             return negated ^ (rowIndicesInIndexedColumn[row] - 1 == col);
         }
+    }
+
+    @Override
+    public boolean isSet( int idx ) {
+        // assuming a column vector
+        return isSet(idx, 0);
     }
 
     @Override
@@ -66,9 +72,19 @@ public class SparseStructuralDMask extends Mask {
     public void setIndexColumn( int col ) {
         if (indexedColumn != col) {
             this.indexedColumn = col;
-            for (int i = matrix.col_idx[col]; i < matrix.col_idx[col+1]; i++) {
+            for (int i = matrix.col_idx[col]; i < matrix.col_idx[col + 1]; i++) {
                 rowIndicesInIndexedColumn[matrix.nz_rows[i]] = col + 1;
             }
+        }
+    }
+
+    @Override
+    public void compatible( int size ) {
+        if (size != matrix.numCols) {
+            throw new MatrixDimensionException(String.format(
+                    "Mask of length %d cannot be applied to vector of length %d",
+                    matrix.numCols, size
+            ));
         }
     }
 
@@ -76,11 +92,11 @@ public class SparseStructuralDMask extends Mask {
         private DMatrixSparseCSC matrix;
         private boolean indexFirstColumn;
 
-        public Builder(DMatrixSparseCSC matrix) {
+        public Builder( DMatrixSparseCSC matrix ) {
             this.matrix = matrix;
         }
 
-        public Builder withIndexFirstColumn( boolean indexFirstColumn) {
+        public Builder withIndexFirstColumn( boolean indexFirstColumn ) {
             this.indexFirstColumn = indexFirstColumn;
             return this;
         }

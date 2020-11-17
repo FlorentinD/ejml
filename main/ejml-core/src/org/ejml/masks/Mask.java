@@ -26,6 +26,11 @@ import org.ejml.data.Matrix;
  * Mask used for specifying which matrix entries should be computed
  */
 public abstract class Mask {
+    // TODO (further ideas)
+    //   - iterator over set values (as an alternative to index maybe)
+    //   - Optional<Integer> entriesSet .. only works in O(1) for structural mask (f.i. for Push/Pull Bfs)
+    //   - distinguish between matrix and vector mask
+
     // useful for sparse matrices, as actual negation would be costly and result in dense masks
     public final boolean negated;
 
@@ -34,6 +39,8 @@ public abstract class Mask {
     }
 
     public abstract boolean isSet(int row, int col);
+
+    public abstract boolean isSet(int idx);
 
     public abstract int getNumCols();
 
@@ -71,4 +78,7 @@ public abstract class Mask {
             ));
         }
     }
+
+    // vector variant
+    public abstract void compatible(int size) ;
 }

@@ -37,12 +37,12 @@ public class PrimitiveDMask extends Mask {
     }
 
     @Override
-    public boolean isSet(int row, int col) {
+    public boolean isSet( int row, int col ) {
         // XOR as negated flips the mask flag
-        return negated ^ (values[row * numCols + col] != zeroElement);
+        return negated ^ (values[row*numCols + col] != zeroElement);
     }
 
-    public double getZeroElement() { return  zeroElement;}
+    public double getZeroElement() { return zeroElement;}
 
     @Override
     public int getNumCols() {
@@ -51,23 +51,23 @@ public class PrimitiveDMask extends Mask {
 
     @Override
     public int getNumRows() {
-        return values.length / numCols;
+        return values.length/numCols;
     }
 
     @Override
-    public void setIndexColumn( int column ) {
-        return;
-    }
+    public void setIndexColumn( int column ) {}
 
-    public boolean isSet(int index) {
+    @Override
+    public boolean isSet( int index ) {
         return negated ^ (values[index] != zeroElement);
     }
 
-    public void compatible(double[] vector) {
-        if (vector.length != values.length) {
+    @Override
+    public void compatible( int size ) {
+        if (size != values.length) {
             throw new MatrixDimensionException(String.format(
-                    "Mask of length %d cannot be applied to vector of lenght %d",
-                    values.length, vector.length
+                    "Mask of length %d cannot be applied to vector of length %d",
+                    values.length, size
             ));
         }
     }
@@ -77,16 +77,16 @@ public class PrimitiveDMask extends Mask {
         private int numCols = 1;
         private double zeroElement = 0;
 
-        public Builder(double[] values) {
+        public Builder( double[] values ) {
             this.values = values;
         }
 
-        public Builder withNumCols(int numCols) {
+        public Builder withNumCols( int numCols ) {
             this.numCols = numCols;
             return this;
         }
 
-        public Builder withZeroElement(double zeroElement) {
+        public Builder withZeroElement( double zeroElement ) {
             this.zeroElement = zeroElement;
             return this;
         }

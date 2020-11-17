@@ -19,7 +19,7 @@
 package org.ejml.sparse.csc.mult;
 
 import org.ejml.data.DMatrixSparseCSC;
-import org.ejml.masks.PrimitiveDMask;
+import org.ejml.masks.Mask;
 import org.ejml.ops.DBinaryOperator;
 import org.ejml.ops.DSemiRing;
 import org.ejml.sparse.csc.MaskUtil_DSCC;
@@ -43,7 +43,7 @@ public class MatrixVectorMultWithSemiRing_DSCC {
      * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
      */
     public static double[] mult(DMatrixSparseCSC A, double[] b, double[] output, DSemiRing semiRing,
-                                @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accumulator, boolean replaceOutput) {
+                                @Nullable Mask mask, @Nullable DBinaryOperator accumulator, boolean replaceOutput) {
         return multAdd(A, b, output, semiRing, mask, accumulator, replaceOutput);
     }
 
@@ -63,11 +63,11 @@ public class MatrixVectorMultWithSemiRing_DSCC {
      * @param accumulator (Optional) accumulator for output + (A*b), else use `add` from the semiRing
      * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
      */
-    public static double[] multAdd(DMatrixSparseCSC A, double[] b, double[] output, DSemiRing semiRing, @Nullable PrimitiveDMask mask,
+    public static double[] multAdd(DMatrixSparseCSC A, double[] b, double[] output, DSemiRing semiRing, @Nullable Mask mask,
                                    @Nullable DBinaryOperator accumulator, boolean replaceOutput) {
         double[] initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
         if (mask != null) {
-            mask.compatible(output);
+            mask.compatible(output.length);
         }
         // could also just fill where mask.isSet()
         Arrays.fill(output, semiRing.add.id);
@@ -99,10 +99,10 @@ public class MatrixVectorMultWithSemiRing_DSCC {
      * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
      */
     public static double[] mult(double[] a, DMatrixSparseCSC B, double[] output, DSemiRing semiRing,
-                                @Nullable PrimitiveDMask mask, @Nullable DBinaryOperator accumulator, boolean replaceOutput) {
+                                @Nullable Mask mask, @Nullable DBinaryOperator accumulator, boolean replaceOutput) {
         double[] initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
         if (mask != null) {
-            mask.compatible(output);
+            mask.compatible(output.length);
         }
 
         for (int k = 0; k < B.numCols; k++) {
@@ -140,11 +140,11 @@ public class MatrixVectorMultWithSemiRing_DSCC {
      * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
      */
     public static double[] multTransA(DMatrixSparseCSC A, double[] b, double[] output,
-                                      DSemiRing semiRing, @Nullable PrimitiveDMask mask,
+                                      DSemiRing semiRing, @Nullable Mask mask,
                                       @Nullable DBinaryOperator accumulator, boolean replaceOutput) {
         double[] initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
         if (mask != null) {
-            mask.compatible(output);
+            mask.compatible(output.length);
         }
 
         // based on a*B (but replaced with A and b)
