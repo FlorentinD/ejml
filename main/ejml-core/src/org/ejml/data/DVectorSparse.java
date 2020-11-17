@@ -252,7 +252,7 @@ public class DVectorSparse implements Matrix {
     /**
      * Value of an element in a sparse vector
      */
-    class RealValue {
+    public class RealValue {
         /** The coordinate */
         public int index;
         /** The value of the coordinate */
