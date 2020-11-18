@@ -59,10 +59,17 @@ public class DVectorSparse implements Matrix {
         oneDimMatrix.indicesSorted = true;
     }
 
-    public DVectorSparse(DMatrixSparseCSC original) {
+    public DVectorSparse(DMatrixSparseCSC original, boolean copyOriginal) {
         assert original.numCols == 1;
+        if (copyOriginal) {
+            oneDimMatrix = original.copy();
+        } else {
+            oneDimMatrix = original;
+        }
+    }
 
-        oneDimMatrix = original.copy();
+    public DVectorSparse(DMatrixSparseCSC original) {
+        this(original, true);
     }
 
     public int[] nz_indices() {
