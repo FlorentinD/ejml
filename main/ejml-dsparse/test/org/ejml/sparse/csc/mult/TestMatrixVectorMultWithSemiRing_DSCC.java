@@ -21,7 +21,9 @@ package org.ejml.sparse.csc.mult;
 import org.ejml.data.DMatrixSparseCSC;
 import org.ejml.ops.DSemiRing;
 import org.ejml.ops.DSemiRings;
+import org.ejml.sparse.csc.CommonOps_DSCC;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -31,7 +33,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SuppressWarnings("UnusedMethod")
+@SuppressWarnings({"UnusedMethod"})
 public class TestMatrixVectorMultWithSemiRing_DSCC {
     DMatrixSparseCSC inputMatrix;
 
@@ -84,6 +86,27 @@ public class TestMatrixVectorMultWithSemiRing_DSCC {
         MatrixVectorMultWithSemiRing_DSCC.mult(inputMatrix, v, found, semiRing);
 
         assertTrue(Arrays.equals(found, expected));
+    }
+
+    @Test
+    void multTransA() {
+        DMatrixSparseCSC transposedMatrix = CommonOps_DSCC.transpose(inputMatrix, null, null);
+
+        double[] v = new double[7];
+        v[3] = 0.5;
+        v[4] = 0.6;
+
+        double[] expected = new double[7];
+        double[] found = new double[7];
+
+        // assuming `mult` works correctly
+        assertTrue(
+                Arrays.equals(
+                        MatrixVectorMultWithSemiRing_DSCC.mult(inputMatrix, v, expected, DSemiRings.PLUS_TIMES),
+                        MatrixVectorMultWithSemiRing_DSCC.multTransA(transposedMatrix, v, found, DSemiRings.PLUS_TIMES, null, null, true)
+                )
+        );
+
     }
 
     private static Stream<Arguments> vectorMatrixMultSources() {

@@ -37,6 +37,8 @@ public class GenerateJavaCode32 extends GenerateCode32 {
         suffices64.add("_F64");
         suffices32.add("_FDRB_to_FDRM");
         suffices32.add("_F32");
+        suffices64.add("_DArray");
+        suffices32.add("_FArray");
 
         for( String suffice : sufficeRoot ) {
             suffices64.add("_D"+suffice);
@@ -64,6 +66,14 @@ public class GenerateJavaCode32 extends GenerateCode32 {
         prefix32.add("FMonoids");
         prefix64.add("DSemiRings");
         prefix32.add("FSemiRings");
+        prefix64.add("PrimitiveDMask");
+        prefix32.add("PrimitiveFMask");
+        prefix64.add("SparseDMask");
+        prefix32.add("SparseFMask");
+        prefix64.add("SparseStructuralDMask");
+        prefix32.add("SparseStructuralFMask");
+        prefix64.add("DMasks");
+        prefix32.add("FMasks");
         prefix64.add("DScalar");
         prefix32.add("FScalar");
         prefix64.add("DMatrix");
@@ -74,6 +84,8 @@ public class GenerateJavaCode32 extends GenerateCode32 {
         prefix32.add("FEigen");
         prefix64.add("DSubmatrix");
         prefix32.add("FSubmatrix");
+        prefix64.add("DVector");
+        prefix32.add("FVector");
         prefix64.add("ConvertD");
         prefix32.add("ConvertF");
         prefix64.add("GenericTestsDMatrix");
@@ -90,6 +102,7 @@ public class GenerateJavaCode32 extends GenerateCode32 {
         converter.replacePattern("DoubleStep", "FIXED_STEP");
         converter.replacePattern("double", "float");
         converter.replacePattern("Double", "Float");
+        converter.replacePattern("DArray", "FArray");
 
         for( String suffice : sufficeRoot) {
             converter.replacePattern("_D"+suffice, "_F"+suffice);
@@ -106,6 +119,11 @@ public class GenerateJavaCode32 extends GenerateCode32 {
         converter.replacePattern("IDBinary", "IFBinary");
         converter.replacePattern("DMonoid", "FMonoid");
         converter.replacePattern("DSemiRing", "FSemiRing");
+        converter.replacePattern("SparseDMask", "SparseFMask");
+        converter.replacePattern("SparseStructuralDMask", "SparseStructuralFMask");
+        converter.replacePattern("PrimitiveDMask", "PrimitiveFMask");
+        converter.replacePattern("DMasks", "FMasks");
+        converter.replacePattern("DVector", "FVector");
         converter.replacePattern("ConvertD", "ConvertF");
         converter.replacePattern("DGrowArray", "FGrowArray");
         converter.replacePattern("DMatrix", "FMatrix");
@@ -146,6 +164,8 @@ public class GenerateJavaCode32 extends GenerateCode32 {
                 "main/ejml-core/test/org/ejml/data",
                 "main/ejml-core/src/org/ejml/ops",
                 "main/ejml-core/test/org/ejml/ops",
+                "main/ejml-core/src/org/ejml/masks",
+                "main/ejml-core/test/org/ejml/masks",
                 "main/ejml-experimental/src/org/ejml/dense/row/decomposition/bidiagonal/"
         };
 

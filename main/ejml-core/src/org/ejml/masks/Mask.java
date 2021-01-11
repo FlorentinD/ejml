@@ -1,0 +1,84 @@
+/*
+ * Copyright (c) 2009-2020, Peter Abeles. All Rights Reserved.
+ *
+ * This file is part of Efficient Java Matrix Library (EJML).
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.ejml.masks;
+
+
+import org.ejml.MatrixDimensionException;
+import org.ejml.data.Matrix;
+
+/**
+ * Mask used for specifying which matrix entries should be computed
+ */
+public abstract class Mask {
+    // TODO (further ideas)
+    //   - iterator over set values (as an alternative to index maybe)
+    //   - Optional<Integer> entriesSet .. only works in O(1) for structural mask (f.i. for Push/Pull Bfs)
+    //   - distinguish between matrix and vector mask
+
+    // useful for sparse matrices, as actual negation would be costly and result in dense masks
+    public final boolean negated;
+
+    protected Mask( boolean negated ) {
+        this.negated = negated;
+    }
+
+    public abstract boolean isSet(int row, int col);
+
+    public abstract boolean isSet(int idx);
+
+    public abstract int getNumCols();
+
+    public abstract int getNumRows();
+
+    public void print() {
+        StringBuilder result = new StringBuilder();
+        for (int row = 0; row < getNumRows(); row++) {
+            for (int col = 0; col < getNumCols(); col++) {
+                result.append(isSet(row, col) ? "+ " : "- ");
+            }
+            result.append(System.lineSeparator());
+        }
+
+        System.out.println(result);
+    }
+
+    /**
+     * For faster access on a specific column (on at a time)
+     * ! Only useful for sparse masks
+     *
+     * @param column column to index
+     */
+    public abstract void setIndexColumn( int column);
+
+    /**
+     * Checks whether the dimensions of the mask and matrix match
+     * @param matrix the mask is applied to
+     */
+    public void compatible(Matrix matrix) {
+        if (matrix.getNumCols() != getNumCols() || matrix.getNumRows() != getNumRows()) {
+            throw new MatrixDimensionException(String.format(
+                    "Mask of (%d, %d) cannot be applied for matrix (%d, %d)",
+                    getNumRows(), getNumCols(), matrix.getNumCols(), matrix.getNumCols()
+            ));
+        }
+    }
+
+    // vector variant
+    public abstract void compatible(int size) ;
+}

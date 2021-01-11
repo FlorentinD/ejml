@@ -19,15 +19,14 @@
 package org.ejml.sparse.csc;
 
 import org.ejml.MatrixDimensionException;
-import org.ejml.data.DGrowArray;
-import org.ejml.data.DMatrixRMaj;
-import org.ejml.data.DMatrixSparseCSC;
-import org.ejml.data.IGrowArray;
+import org.ejml.data.*;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.interfaces.decomposition.LUSparseDecomposition_F64;
 import org.ejml.interfaces.linsol.LinearSolverSparse;
+import org.ejml.masks.Mask;
 import org.ejml.ops.DBinaryOperator;
 import org.ejml.ops.DUnaryOperator;
+import org.ejml.ops.IBinaryPredicate;
 import org.ejml.ops.IDBinaryOperator;
 import org.ejml.sparse.FillReducing;
 import org.ejml.sparse.csc.factory.DecompositionFactory_DSCC;
@@ -39,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 import static org.ejml.UtilEjml.*;
+import static org.ejml.sparse.csc.MaskUtil_DSCC.combineOutputs;
+import static org.ejml.sparse.csc.MaskUtil_DSCC.maybeCacheInitialOutput;
 
 /**
  * @author Peter Abeles
@@ -1209,6 +1210,34 @@ public class CommonOps_DSCC {
     }
 
     /**
+     * Select entries from A and save them in C.
+     * A more generic but probably also slower version of `extract`
+     * <p>
+     * Can be used to select f.i. the lower or upper triangle of a matrix
+     * <p>
+     * Simplified version of: GxB_Select
+     *
+     * @param A           (Input) Matrix. Not modified.
+     * @param selector    Function to decide whether an entry gets selected
+     * @param accumulator (Optional) How to combine existing entries in output with the selected ones
+     * @param output      (Optional/Output) Matrix to use for the output. Can be the same as A
+     * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
+     * @return Matrix storing the selected entries of A
+     */
+    public static DMatrixSparseCSC select(DMatrixSparseCSC A, IBinaryPredicate selector,
+                                          @Nullable DBinaryOperator accumulator, @Nullable DMatrixSparseCSC output, boolean replaceOutput) {
+        DMatrixSparseCSC initialOutput = maybeCacheInitialOutput(output, replaceOutput);
+
+        if (output != A) {
+            output = reshapeOrDeclare(output, A);
+        }
+
+        ImplCommonOps_DSCC.select(A, output, selector);
+
+        return combineOutputs(output, initialOutput, null, accumulator);
+    }
+
+    /**
      * <p>
      * Sets every element in the matrix to the specified value. This can require a very large amount of
      * memory and might exceed the maximum array size<br>
@@ -1804,6 +1833,50 @@ public class CommonOps_DSCC {
         return apply(input, func, input);
     }
 
+    public static DMatrixSparseCSC apply(DMatrixSparseCSC input, DUnaryOperator func, @Nullable DMatrixSparseCSC output,
+                                         @Nullable Mask mask, @Nullable DBinaryOperator accum, boolean replaceOutput) {
+        DMatrixSparseCSC initialOutput = null;
+        // set correct structure
+        if (output == null) {
+            output = input.createLike();
+        } else if (input != output) {
+            initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
+            output.copyStructure(input);
+        }
+        if (mask != null) {
+            mask.compatible(output);
+        }
+
+
+        if (mask != null && initialOutput == null) {
+            for (int col = 0; col < input.numCols; col++) {
+                int start = input.col_idx[col];
+                int end = input.col_idx[col + 1];
+                // allow faster access per column
+                mask.setIndexColumn(col);
+
+                for (int i = start; i < end; i++) {
+                    if (mask.isSet(output.nz_rows[i], col)) {
+                        output.nz_values[i] = func.apply(input.nz_values[i]);
+                    } else {
+                        // assuming this would be right ...
+                        output.nz_values[i] = 0;
+                    }
+                }
+            }
+        }
+        else {
+            // dont check for the mask here as the computation is too simple to get any improvements when skipping
+            // would more likely prohibit vectorisation
+            // mask is applied in combineOutputs
+            for (int i = 0; i < input.nz_length; i++) {
+                output.nz_values[i] = func.apply(input.nz_values[i]);
+            }
+        }
+
+        return combineOutputs(output, initialOutput, mask, accum);
+    }
+
     /**
      * This applies a given unary function on every nz row,value stored in the matrix
      *
@@ -1827,6 +1900,15 @@ public class CommonOps_DSCC {
         }
 
         return output;
+    }
+
+    public static DVectorSparse applyIdx( DVectorSparse input, IDBinaryOperator func, @Nullable DVectorSparse output ) {
+        if (output == null) {
+            return new DVectorSparse(CommonOps_DSCC.applyRowIdx(input.oneDimMatrix, func, null));
+        } else {
+            output.oneDimMatrix = CommonOps_DSCC.applyRowIdx(input.oneDimMatrix, func, output.oneDimMatrix);
+            return output;
+        }
     }
 
     /**
@@ -1893,17 +1975,21 @@ public class CommonOps_DSCC {
      *   output[j] = result
      * </pre>
      *
-     * @param input (Input) input matrix. Not modified
+     * NOTE: this produces only dense vectors (no entry in this column -> initValue)
+     *
+     * @param input     (Input) input matrix. Not modified
      * @param initValue initial value for accumulator
      * @param func Accumulator function defining "+" for accumulator +=  cellValue
      * @param output output (Output) Vector, where result can be stored in
+     * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
      * @return a column-vector, where v[i] == values of column i reduced to scalar based on `func`
      */
-    public static DMatrixRMaj reduceColumnWise( DMatrixSparseCSC input, double initValue, DBinaryOperator func, @Nullable DMatrixRMaj output ) {
-        if (output == null) {
-            output = new DMatrixRMaj(1, input.numCols);
-        } else {
-            output.reshape(1, input.numCols);
+    public static DMatrixRMaj reduceColumnWise(DMatrixSparseCSC input, double initValue, DBinaryOperator func, @Nullable DMatrixRMaj output,
+                                               @Nullable Mask mask, @Nullable DBinaryOperator accum, boolean replaceOutput) {
+        DMatrixRMaj initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
+        output = reshapeOrDeclare(output, 1, input.numCols);
+        if (mask != null) {
+            mask.compatible(output.numCols);
         }
 
         for (int col = 0; col < input.numCols; col++) {
@@ -1911,14 +1997,22 @@ public class CommonOps_DSCC {
             int end = input.col_idx[col + 1];
 
             double acc = initValue;
-            for (int i = start; i < end; i++) {
-                acc = func.apply(acc, input.nz_values[i]);
+
+            if (mask == null || mask.isSet(col)) {
+                for (int i = start; i < end; i++) {
+                    acc = func.apply(acc, input.nz_values[i]);
+                }
             }
 
             output.data[col] = acc;
         }
 
-        return output;
+        return combineOutputs(output, initialOutput, mask, accum, true);
+    }
+
+    public static DMatrixRMaj reduceColumnWise(DMatrixSparseCSC input, double initValue, DBinaryOperator func,
+                                               @Nullable DMatrixRMaj output) {
+        return reduceColumnWise(input, initValue, func, output, null, null, true);
     }
 
     /**
@@ -1931,18 +2025,22 @@ public class CommonOps_DSCC {
      *   output[j] = result
      * </pre>
      *
-     * @param input (Input) input matrix. Not modified
+     * NOTE: this produces only dense vectors (no entry in this column -> initValue)
+     *
+     * @param input     (Input) input matrix. Not modified
      * @param initValue initial value for accumulator
      * @param func Accumulator function defining "+" for accumulator += cellValue
      * @param output output (Output) Vector, where result can be stored in
+     * @param accum Accumulator function defining "+" for oldOutput += newOutput
+     * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
      * @return a row-vector, where v[i] == values of row i reduced to scalar based on `func`
      */
-    public static DMatrixRMaj reduceRowWise( DMatrixSparseCSC input, double initValue, DBinaryOperator func,
-                                             @Nullable DMatrixRMaj output ) {
-        if (output == null) {
-            output = new DMatrixRMaj(1, input.numRows);
-        } else {
-            output.reshape(1, input.numCols);
+    public static DMatrixRMaj reduceRowWise(DMatrixSparseCSC input, double initValue, DBinaryOperator func, @Nullable DMatrixRMaj output,
+                                            @Nullable Mask mask, @Nullable DBinaryOperator accum, boolean replaceOutput) {
+        DMatrixRMaj initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
+        output = reshapeOrDeclare(output, input.numRows, 1);
+        if (mask != null) {
+            mask.compatible(output.numRows);
         }
 
         Arrays.fill(output.data, initValue);
@@ -1951,11 +2049,16 @@ public class CommonOps_DSCC {
             int start = input.col_idx[col];
             int end = input.col_idx[col + 1];
 
+            // (assumption) not checking for mask here as computation should be faster than check
             for (int i = start; i < end; i++) {
                 output.data[input.nz_rows[i]] = func.apply(output.data[input.nz_rows[i]], input.nz_values[i]);
             }
         }
 
-        return output;
+        return combineOutputs(output, initialOutput, mask, accum, false);
+    }
+
+    public static DMatrixRMaj reduceRowWise(DMatrixSparseCSC input, double initValue, DBinaryOperator func, @Nullable DMatrixRMaj output) {
+        return reduceRowWise(input, initValue, func, output, null, null, true);
     }
 }

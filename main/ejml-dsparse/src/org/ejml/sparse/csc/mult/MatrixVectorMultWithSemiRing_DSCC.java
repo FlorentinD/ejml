@@ -19,7 +19,11 @@
 package org.ejml.sparse.csc.mult;
 
 import org.ejml.data.DMatrixSparseCSC;
+import org.ejml.masks.Mask;
+import org.ejml.ops.DBinaryOperator;
 import org.ejml.ops.DSemiRing;
+import org.ejml.sparse.csc.MaskUtil_DSCC;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -28,92 +32,143 @@ import java.util.Arrays;
  */
 public class MatrixVectorMultWithSemiRing_DSCC {
     /**
-     * c = A*b
+     * output = A*b
      *
      * @param A (Input) Matrix
      * @param b (Input) vector
-     * @param offsetB (Input) first index in vector b
-     * @param c (Output) vector
-     * @param offsetC (Output) first index in vector c
+     * @param output (Output) vector
      * @param semiRing Semi-Ring to define + and *
+     * @param mask Mask for specifying which entries should be overwritten
+     * @param accumulator Operator to combine result with existing entries in output matrix
+     * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
      */
-    public static void mult( DMatrixSparseCSC A,
-                             double[] b, int offsetB,
-                             double[] c, int offsetC, DSemiRing semiRing ) {
-        Arrays.fill(c, offsetC, offsetC + A.numRows, semiRing.add.id);
-        multAdd(A, b, offsetB, c, offsetC, semiRing);
+    public static double[] mult(DMatrixSparseCSC A, double[] b, double[] output, DSemiRing semiRing,
+                                @Nullable Mask mask, @Nullable DBinaryOperator accumulator, boolean replaceOutput) {
+        return multAdd(A, b, output, semiRing, mask, accumulator, replaceOutput);
     }
 
-    public static void mult( DMatrixSparseCSC A, double[] b, double[] c, DSemiRing semiRing ) {
-        mult(A, b, 0, c, 0, semiRing);
+    public static double[] mult(DMatrixSparseCSC A, double[] b, double[] output, DSemiRing semiRing) {
+        return mult(A, b, output, semiRing, null, null, true);
     }
 
     /**
-     * c = c + A*b
+     * output = initialOutput + A*b
+     * ! difference to normal `multAdd` without semiRing: apply + on result of A*b
      *
-     * @param A (Input) Matrix
-     * @param b (Input) vector
-     * @param offsetB (Input) first index in vector b
-     * @param c (Output) vector
-     * @param offsetC (Output) first index in vector c
-     * @param semiRing Semi-Ring to define + and *
+     * @param A           (Input) Matrix
+     * @param b           (Input) vector
+     * @param output      (Output) vector
+     * @param mask        Mask for specifying which entries should be overwritten
+     * @param semiRing    Semi-Ring to define + and *
+     * @param accumulator (Optional) accumulator for output + (A*b), else use `add` from the semiRing
+     * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
      */
-    public static void multAdd( DMatrixSparseCSC A,
-                                double[] b, int offsetB,
-                                double[] c, int offsetC, DSemiRing semiRing ) {
-        if (b.length - offsetB < A.numCols)
-            throw new IllegalArgumentException("Length of 'b' isn't long enough");
-        if (c.length - offsetC < A.numRows)
-            throw new IllegalArgumentException("Length of 'c' isn't long enough");
+    public static double[] multAdd(DMatrixSparseCSC A, double[] b, double[] output, DSemiRing semiRing, @Nullable Mask mask,
+                                   @Nullable DBinaryOperator accumulator, boolean replaceOutput) {
+        double[] initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
+        if (mask != null) {
+            mask.compatible(output.length);
+        }
+        // could also just fill where mask.isSet()
+        Arrays.fill(output, semiRing.add.id);
 
         for (int k = 0; k < A.numCols; k++) {
             int idx0 = A.col_idx[k];
             int idx1 = A.col_idx[k + 1];
 
             for (int indexA = idx0; indexA < idx1; indexA++) {
-                c[offsetC + A.nz_rows[indexA]] = semiRing.add.func.apply(
-                        c[offsetC + A.nz_rows[indexA]],
-                        semiRing.mult.func.apply(A.nz_values[indexA], b[offsetB + k]));
+                output[A.nz_rows[indexA]] = semiRing.add.func.apply(
+                        output[A.nz_rows[indexA]],
+                        semiRing.mult.apply(A.nz_values[indexA], b[k]));
             }
         }
+
+        // initialOutput + output (+apply mask)
+        return MaskUtil_DSCC.combineOutputs(initialOutput, output, mask, accumulator, false);
     }
 
     /**
-     * c = a<sup>T</sup>*B
+     * output = a<sup>T</sup>*B
      *
-     * @param a (Input) vector
-     * @param offsetA Input) first index in vector a
-     * @param B (Input) Matrix
-     * @param c (Output) vector
-     * @param offsetC (Output) first index in vector c
+     * @param a       (Input) vector
+     * @param B       (Input) Matrix
+     * @param output       (Output) vector
      * @param semiRing Semi-Ring to define + and *
+     * @param mask Mask for specifying which entries should be overwritten
+     * @param accumulator Operator to combine result with existing entries in output matrix
+     * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
      */
-    public static void mult( double[] a, int offsetA,
-                             DMatrixSparseCSC B,
-                             double[] c, int offsetC, DSemiRing semiRing ) {
-        if (a.length - offsetA < B.numRows)
-            throw new IllegalArgumentException("Length of 'a' isn't long enough");
-        if (c.length - offsetC < B.numCols)
-            throw new IllegalArgumentException("Length of 'c' isn't long enough");
+    public static double[] mult(double[] a, DMatrixSparseCSC B, double[] output, DSemiRing semiRing,
+                                @Nullable Mask mask, @Nullable DBinaryOperator accumulator, boolean replaceOutput) {
+        double[] initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
+        if (mask != null) {
+            mask.compatible(output.length);
+        }
 
         for (int k = 0; k < B.numCols; k++) {
-            int idx0 = B.col_idx[k];
-            int idx1 = B.col_idx[k + 1];
+            if (mask == null || mask.isSet(k)) {
+                int idx0 = B.col_idx[k];
+                int idx1 = B.col_idx[k + 1];
 
-            double sum = semiRing.add.id;
-            for (int indexB = idx0; indexB < idx1; indexB++) {
-                sum = semiRing.add.func.apply(sum, semiRing.mult.func.apply(a[offsetA + B.nz_rows[indexB]], B.nz_values[indexB]));
+
+                double sum = semiRing.add.id;
+                for (int indexB = idx0; indexB < idx1; indexB++) {
+                    sum = semiRing.add.func.apply(sum, semiRing.mult.apply(a[B.nz_rows[indexB]], B.nz_values[indexB]));
+                }
+                output[k] = sum;
+            } else if (replaceOutput) {
+                // overwrite old value (alternatively also use Arrays.fill(output, semiRing.add.id))
+                output[k] = semiRing.add.id;
             }
-            c[offsetC + k] = sum;
         }
+
+        return MaskUtil_DSCC.combineOutputs(initialOutput, output, mask, accumulator, true);
     }
 
-    public static void mult( double[] a, DMatrixSparseCSC B, double[] c, DSemiRing semiRing ) {
-        mult(a, 0, B, c, 0, semiRing);
+    public static double[] mult(double[] a, DMatrixSparseCSC B, double[] c, DSemiRing semiRing) {
+        return mult(a, B, c, semiRing, null, null, true);
     }
 
     /**
-     * scalar = A<sup>T</sup>*B*C
+     * output = A<sup>T</sup>*b
+     * @param A     (Input) Matrix
+     * @param b     (Input) vector
+     * @param output    (Output) vector
+     * @param semiRing  Semi-Ring to define + and *
+     * @param mask      Mask for specifying which entries should be overwritten
+     * @param accumulator Operator to combine result with existing entries in output matrix
+     * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
+     */
+    public static double[] multTransA(DMatrixSparseCSC A, double[] b, double[] output,
+                                      DSemiRing semiRing, @Nullable Mask mask,
+                                      @Nullable DBinaryOperator accumulator, boolean replaceOutput) {
+        double[] initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
+        if (mask != null) {
+            mask.compatible(output.length);
+        }
+
+        // based on a*B (but replaced with A and b)
+        for (int k = 0; k < A.numCols; k++) {
+            if (mask == null || mask.isSet(k)) {
+                int idx0 = A.col_idx[k];
+                int idx1 = A.col_idx[k + 1];
+
+                double sum = semiRing.add.id;
+                for (int indexB = idx0; indexB < idx1; indexB++) {
+                    sum = semiRing.add.func.apply(sum, semiRing.mult.apply(b[A.nz_rows[indexB]], A.nz_values[indexB]));
+                }
+                output[k] = sum;
+            } else if (replaceOutput) {
+                // overwrite old value (alternatively also use Arrays.fill(output, semiRing.add.id))
+                output[k] = semiRing.add.id;
+            }
+        }
+
+        return MaskUtil_DSCC.combineOutputs(initialOutput, output, mask, accumulator, true);
+    }
+
+    /**
+     * scalar = a<sup>T</sup>*B*c
      *
      * @param a (Input) vector
      * @param offsetA Input) first index in vector a
@@ -122,9 +177,9 @@ public class MatrixVectorMultWithSemiRing_DSCC {
      * @param offsetC (Output) first index in vector c
      * @param semiRing Semi-Ring to define + and *
      */
-    public static double innerProduct( double[] a, int offsetA,
-                                       DMatrixSparseCSC B,
-                                       double[] c, int offsetC, DSemiRing semiRing ) {
+    public static double innerProduct(double[] a, int offsetA,
+                                      DMatrixSparseCSC B,
+                                      double[] c, int offsetC, DSemiRing semiRing) {
         if (a.length - offsetA < B.numRows)
             throw new IllegalArgumentException("Length of 'a' isn't long enough");
         if (c.length - offsetC < B.numCols)
@@ -138,9 +193,9 @@ public class MatrixVectorMultWithSemiRing_DSCC {
 
             double sum = 0;
             for (int indexB = idx0; indexB < idx1; indexB++) {
-                sum = semiRing.add.func.apply(sum, semiRing.mult.func.apply(a[offsetA + B.nz_rows[indexB]], B.nz_values[indexB]));
+                sum = semiRing.add.func.apply(sum, semiRing.mult.apply(a[offsetA + B.nz_rows[indexB]], B.nz_values[indexB]));
             }
-            output = semiRing.add.func.apply(output, semiRing.mult.func.apply(sum, c[offsetC + k]));
+            output = semiRing.add.func.apply(output, semiRing.mult.apply(sum, c[offsetC + k]));
         }
 
         return output;

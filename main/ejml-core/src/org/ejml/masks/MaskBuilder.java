@@ -16,23 +16,15 @@
  * limitations under the License.
  */
 
-package org.ejml.ops;
+package org.ejml.masks;
 
-/**
- * An algebraic structure, defined over the `doubles` by two monoids + and *, called addition and multiplication.
- *
- * Here mult is only a binary operator as defined in the GraphBLAS C-API
- */
-public class DSemiRing {
-    public final DMonoid add;
-    public final DBinaryOperator mult;
+public abstract class MaskBuilder<MASK extends Mask> {
+    protected boolean negated = false;
 
-    public DSemiRing(DMonoid add, DMonoid mult) {
-        this(add, mult.func);
+    public MaskBuilder<MASK> withNegated(boolean negated) {
+        this.negated = negated;
+        return this;
     }
 
-    public DSemiRing(DMonoid add, DBinaryOperator mult) {
-        this.add = add;
-        this.mult = mult;
-    }
+    public abstract MASK build();
 }

@@ -21,13 +21,14 @@ package org.ejml.sparse.csc.misc;
 import org.ejml.data.DGrowArray;
 import org.ejml.data.DMatrixSparseCSC;
 import org.ejml.data.IGrowArray;
+import org.ejml.masks.Mask;
+import org.ejml.ops.DBinaryOperator;
 import org.ejml.ops.DSemiRing;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
 import static org.ejml.UtilEjml.adjust;
-import static org.ejml.sparse.csc.mult.ImplSparseSparseMultWithSemiRing_DSCC.multAddColA;
 
 /**
  * based on ImplCommonOps_DSCC
@@ -38,15 +39,16 @@ public class ImplCommonOpsWithSemiRing_DSCC {
      * Performs matrix addition:<br>
      * C = A + B
      *
-     * @param A Matrix
-     * @param B Matrix
-     * @param C Output matrix.
-     * @param semiRing Semi-Ring to define + and *
-     * @param gw (Optional) Storage for internal workspace.  Can be null.
-     * @param gx (Optional) Storage for internal workspace.  Can be null.
+     * @param A        Matrix
+     * @param B        Matrix
+     * @param C        Output matrix.
+     * @param addOp Operator to define `+`
+     * @param mask Mask for specifying which entries should be overwritten
+     * @param gw       (Optional) Storage for internal workspace.  Can be null.
+     * @param gx       (Optional) Storage for internal workspace.  Can be null.
      */
-    public static void add( double alpha, DMatrixSparseCSC A, double beta, DMatrixSparseCSC B, DMatrixSparseCSC C, DSemiRing semiRing,
-                            @Nullable IGrowArray gw, @Nullable DGrowArray gx ) {
+    public static void add(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC C, DBinaryOperator addOp, @Nullable Mask mask,
+                           @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         double[] x = adjust(gx, A.numRows);
         int[] w = adjust(gw, A.numRows, A.numRows);
 
@@ -56,8 +58,12 @@ public class ImplCommonOpsWithSemiRing_DSCC {
         for (int col = 0; col < A.numCols; col++) {
             C.col_idx[col] = C.nz_length;
 
-            multAddColA(A, col, alpha, C, col + 1, semiRing, x, w);
-            multAddColA(B, col, beta, C, col + 1, semiRing, x, w);
+            if (mask != null) {
+                mask.setIndexColumn(col);
+            }
+
+            addColA(A, col, C, col + 1, mask, addOp, x, w);
+            addColA(B, col, C, col + 1, mask, addOp, x, w);
 
             // take the values in the dense vector 'x' and put them into 'C'
             int idxC0 = C.col_idx[col];
@@ -68,6 +74,40 @@ public class ImplCommonOpsWithSemiRing_DSCC {
             }
         }
         C.col_idx[A.numCols] = C.nz_length;
+    }
+
+    /**
+     * Performs the performing operation x = x + A(:,i)
+     * for applying a accumulator
+     *
+     * ! difference: no alpha and accumulator is not nullable
+     */
+    public static void addColA( DMatrixSparseCSC A, int colA,
+                                DMatrixSparseCSC C, int mark,
+                                @Nullable Mask mask,
+                                DBinaryOperator accum,
+                                double[] x, int[] w) {
+        int idxA0 = A.col_idx[colA];
+        int idxA1 = A.col_idx[colA + 1];
+
+        for (int j = idxA0; j < idxA1; j++) {
+            int row = A.nz_rows[j];
+            if (mask == null || mask.isSet(row, mark - 1)) {
+                if (w[row] < mark) {
+                    if (C.nz_length >= C.nz_rows.length) {
+                        C.growMaxLength(C.nz_length * 2 + 1, true);
+                    }
+
+                    w[row] = mark;
+                    C.nz_rows[C.nz_length] = row;
+                    C.col_idx[mark] = ++C.nz_length;
+                    x[row] = A.nz_values[j];
+                } else if (accum != null) {
+                    // if it is null .. x[row] can just stay the same
+                    x[row] = accum.apply(x[row], A.nz_values[j]);
+                }
+            }
+        }
     }
 
     /**
@@ -125,11 +165,12 @@ public class ImplCommonOpsWithSemiRing_DSCC {
      * @param B (Input) Matrix
      * @param C (Output) Matrix.
      * @param semiRing Semi-Ring to define + and *
-     * @param gw (Optional) Storage for internal workspace.  Can be null.
-     * @param gx (Optional) Storage for internal workspace.  Can be null.
+     * @param mask Mask for specifying which entries should be overwritten
+     * @param gw       (Optional) Storage for internal workspace.  Can be null.
+     * @param gx       (Optional) Storage for internal workspace.  Can be null.
      */
-    public static void elementMult( DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC C, DSemiRing semiRing,
-                                    @Nullable IGrowArray gw, @Nullable DGrowArray gx ) {
+    public static void elementMult(DMatrixSparseCSC A, DMatrixSparseCSC B, DMatrixSparseCSC C, DSemiRing semiRing, @Nullable Mask mask,
+                                   @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         double[] x = adjust(gx, A.numRows);
         int[] w = adjust(gw, A.numRows);
         Arrays.fill(w, 0, A.numRows, -1); // fill with -1. This will be a value less than column
@@ -165,8 +206,10 @@ public class ImplCommonOpsWithSemiRing_DSCC {
             for (int i = idxB0; i < idxB1; i++) {
                 int row = B.nz_rows[i];
                 if (w[row] == col) {
-                    C.nz_values[C.nz_length] = semiRing.mult.func.apply(x[row], B.nz_values[i]);
-                    C.nz_rows[C.nz_length++] = row;
+                    if (mask == null || mask.isSet(row, col)) {
+                        C.nz_values[C.nz_length] = semiRing.mult.apply(x[row], B.nz_values[i]);
+                        C.nz_rows[C.nz_length++] = row;
+                    }
                 }
             }
         }

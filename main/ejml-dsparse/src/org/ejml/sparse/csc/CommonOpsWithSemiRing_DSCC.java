@@ -19,44 +19,59 @@
 package org.ejml.sparse.csc;
 
 import org.ejml.MatrixDimensionException;
-import org.ejml.data.DGrowArray;
-import org.ejml.data.DMatrixRMaj;
-import org.ejml.data.DMatrixSparseCSC;
-import org.ejml.data.IGrowArray;
+import org.ejml.data.*;
+import org.ejml.masks.Mask;
+import org.ejml.ops.DBinaryOperator;
 import org.ejml.ops.DSemiRing;
 import org.ejml.sparse.csc.misc.ImplCommonOpsWithSemiRing_DSCC;
 import org.ejml.sparse.csc.mult.ImplSparseSparseMultWithSemiRing_DSCC;
 import org.jetbrains.annotations.Nullable;
 
-import static org.ejml.UtilEjml.reshapeOrDeclare;
-import static org.ejml.UtilEjml.stringShapes;
+import static org.ejml.UtilEjml.*;
+import static org.ejml.sparse.csc.MaskUtil_DSCC.combineOutputs;
 
 
 public class CommonOpsWithSemiRing_DSCC {
 
+    public static DMatrixSparseCSC mult(DMatrixSparseCSC A, DMatrixSparseCSC B, @Nullable DMatrixSparseCSC output, DSemiRing semiRing,
+                                        @Nullable Mask mask, @Nullable DBinaryOperator accumulator, boolean replaceOutput) {
+        return mult(A, B, output, semiRing, mask, accumulator, replaceOutput, null, null);
+    }
+
     public static DMatrixSparseCSC mult(DMatrixSparseCSC A, DMatrixSparseCSC B, @Nullable DMatrixSparseCSC output, DSemiRing semiRing) {
-        return mult(A, B, output, semiRing, null, null);
+        return mult(A, B, output, semiRing, null, null, true, null, null);
     }
 
     /**
      * Performs matrix multiplication.  output = A*B
      *
-     * @param A        (Input) Matrix. Not modified.
-     * @param B        (Input) Matrix. Not modified.
-     * @param output   (Output) Storage for results.  Data length is increased if insufficient.
+     * @param A  (Input) Matrix. Not modified.
+     * @param B  (Input) Matrix. Not modified.
+     * @param output  (Output) Storage for results. Data length is increased if increased if insufficient.
      * @param semiRing Semi-Ring to define + and *
+     * @param mask Mask for specifying which entries should be overwritten
+     * @param accumulator Operator to combine result with existing entries in output matrix
+     * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
      * @param gw       (Optional) Storage for internal workspace.  Can be null.
      * @param gx       (Optional) Storage for internal workspace.  Can be null.
      */
     public static DMatrixSparseCSC mult(DMatrixSparseCSC A, DMatrixSparseCSC B, @Nullable DMatrixSparseCSC output, DSemiRing semiRing,
+                                        @Nullable Mask mask, @Nullable DBinaryOperator accumulator, boolean replaceOutput,
                                         @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numCols != B.numRows)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
+
+        // !! important to do before reshape
+        DMatrixSparseCSC initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
+
         output = reshapeOrDeclare(output, A, A.numRows, B.numCols);
+        if (mask != null) {
+            mask.compatible(output);
+        }
 
-        ImplSparseSparseMultWithSemiRing_DSCC.mult(A, B, output, semiRing, gw, gx);
+        ImplSparseSparseMultWithSemiRing_DSCC.mult(A, B, output, semiRing, mask, gw, gx);
 
-        return output;
+        return combineOutputs(output, initialOutput, null, accumulator);
     }
 
     /**
@@ -176,26 +191,32 @@ public class CommonOpsWithSemiRing_DSCC {
 
     /**
      * Performs matrix addition:<br>
-     * output = &alpha;A + &beta;B
+     * output = A + B
      *
-     * @param alpha    scalar value multiplied against A
-     * @param A        Matrix
-     * @param beta     scalar value multiplied against B
-     * @param B        Matrix
-     * @param output   (Optional)    Output matrix.
+     * @param A           Matrix
+     * @param B           Matrix
+     * @param output      (Optional)    Output matrix.
+     * @param mask        Mask for specifying which entries should be overwritten
      * @param semiRing Semi-Ring to define + and *
-     * @param gw       (Optional) Storage for internal workspace.  Can be null.
-     * @param gx       (Optional) Storage for internal workspace.  Can be null.
+     * @param accumulator Operator to combine result with existing entries in output matrix
+     * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
+     * @param gw          (Optional) Storage for internal workspace.  Can be null.
+     * @param gx          (Optional) Storage for internal workspace.  Can be null.
      */
-    public static DMatrixSparseCSC add(double alpha, DMatrixSparseCSC A, double beta, DMatrixSparseCSC B, @Nullable DMatrixSparseCSC output, DSemiRing semiRing,
+    public static DMatrixSparseCSC add(DMatrixSparseCSC A, DMatrixSparseCSC B, @Nullable DMatrixSparseCSC output, DSemiRing semiRing,
+                                       @Nullable Mask mask, @Nullable DBinaryOperator accumulator, boolean replaceOutput,
                                        @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numRows != B.numRows || A.numCols != B.numCols)
             throw new MatrixDimensionException("Inconsistent matrix shapes. " + stringShapes(A, B));
+        DMatrixSparseCSC initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
         output = reshapeOrDeclare(output, A, A.numRows, A.numCols);
+        if (mask != null) {
+            mask.compatible(output);
+        }
 
-        ImplCommonOpsWithSemiRing_DSCC.add(alpha, A, beta, B, output, semiRing, gw, gx);
+        ImplCommonOpsWithSemiRing_DSCC.add(A, B, output, semiRing.add.func, mask, gw, gx);
 
-        return output;
+        return combineOutputs(output, initialOutput, null, accumulator);
     }
 
     /**
@@ -203,21 +224,29 @@ public class CommonOpsWithSemiRing_DSCC {
      * output[i,j] = A[i,j]*B[i,j]<br>
      * All matrices must have the same shape.
      *
-     * @param A        (Input) Matrix.
-     * @param B        (Input) Matrix
-     * @param output   (Output) Matrix. data array is grown to min(A.nz_length,B.nz_length), resulting a in a large speed boost.
+     * @param A           (Input) Matrix.
+     * @param B           (Input) Matrix
+     * @param output      (Output) Matrix. data array is grown to min(A.nz_length,B.nz_length), resulting a in a large speed boost.
      * @param semiRing Semi-Ring to define + and *
-     * @param gw       (Optional) Storage for internal workspace.  Can be null.
-     * @param gx       (Optional) Storage for internal workspace.  Can be null.
+     * @param mask        Mask for specifying which entries should be overwritten
+     * @param accumulator Operator to combine result with existing entries in output matrix
+     * @param replaceOutput If true, the value of the output parameter will be overwritten, otherwise they will be merged
+     * @param gw          (Optional) Storage for internal workspace.  Can be null.
+     * @param gx          (Optional) Storage for internal workspace.  Can be null.
      */
     public static DMatrixSparseCSC elementMult(DMatrixSparseCSC A, DMatrixSparseCSC B, @Nullable DMatrixSparseCSC output, DSemiRing semiRing,
+                                               @Nullable Mask mask, @Nullable DBinaryOperator accumulator, boolean replaceOutput,
                                                @Nullable IGrowArray gw, @Nullable DGrowArray gx) {
         if (A.numCols != B.numCols || A.numRows != B.numRows)
             throw new MatrixDimensionException("All inputs must have the same number of rows and columns. " + stringShapes(A, B));
+        DMatrixSparseCSC initialOutput = MaskUtil_DSCC.maybeCacheInitialOutput(output, replaceOutput);
         output = reshapeOrDeclare(output, A, A.numRows, A.numCols);
+        if (mask != null) {
+            mask.compatible(output);
+        }
 
-        ImplCommonOpsWithSemiRing_DSCC.elementMult(A, B, output, semiRing, gw, gx);
+        ImplCommonOpsWithSemiRing_DSCC.elementMult(A, B, output, semiRing, mask, gw, gx);
 
-        return output;
+        return combineOutputs(output, initialOutput, null, accumulator);
     }
 }

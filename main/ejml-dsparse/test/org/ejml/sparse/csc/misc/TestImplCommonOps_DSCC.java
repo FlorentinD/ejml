@@ -24,6 +24,8 @@ import org.ejml.data.DMatrixSparseCSC;
 import org.ejml.data.DMatrixSparseTriplet;
 import org.ejml.data.IGrowArray;
 import org.ejml.ops.ConvertDMatrixStruct;
+import org.ejml.ops.IBinaryPredicate;
+import org.ejml.ops.IBinaryPredicates;
 import org.ejml.sparse.csc.CommonOps_DSCC;
 import org.ejml.sparse.csc.MatrixFeatures_DSCC;
 import org.ejml.sparse.csc.RandomMatrices_DSCC;
@@ -32,12 +34,12 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Random;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Abeles
  */
+@SuppressWarnings({"UnusedMethod"})
 public class TestImplCommonOps_DSCC {
 
     private final Random rand = new Random(324);
@@ -267,5 +269,69 @@ public class TestImplCommonOps_DSCC {
                 assertTrue(MatrixFeatures_DSCC.isEquals(A, B, UtilEjml.TEST_F64));
             }
         }
+    }
+
+    @Test
+    public void extract() {
+        int dim = 5;
+        DMatrixSparseCSC A = RandomMatrices_DSCC.rectangle(dim, dim, 10, 1, 2, rand);
+        DMatrixSparseCSC B = A.copy();
+
+        IBinaryPredicate selector = IBinaryPredicates.higherTriangle;
+        ImplCommonOps_DSCC.select(B, B, selector);
+    }
+
+    private void assertSelectResult(int dim, DMatrixSparseCSC input, DMatrixSparseCSC result, IBinaryPredicate selector) {
+        for (int row = 0; row < dim; row++) {
+            for (int col = 0; col < dim; col++) {
+                if (selector.apply(row, col)) {
+                    assertEquals(input.get(row, col), result.get(row, col));
+                }
+                else {
+                    assertFalse(result.isAssigned(row, col));
+                }
+            }
+        }
+    }
+
+    @Test
+    public void selectAndSaveInSameMatrix() {
+        int dim = 5;
+        DMatrixSparseCSC A = RandomMatrices_DSCC.rectangle(dim, dim, 10, 1, 2, rand);
+        DMatrixSparseCSC B = A.copy();
+
+        IBinaryPredicate selector = IBinaryPredicates.lowerTriangle;
+        ImplCommonOps_DSCC.select(B, B, selector);
+
+        B.print();
+
+        assertSelectResult(dim, A, B, selector);
+    }
+
+    @Test
+    public void selectAndSaveInAnotherMatrix() {
+        DMatrixSparseCSC inputMatrix = new DMatrixSparseCSC(7, 7, 24);
+        inputMatrix.set(0, 1, 1);
+        inputMatrix.set(0, 3, 1);
+        inputMatrix.set(1, 3, 1);
+        inputMatrix.set(1, 4, 1);
+        inputMatrix.set(1, 6, 1);
+        inputMatrix.set(2, 3, 1);
+        inputMatrix.set(2, 5, 1);
+        inputMatrix.set(2, 6, 1);
+        inputMatrix.set(3, 5, 1);
+        inputMatrix.set(3, 6, 1);
+        inputMatrix.set(4, 5, 1);
+        inputMatrix.set(4, 6, 1);
+
+        // making matrix symmetric
+        inputMatrix.copy().createCoordinateIterator().forEachRemaining(v -> inputMatrix.set(v.col, v.row, v.value));
+
+        IBinaryPredicate selector = IBinaryPredicates.lowerTriangle;
+        DMatrixSparseCSC result = CommonOps_DSCC.select(inputMatrix, selector, null, null, true);
+
+        result.print();
+
+        assertSelectResult(7, inputMatrix, result, selector);
     }
 }

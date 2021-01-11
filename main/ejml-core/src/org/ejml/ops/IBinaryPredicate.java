@@ -19,20 +19,10 @@
 package org.ejml.ops;
 
 /**
- * An algebraic structure, defined over the `doubles` by two monoids + and *, called addition and multiplication.
- *
- * Here mult is only a binary operator as defined in the GraphBLAS C-API
+ * Functional Interface used in matrix select methods to specify arbitrary binary predicates accepting element coordinates
  */
-public class DSemiRing {
-    public final DMonoid add;
-    public final DBinaryOperator mult;
-
-    public DSemiRing(DMonoid add, DMonoid mult) {
-        this(add, mult.func);
-    }
-
-    public DSemiRing(DMonoid add, DBinaryOperator mult) {
-        this.add = add;
-        this.mult = mult;
-    }
+@FunctionalInterface
+public interface IBinaryPredicate {
+    // TODO: add a version, where the value is also relevant f.i. for selecting non-zero entries
+    boolean apply(int row, int col);
 }

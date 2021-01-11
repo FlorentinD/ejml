@@ -19,20 +19,11 @@
 package org.ejml.ops;
 
 /**
- * An algebraic structure, defined over the `doubles` by two monoids + and *, called addition and multiplication.
- *
- * Here mult is only a binary operator as defined in the GraphBLAS C-API
+ * Inspired by the predefined SelectOps in GraphBLAS (spec extension)
  */
-public class DSemiRing {
-    public final DMonoid add;
-    public final DBinaryOperator mult;
-
-    public DSemiRing(DMonoid add, DMonoid mult) {
-        this(add, mult.func);
-    }
-
-    public DSemiRing(DMonoid add, DBinaryOperator mult) {
-        this.add = add;
-        this.mult = mult;
-    }
+public class IBinaryPredicates {
+    public static final IBinaryPredicate lowerTriangle = (row, col) -> row >= col;
+    public static final IBinaryPredicate higherTriangle = (row, col) -> row <= col;
+    public static final IBinaryPredicate diagonal = (row, col) -> row == col;
+    public static final IBinaryPredicate nonDiagonal = (row, col) -> row != col;
 }

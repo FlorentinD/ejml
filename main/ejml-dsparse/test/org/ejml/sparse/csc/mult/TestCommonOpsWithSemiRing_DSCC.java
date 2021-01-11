@@ -20,12 +20,14 @@ package org.ejml.sparse.csc.mult;
 
 import org.ejml.EjmlUnitTests;
 import org.ejml.data.DMatrixSparseCSC;
+import org.ejml.data.DVectorSparse;
 import org.ejml.ops.DSemiRing;
 import org.ejml.ops.DSemiRings;
 import org.ejml.sparse.csc.CommonOpsWithSemiRing_DSCC;
 import org.ejml.sparse.csc.CommonOps_DSCC;
+import org.ejml.sparse.csc.CommonVectorOps_DSCC;
 import org.ejml.sparse.csc.RandomMatrices_DSCC;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -36,27 +38,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings({"UnusedMethod"})
-public class TestMatrixMatrixMultWithSemiRing_DSCC {
-    DMatrixSparseCSC inputMatrix;
-
-    @BeforeEach
-    public void setUp() {
-        // based on example in http://mit.bme.hu/~szarnyas/grb/graphblas-introduction.pdf
-        inputMatrix = new DMatrixSparseCSC(7, 7, 12);
-        inputMatrix.set(0, 1, 1);
-        inputMatrix.set(0, 3, 1);
-        inputMatrix.set(1, 4, 1);
-        inputMatrix.set(1, 6, 1);
-        inputMatrix.set(2, 5, 1);
-        inputMatrix.set(3, 0, 0.2);
-        inputMatrix.set(3, 2, 0.4);
-        inputMatrix.set(4, 5, 1);
-        inputMatrix.set(5, 2, 0.5);
-        inputMatrix.set(6, 2, 1);
-        inputMatrix.set(6, 3, 1);
-        inputMatrix.set(6, 4, 1);
-
-    }
+public class TestCommonOpsWithSemiRing_DSCC extends BaseTestMatrixMatrixOpsWithSemiRing_DSCC {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("sparseVectorMatrixMultSources")
@@ -66,19 +48,18 @@ public class TestMatrixMatrixMultWithSemiRing_DSCC {
         vector.set(0, 3, 0.5);
         vector.set(0, 5, 0.6);
 
-        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.mult(vector, inputMatrix, null, semiRing);
+        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.mult(vector, inputMatrix, null, semiRing, null, null, true);
 
         assertEquals(expected[0], found.get(0, 0));
         assertEquals(expected[1], found.get(0, 2));
     }
-
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("sparseMatrixSources")
     void elementMult(String desc, DMatrixSparseCSC matrix, DMatrixSparseCSC otherMatrix) {
         DSemiRing semiRing = DSemiRings.PLUS_TIMES;
 
-        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.elementMult(matrix, otherMatrix, null, semiRing, null, null);
+        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.elementMult(matrix, otherMatrix, null, semiRing, null, null, true, null, null);
         DMatrixSparseCSC expected = CommonOps_DSCC.elementMult(matrix, otherMatrix, null, null, null);
 
         EjmlUnitTests.assertEquals(expected, found);
@@ -89,7 +70,7 @@ public class TestMatrixMatrixMultWithSemiRing_DSCC {
     void add(String desc, DMatrixSparseCSC matrix, DMatrixSparseCSC otherMatrix) {
         DSemiRing semiRing = DSemiRings.PLUS_TIMES;
 
-        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.add(1, matrix, 1, otherMatrix, null, semiRing, null, null);
+        DMatrixSparseCSC found = CommonOpsWithSemiRing_DSCC.add(matrix, otherMatrix, null, semiRing, null, null, true, null, null);
         DMatrixSparseCSC expected = CommonOps_DSCC.add(1, matrix, 1, otherMatrix, null, null, null);
 
         EjmlUnitTests.assertEquals(expected, found);

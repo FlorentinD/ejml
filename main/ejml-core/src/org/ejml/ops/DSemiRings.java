@@ -41,12 +41,14 @@ public final class DSemiRings {
     public static final DSemiRing XNOR_OR = new DSemiRing(XNOR, OR);
 
     // only private as they have no identity element, hence can only be used for add
-    private static final DMonoid FIRST = new DMonoid(Double.NaN, (x, y) -> x);
-    private static final DMonoid SECOND = new DMonoid(Double.NaN, (x, y) -> y);
+    private static final DBinaryOperator FIRST = (x, y) -> x;
+    private static final DBinaryOperator SECOND = (x, y) -> y;
 
     // semi-rings with no multiplicative annihilator
     public static final DSemiRing MIN_FIRST = new DSemiRing(MIN, FIRST);
     public static final DSemiRing MIN_SECOND = new DSemiRing(MIN, SECOND);
     public static final DSemiRing MAX_FIRST = new DSemiRing(MAX, FIRST);
     public static final DSemiRing MAX_SECOND = new DSemiRing(MAX, SECOND);
+    public static final DSemiRing PLUS_SECOND = new DSemiRing(PLUS, SECOND);
+    public static final DSemiRing PLUS_FIRST = new DSemiRing(PLUS, FIRST);
 }
