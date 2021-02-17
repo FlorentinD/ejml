@@ -54,9 +54,8 @@ public class BenchmarkCommonOps_MT_DSCC {
     GrowArray<Workspace_MT_DSCC> listWork = new GrowArray<>(Workspace_MT_DSCC::new);
 
     @Setup
-    public void setup() {
-        Random rand = new Random(42);
-        A = RandomMatrices_DSCC.generateUniform(dimension, dimension, countPerColumn,-1,1, rand);
+    public void setup() throws Throwable {
+        A = BenchmarkUtil.createOrLoadRandomCSCMatrix(dimension, dimension, countPerColumn,-1,1, 42);
         B = CommonOps_DSCC.transpose(A, null, null);
         C = new DMatrixSparseCSC(1, 1);
     }

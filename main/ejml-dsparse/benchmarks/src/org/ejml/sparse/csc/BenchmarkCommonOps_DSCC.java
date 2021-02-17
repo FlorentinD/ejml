@@ -59,9 +59,9 @@ public class BenchmarkCommonOps_DSCC {
     double[] array;
 
     @Setup
-    public void setup() {
+    public void setup() throws Throwable {
         Random rand = new Random(345);
-        A = RandomMatrices_DSCC.generateUniform(dimension, dimension, countPerColumn,-1,1, rand);
+        A = BenchmarkUtil.createOrLoadRandomCSCMatrix(dimension, dimension, countPerColumn,-1,1, 345);
         B = CommonOps_DSCC.transpose(A, null, null);
         C = new DMatrixSparseCSC(1, 1);
         C_ddrm = new DMatrixRMaj(1, 1);
